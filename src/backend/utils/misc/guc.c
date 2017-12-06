@@ -2854,7 +2854,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BYTE
 		},
-		DECLARE_INT_GUC(thread_stack_size, 1024*1024, 8*1024, 128*1024*1024)
+		DECLARE_INT_GUC(thread_stack_size, 512*1024, PTHREAD_STACK_MIN, 128*1024*1024)
 	},
 
 	/* End-of-list marker */
