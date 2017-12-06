@@ -31,7 +31,7 @@ typedef struct
 	check_object_relabel_type hook;
 } LabelProvider;
 
-static List *label_provider_list = NIL;
+static session_local List *label_provider_list = NIL;
 
 /*
  * ExecSecLabelStmt --

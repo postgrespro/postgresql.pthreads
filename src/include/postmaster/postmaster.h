@@ -14,26 +14,27 @@
 #define _POSTMASTER_H
 
 /* GUC options */
-extern bool EnableSSL;
-extern int	ReservedBackends;
-extern int	PostPortNumber;
-extern int	Unix_socket_permissions;
-extern char *Unix_socket_group;
-extern char *Unix_socket_directories;
-extern char *ListenAddresses;
-extern bool ClientAuthInProgress;
-extern int	PreAuthDelay;
-extern int	AuthenticationTimeout;
-extern bool Log_connections;
-extern bool log_hostname;
-extern bool enable_bonjour;
-extern char *bonjour_name;
-extern bool restart_after_crash;
+extern session_local bool EnableSSL;
+extern session_local int	ReservedBackends;
+extern session_local int	PostPortNumber;
+extern session_local int	Unix_socket_permissions;
+extern session_local char *Unix_socket_group;
+extern session_local char *Unix_socket_directories;
+extern session_local char *ListenAddresses;
+extern session_local bool ClientAuthInProgress;
+extern session_local int	PreAuthDelay;
+extern session_local int	AuthenticationTimeout;
+extern session_local bool Log_connections;
+extern session_local bool log_hostname;
+extern session_local bool enable_bonjour;
+extern session_local char *bonjour_name;
+extern session_local bool restart_after_crash;
+extern session_local int  thread_stack_size;
 
 #ifdef WIN32
-extern HANDLE PostmasterHandle;
+extern session_local HANDLE PostmasterHandle;
 #else
-extern int	postmaster_alive_fds[2];
+extern session_local int	postmaster_alive_fds[2];
 
 /*
  * Constants that represent which of postmaster_alive_fds is held by
@@ -44,7 +45,7 @@ extern int	postmaster_alive_fds[2];
 #define POSTMASTER_FD_OWN		1	/* kept open by postmaster only */
 #endif
 
-extern const char *progname;
+extern session_local const char *progname;
 
 extern void PostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
 extern void ClosePostmasterPorts(bool am_syslogger);

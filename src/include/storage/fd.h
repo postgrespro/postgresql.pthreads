@@ -50,12 +50,12 @@ typedef int File;
 
 
 /* GUC parameter */
-extern int	max_files_per_process;
+extern session_local int	max_files_per_process;
 
 /*
  * This is private to fd.c, but exported for save/restore_backend_variables()
  */
-extern int	max_safe_fds;
+extern session_local int	max_safe_fds;
 
 
 /*

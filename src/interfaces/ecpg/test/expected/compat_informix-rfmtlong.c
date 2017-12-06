@@ -26,7 +26,7 @@ check_return(int ret);
 static void
 fmtlong(long lng, const char *fmt)
 {
-	static int i;
+	static session_local int i;
 	int r;
 	char buf[30];
 

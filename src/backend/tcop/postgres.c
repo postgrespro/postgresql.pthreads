@@ -82,21 +82,21 @@
  *		global variables
  * ----------------
  */
-const char *debug_query_string; /* client-supplied query string */
+session_local const char *debug_query_string; /* client-supplied query string */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
-CommandDest whereToSendOutput = DestDebug;
+session_local CommandDest whereToSendOutput = DestDebug;
 
 /* flag for logging end of session */
-bool		Log_disconnections = false;
+session_local bool		Log_disconnections = false;
 
-int			log_statement = LOGSTMT_NONE;
+session_local int			log_statement = LOGSTMT_NONE;
 
 /* GUC variable for maximum stack depth (measured in kilobytes) */
-int			max_stack_depth = 100;
+session_local int			max_stack_depth = 100;
 
 /* wait N seconds to allow attach from a debugger */
-int			PostAuthDelay = 0;
+session_local int			PostAuthDelay = 0;
 
 
 
@@ -106,7 +106,7 @@ int			PostAuthDelay = 0;
  */
 
 /* max_stack_depth converted to bytes for speed of checking */
-static long max_stack_depth_bytes = 100 * 1024L;
+static session_local long max_stack_depth_bytes = 100 * 1024L;
 
 /*
  * Stack base pointer -- initialized by PostmasterMain and inherited by
@@ -114,60 +114,60 @@ static long max_stack_depth_bytes = 100 * 1024L;
  * it directly. Newer versions use set_stack_base(), but we want to stay
  * binary-compatible for the time being.
  */
-char	   *stack_base_ptr = NULL;
+session_local char	   *stack_base_ptr = NULL;
 
 /*
  * On IA64 we also have to remember the register stack base.
  */
 #if defined(__ia64__) || defined(__ia64)
-char	   *register_stack_base_ptr = NULL;
+session_local char	   *register_stack_base_ptr = NULL;
 #endif
 
 /*
  * Flag to keep track of whether we have started a transaction.
  * For extended query protocol this has to be remembered across messages.
  */
-static bool xact_started = false;
+static session_local bool xact_started = false;
 
 /*
  * Flag to indicate that we are doing the outer loop's read-from-client,
  * as opposed to any random read from client that might happen within
  * commands like COPY FROM STDIN.
  */
-static bool DoingCommandRead = false;
+static session_local bool DoingCommandRead = false;
 
 /*
  * Flags to implement skip-till-Sync-after-error behavior for messages of
  * the extended query protocol.
  */
-static bool doing_extended_query_message = false;
-static bool ignore_till_sync = false;
+static session_local bool doing_extended_query_message = false;
+static session_local bool ignore_till_sync = false;
 
 /*
  * Flag to keep track of whether statement timeout timer is active.
  */
-static bool stmt_timeout_active = false;
+static session_local bool stmt_timeout_active = false;
 
 /*
  * If an unnamed prepared statement exists, it's stored here.
  * We keep it separate from the hashtable kept by commands/prepare.c
  * in order to reduce overhead for short-lived queries.
  */
-static CachedPlanSource *unnamed_stmt_psrc = NULL;
+static session_local CachedPlanSource *unnamed_stmt_psrc = NULL;
 
 /* assorted command-line switches */
-static const char *userDoption = NULL;	/* -D switch */
-static bool EchoQuery = false;	/* -E switch */
-static bool UseSemiNewlineNewline = false;	/* -j switch */
+static session_local const char *userDoption = NULL;	/* -D switch */
+static session_local bool EchoQuery = false;	/* -E switch */
+static session_local bool UseSemiNewlineNewline = false;	/* -j switch */
 
 /* whether or not, and why, we were canceled by conflict with recovery */
-static bool RecoveryConflictPending = false;
-static bool RecoveryConflictRetryable = true;
-static ProcSignalReason RecoveryConflictReason;
+static session_local bool RecoveryConflictPending = false;
+static session_local bool RecoveryConflictRetryable = true;
+static session_local ProcSignalReason RecoveryConflictReason;
 
 /* reused buffer to pass to SendRowDescriptionMessage() */
-static MemoryContext row_description_context = NULL;
-static StringInfoData row_description_buf;
+static session_local MemoryContext row_description_context = NULL;
+static session_local StringInfoData row_description_buf;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
@@ -3361,6 +3361,9 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	GucSource	gucsource;
 	int			flag;
 
+	if (optind > 1)
+		return;
+
 	if (secure)
 	{
 		gucsource = PGC_S_ARGV; /* switches came from command line */
@@ -4401,7 +4404,7 @@ long
 get_stack_depth_rlimit(void)
 {
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_STACK)
-	static long val = 0;
+	static session_local long val = 0;
 
 	/* This won't change after process launch, so check just once */
 	if (val == 0)
@@ -4430,8 +4433,8 @@ get_stack_depth_rlimit(void)
 }
 
 
-static struct rusage Save_r;
-static struct timeval Save_t;
+static session_local struct rusage Save_r;
+static session_local struct timeval Save_t;
 
 void
 ResetUsage(void)

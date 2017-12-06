@@ -979,7 +979,7 @@ gistproperty(Oid index_oid, int attno,
 XLogRecPtr
 gistGetFakeLSN(Relation rel)
 {
-	static XLogRecPtr counter = 1;
+	static session_local XLogRecPtr counter = 1;
 
 	if (rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 	{

@@ -36,15 +36,15 @@
 #include "utils/typcache.h"
 
 
-uint64		SPI_processed = 0;
-Oid			SPI_lastoid = InvalidOid;
-SPITupleTable *SPI_tuptable = NULL;
-int			SPI_result;
+session_local uint64		SPI_processed = 0;
+session_local Oid			SPI_lastoid = InvalidOid;
+session_local SPITupleTable *SPI_tuptable = NULL;
+session_local int			SPI_result;
 
-static _SPI_connection *_SPI_stack = NULL;
-static _SPI_connection *_SPI_current = NULL;
-static int	_SPI_stack_depth = 0;	/* allocated size of _SPI_stack */
-static int	_SPI_connected = -1;	/* current stack index */
+static session_local _SPI_connection *_SPI_stack = NULL;
+static session_local _SPI_connection *_SPI_current = NULL;
+static session_local int	_SPI_stack_depth = 0;	/* allocated size of _SPI_stack */
+static session_local int	_SPI_connected = -1;	/* current stack index */
 
 static Portal SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 						 ParamListInfo paramLI, bool read_only);
@@ -1520,7 +1520,7 @@ SPI_plan_is_valid(SPIPlanPtr plan)
 const char *
 SPI_result_code_string(int code)
 {
-	static char buf[64];
+	static session_local char buf[64];
 
 	switch (code)
 	{

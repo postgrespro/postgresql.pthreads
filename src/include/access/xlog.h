@@ -27,9 +27,9 @@
 #define SYNC_METHOD_OPEN		2	/* for O_SYNC */
 #define SYNC_METHOD_FSYNC_WRITETHROUGH	3
 #define SYNC_METHOD_OPEN_DSYNC	4	/* for O_DSYNC */
-extern int	sync_method;
+extern session_local int	sync_method;
 
-extern PGDLLIMPORT TimeLineID ThisTimeLineID;	/* current TLI */
+extern session_local PGDLLIMPORT TimeLineID ThisTimeLineID;	/* current TLI */
 
 /*
  * Prior to 8.4, all activity during recovery was carried out by the startup
@@ -38,7 +38,7 @@ extern PGDLLIMPORT TimeLineID ThisTimeLineID;	/* current TLI */
  * potentially perform work during recovery should check RecoveryInProgress().
  * See XLogCtl notes in xlog.c.
  */
-extern bool InRecovery;
+extern session_local bool InRecovery;
 
 /*
  * Like InRecovery, standbyState is only valid in the startup process.
@@ -69,7 +69,7 @@ typedef enum
 	STANDBY_SNAPSHOT_READY
 } HotStandbyState;
 
-extern HotStandbyState standbyState;
+extern session_local HotStandbyState standbyState;
 
 #define InHotStandby (standbyState >= STANDBY_SNAPSHOT_PENDING)
 
@@ -87,30 +87,30 @@ typedef enum
 	RECOVERY_TARGET_IMMEDIATE
 } RecoveryTargetType;
 
-extern XLogRecPtr ProcLastRecPtr;
-extern XLogRecPtr XactLastRecEnd;
-extern PGDLLIMPORT XLogRecPtr XactLastCommitEnd;
+extern session_local XLogRecPtr ProcLastRecPtr;
+extern session_local XLogRecPtr XactLastRecEnd;
+extern session_local PGDLLIMPORT XLogRecPtr XactLastCommitEnd;
 
-extern bool reachedConsistency;
+extern session_local bool reachedConsistency;
 
 /* these variables are GUC parameters related to XLOG */
-extern int	wal_segment_size;
-extern int	min_wal_size_mb;
-extern int	max_wal_size_mb;
-extern int	wal_keep_segments;
-extern int	XLOGbuffers;
-extern int	XLogArchiveTimeout;
-extern int	wal_retrieve_retry_interval;
-extern char *XLogArchiveCommand;
-extern bool EnableHotStandby;
-extern bool fullPageWrites;
-extern bool wal_log_hints;
-extern bool wal_compression;
-extern bool *wal_consistency_checking;
-extern char *wal_consistency_checking_string;
-extern bool log_checkpoints;
+extern session_local int	wal_segment_size;
+extern session_local int	min_wal_size_mb;
+extern session_local int	max_wal_size_mb;
+extern session_local int	wal_keep_segments;
+extern session_local int	XLOGbuffers;
+extern session_local int	XLogArchiveTimeout;
+extern session_local int	wal_retrieve_retry_interval;
+extern session_local char *XLogArchiveCommand;
+extern session_local bool EnableHotStandby;
+extern session_local bool fullPageWrites;
+extern session_local bool wal_log_hints;
+extern session_local bool wal_compression;
+extern session_local bool *wal_consistency_checking;
+extern session_local char *wal_consistency_checking_string;
+extern session_local bool log_checkpoints;
 
-extern int	CheckPointSegments;
+extern session_local int	CheckPointSegments;
 
 /* Archive modes */
 typedef enum ArchiveMode
@@ -119,7 +119,7 @@ typedef enum ArchiveMode
 	ARCHIVE_MODE_ON,			/* enabled while server is running normally */
 	ARCHIVE_MODE_ALWAYS			/* enabled always (even during recovery) */
 } ArchiveMode;
-extern int	XLogArchiveMode;
+extern session_local int	XLogArchiveMode;
 
 /* WAL levels */
 typedef enum WalLevel
@@ -129,7 +129,7 @@ typedef enum WalLevel
 	WAL_LEVEL_LOGICAL
 } WalLevel;
 
-extern PGDLLIMPORT int wal_level;
+extern session_local PGDLLIMPORT int wal_level;
 
 /* Is WAL archiving enabled (always or only while server is running normally)? */
 #define XLogArchivingActive() \
@@ -163,7 +163,7 @@ extern PGDLLIMPORT int wal_level;
 #define XLogLogicalInfoActive() (wal_level >= WAL_LEVEL_LOGICAL)
 
 #ifdef WAL_DEBUG
-extern bool XLOG_DEBUG;
+extern session_local bool XLOG_DEBUG;
 #endif
 
 /*
@@ -216,7 +216,7 @@ typedef struct CheckpointStatsData
 									 * entire sync phase. */
 } CheckpointStatsData;
 
-extern CheckpointStatsData CheckpointStats;
+extern session_local CheckpointStatsData CheckpointStats;
 
 struct XLogRecData;
 

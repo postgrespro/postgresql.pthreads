@@ -238,17 +238,17 @@ static const datetkn deltatktbl[] = {
 	{"yrs", UNITS, DTK_YEAR}	/* "years" relative */
 };
 
-static int	szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
+static session_local int	szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
-static TimeZoneAbbrevTable *zoneabbrevtbl = NULL;
+static session_local TimeZoneAbbrevTable *zoneabbrevtbl = NULL;
 
 /* Caches of recent lookup results in the above tables */
 
-static const datetkn *datecache[MAXDATEFIELDS] = {NULL};
+static session_local const datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
-static const datetkn *deltacache[MAXDATEFIELDS] = {NULL};
+static session_local const datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 
-static const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
+static session_local const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
 
 
 /*

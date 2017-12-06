@@ -23,8 +23,8 @@
 #include "nodes/extensible.h"
 #include "utils/hsearch.h"
 
-static HTAB *extensible_node_methods = NULL;
-static HTAB *custom_scan_methods = NULL;
+static session_local HTAB *extensible_node_methods = NULL;
+static session_local HTAB *custom_scan_methods = NULL;
 
 typedef struct
 {

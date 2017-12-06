@@ -55,7 +55,7 @@ typedef struct xl_invalid_page
 	bool		present;		/* page existed but contained zeroes */
 } xl_invalid_page;
 
-static HTAB *invalid_page_tab = NULL;
+static session_local HTAB *invalid_page_tab = NULL;
 
 
 /* Report a reference to an invalid page */
@@ -662,10 +662,10 @@ XLogRead(char *buf, int segsize, TimeLineID tli, XLogRecPtr startptr,
 	Size		nbytes;
 
 	/* state maintained across calls */
-	static int	sendFile = -1;
-	static XLogSegNo sendSegNo = 0;
-	static TimeLineID sendTLI = 0;
-	static uint32 sendOff = 0;
+	static session_local int	sendFile = -1;
+	static session_local XLogSegNo sendSegNo = 0;
+	static session_local TimeLineID sendTLI = 0;
+	static session_local uint32 sendOff = 0;
 
 	Assert(segsize == wal_segment_size);
 

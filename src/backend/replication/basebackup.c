@@ -71,10 +71,10 @@ static int	compareWalFileNames(const void *a, const void *b);
 static void throttle(size_t increment);
 
 /* Was the backup currently in-progress initiated in recovery mode? */
-static bool backup_started_in_recovery = false;
+static session_local bool backup_started_in_recovery = false;
 
 /* Relative path of temporary statistics directory */
-static char *statrelpath = NULL;
+static session_local char *statrelpath = NULL;
 
 /*
  * Size of each block sent into the tar stream for larger files.
@@ -87,16 +87,16 @@ static char *statrelpath = NULL;
 #define THROTTLING_FREQUENCY	8
 
 /* The actual number of bytes, transfer of which may cause sleep. */
-static uint64 throttling_sample;
+static session_local uint64 throttling_sample;
 
 /* Amount of data already transferred but not yet throttled.  */
-static int64 throttling_counter;
+static session_local int64 throttling_counter;
 
 /* The minimum time required to transfer throttling_sample bytes. */
-static TimeOffset elapsed_min_unit;
+static session_local TimeOffset elapsed_min_unit;
 
 /* The last check of the transfer rate. */
-static TimestampTz throttled_last;
+static session_local TimestampTz throttled_last;
 
 /*
  * The contents of these directories are removed or recreated during server

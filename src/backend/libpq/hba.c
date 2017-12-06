@@ -109,8 +109,8 @@ static MemoryContext parsed_hba_context = NULL;
  * that live outside the memory context. Before destroying or resetting the
  * memory context, they need to be explicitly free'd.
  */
-static List *parsed_ident_lines = NIL;
-static MemoryContext parsed_ident_context = NULL;
+static session_local List *parsed_ident_lines = NIL;
+static session_local MemoryContext parsed_ident_context = NULL;
 
 /*
  * The following character array represents the names of the authentication

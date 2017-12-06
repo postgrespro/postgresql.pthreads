@@ -38,15 +38,15 @@ typedef struct
 #define LocalBufHdrGetBlock(bufHdr) \
 	LocalBufferBlockPointers[-((bufHdr)->buf_id + 2)]
 
-int			NLocBuffer = 0;		/* until buffers are initialized */
+session_local int			NLocBuffer = 0;		/* until buffers are initialized */
 
-BufferDesc *LocalBufferDescriptors = NULL;
-Block	   *LocalBufferBlockPointers = NULL;
-int32	   *LocalRefCount = NULL;
+session_local BufferDesc *LocalBufferDescriptors = NULL;
+session_local Block	   *LocalBufferBlockPointers = NULL;
+session_local int32	   *LocalRefCount = NULL;
 
-static int	nextFreeLocalBuf = 0;
+static session_local int	nextFreeLocalBuf = 0;
 
-static HTAB *LocalBufHash = NULL;
+static session_local HTAB *LocalBufHash = NULL;
 
 
 static void InitLocalBuffers(void);
@@ -487,11 +487,11 @@ InitLocalBuffers(void)
 static Block
 GetLocalBufferStorage(void)
 {
-	static char *cur_block = NULL;
-	static int	next_buf_in_block = 0;
-	static int	num_bufs_in_block = 0;
-	static int	total_bufs_allocated = 0;
-	static MemoryContext LocalBufferContext = NULL;
+	static session_local char *cur_block = NULL;
+	static session_local int	next_buf_in_block = 0;
+	static session_local int	num_bufs_in_block = 0;
+	static session_local int	total_bufs_allocated = 0;
+	static session_local MemoryContext LocalBufferContext = NULL;
 
 	char	   *this_buf;
 

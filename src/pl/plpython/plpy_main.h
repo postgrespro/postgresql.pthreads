@@ -8,7 +8,7 @@
 #include "plpy_procedure.h"
 
 /* the interpreter's globals dict */
-extern PyObject *PLy_interp_globals;
+extern session_local PyObject *PLy_interp_globals;
 
 /*
  * A stack of PL/Python execution contexts. Each time user-defined Python code

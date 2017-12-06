@@ -276,7 +276,7 @@ extern PGDLLIMPORT BufferDescPadded *BufferDescriptors;
 extern PGDLLIMPORT WritebackContext BackendWritebackContext;
 
 /* in localbuf.c */
-extern BufferDesc *LocalBufferDescriptors;
+extern session_local BufferDesc *LocalBufferDescriptors;
 
 /* in bufmgr.c */
 

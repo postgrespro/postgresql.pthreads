@@ -351,7 +351,7 @@ static OldSerXidControl oldSerXidControl;
  * collapsing duplicate targets.  When a duplicate is found, the later
  * commitSeqNo is used.
  */
-static SERIALIZABLEXACT *OldCommittedSxact;
+static session_local SERIALIZABLEXACT *OldCommittedSxact;
 
 
 /*
@@ -360,9 +360,9 @@ static SERIALIZABLEXACT *OldCommittedSxact;
  * attempt to degrade performance (mostly as false positive serialization
  * failure) gracefully in the face of memory pressurel
  */
-int			max_predicate_locks_per_xact;	/* set by guc.c */
-int			max_predicate_locks_per_relation;	/* set by guc.c */
-int			max_predicate_locks_per_page;	/* set by guc.c */
+session_local int			max_predicate_locks_per_xact;	/* set by guc.c */
+session_local int			max_predicate_locks_per_relation;	/* set by guc.c */
+session_local int			max_predicate_locks_per_page;	/* set by guc.c */
 
 /*
  * This provides a list of objects in order to track transactions
@@ -395,23 +395,23 @@ static SHM_QUEUE *FinishedSerializableTransactions;
  * this entry, you can ensure that there's enough scratch space available for
  * inserting one entry in the hash table. This is an otherwise-invalid tag.
  */
-static const PREDICATELOCKTARGETTAG ScratchTargetTag = {0, 0, 0, 0};
-static uint32 ScratchTargetTagHash;
-static LWLock *ScratchPartitionLock;
+static session_local const PREDICATELOCKTARGETTAG ScratchTargetTag = {0, 0, 0, 0};
+static session_local uint32 ScratchTargetTagHash;
+static session_local LWLock *ScratchPartitionLock;
 
 /*
  * The local hash table used to determine when to combine multiple fine-
  * grained locks into a single courser-grained lock.
  */
-static HTAB *LocalPredicateLockHash = NULL;
+static session_local HTAB *LocalPredicateLockHash = NULL;
 
 /*
  * Keep a pointer to the currently-running serializable transaction (if any)
  * for quick reference. Also, remember if we have written anything that could
  * cause a rw-conflict.
  */
-static SERIALIZABLEXACT *MySerializableXact = InvalidSerializableXact;
-static bool MyXactDidWrite = false;
+static session_local SERIALIZABLEXACT *MySerializableXact = InvalidSerializableXact;
+static session_local bool MyXactDidWrite = false;
 
 /* local functions */
 

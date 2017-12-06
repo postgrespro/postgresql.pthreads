@@ -54,7 +54,7 @@
 /*
  * GUC: backwards-compatibility flag to suppress LO permission checks
  */
-bool		lo_compat_privileges;
+session_local bool		lo_compat_privileges;
 
 /*
  * All accesses to pg_largeobject and its index make use of a single Relation
@@ -63,8 +63,8 @@ bool		lo_compat_privileges;
  * subtransaction, we execute a slightly klugy maneuver to assign ownership of
  * the Relation reference to TopTransactionResourceOwner.
  */
-static Relation lo_heap_r = NULL;
-static Relation lo_index_r = NULL;
+static session_local Relation lo_heap_r = NULL;
+static session_local Relation lo_index_r = NULL;
 
 
 /*

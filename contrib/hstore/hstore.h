@@ -196,10 +196,10 @@ extern Pairs *hstoreArrayToPairs(ArrayType *a, int *npairs);
 	PG_FUNCTION_INFO_V1(oldname_);		  \
 	Datum newname_(PG_FUNCTION_ARGS);	  \
 	Datum oldname_(PG_FUNCTION_ARGS) { return newname_(fcinfo); } \
-	extern int no_such_variable
+	extern session_local int no_such_variable
 #else
 #define HSTORE_POLLUTE(newname_,oldname_) \
-	extern int no_such_variable
+	extern session_local int no_such_variable
 #endif
 
 #endif							/* __HSTORE_H__ */

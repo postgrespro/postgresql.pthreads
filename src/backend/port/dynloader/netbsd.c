@@ -47,7 +47,7 @@ static char error_message[BUFSIZ];
 char *
 BSD44_derived_dlerror(void)
 {
-	static char ret[BUFSIZ];
+	static session_local char ret[BUFSIZ];
 
 	strcpy(ret, error_message);
 	error_message[0] = 0;

@@ -30,10 +30,10 @@
 /* Required daylight between max_stack_depth and the kernel limit, in bytes */
 #define STACK_DEPTH_SLOP (512 * 1024L)
 
-extern CommandDest whereToSendOutput;
-extern PGDLLIMPORT const char *debug_query_string;
-extern int	max_stack_depth;
-extern int	PostAuthDelay;
+extern session_local CommandDest whereToSendOutput;
+extern session_local PGDLLIMPORT const char *debug_query_string;
+extern session_local int	max_stack_depth;
+extern session_local int	PostAuthDelay;
 
 /* GUC-configurable parameters */
 
@@ -45,7 +45,7 @@ typedef enum
 	LOGSTMT_ALL					/* log all statements */
 } LogStmtLevel;
 
-extern int	log_statement;
+extern session_local int	log_statement;
 
 extern List *pg_parse_query(const char *query_string);
 extern List *pg_analyze_and_rewrite(RawStmt *parsetree,

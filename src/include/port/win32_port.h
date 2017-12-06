@@ -420,10 +420,10 @@ extern char *pgwin32_setlocale(int category, const char *locale);
 
 
 /* In backend/port/win32/signal.c */
-extern PGDLLIMPORT volatile int pg_signal_queue;
-extern PGDLLIMPORT int pg_signal_mask;
-extern HANDLE pgwin32_signal_event;
-extern HANDLE pgwin32_initial_signal_pipe;
+extern session_local PGDLLIMPORT volatile int pg_signal_queue;
+extern session_local PGDLLIMPORT int pg_signal_mask;
+extern session_local HANDLE pgwin32_signal_event;
+extern session_local HANDLE pgwin32_initial_signal_pipe;
 
 #define UNBLOCKED_SIGNAL_QUEUE()	(pg_signal_queue & ~pg_signal_mask)
 #define PG_SIGNAL_COUNT 32
@@ -460,7 +460,7 @@ int			pgwin32_send(SOCKET s, const void *buf, int len, int flags);
 const char *pgwin32_socket_strerror(int err);
 int			pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout);
 
-extern int	pgwin32_noblock;
+extern session_local int	pgwin32_noblock;
 
 #endif							/* FRONTEND */
 

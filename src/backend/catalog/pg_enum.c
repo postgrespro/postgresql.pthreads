@@ -33,7 +33,7 @@
 
 
 /* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
+session_local Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
 
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
 static int	sort_order_cmp(const void *p1, const void *p2);

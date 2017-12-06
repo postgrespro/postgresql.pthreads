@@ -152,8 +152,8 @@
 
 
 /* Hooks for plugins to get control when we ask for stats */
-get_relation_stats_hook_type get_relation_stats_hook = NULL;
-get_index_stats_hook_type get_index_stats_hook = NULL;
+session_local get_relation_stats_hook_type get_relation_stats_hook = NULL;
+session_local get_index_stats_hook_type get_index_stats_hook = NULL;
 
 static double eqsel_internal(PG_FUNCTION_ARGS, bool negate);
 static double var_eq_const(VariableStatData *vardata, Oid operator,
@@ -6264,8 +6264,8 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 		else
 		{
 			/* If first time through, determine the suffix to use */
-			static char suffixchar = 0;
-			static Oid	suffixcollation = 0;
+			static session_local char suffixchar = 0;
+			static session_local Oid	suffixcollation = 0;
 
 			if (!suffixchar || suffixcollation != collation)
 			{

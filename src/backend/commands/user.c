@@ -40,14 +40,14 @@
 #include "utils/tqual.h"
 
 /* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
+session_local Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
 
 
 /* GUC parameter */
-int			Password_encryption = PASSWORD_TYPE_MD5;
+session_local int			Password_encryption = PASSWORD_TYPE_MD5;
 
 /* Hook to check passwords in CreateRole() and AlterRole() */
-check_password_hook_type check_password_hook = NULL;
+session_local check_password_hook_type check_password_hook = NULL;
 
 static void AddRoleMems(const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,

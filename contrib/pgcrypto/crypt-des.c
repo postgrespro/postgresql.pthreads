@@ -659,7 +659,7 @@ px_crypt_des(const char *key, const char *setting)
 				keybuf[2];
 	char	   *p;
 	uint8	   *q;
-	static char output[21];
+	static session_local char output[21];
 
 	if (!des_initialised)
 		des_init();

@@ -103,7 +103,7 @@ GETTEMP(char *path, int *doopen, int domkdir)
 	 * not created. 676 different possibilities with 7 or more X's, 26 with 6
 	 * or less.
 	 */
-	static char xtra[2] = "aa";
+	static session_local char xtra[2] = "aa";
 	int			xcnt = 0;
 
 	_DIAGASSERT(path != NULL);

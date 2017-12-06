@@ -23,9 +23,9 @@
 #include "utils/tuplestore.h"
 
 /* user-settable parameters */
-extern int	wal_receiver_status_interval;
-extern int	wal_receiver_timeout;
-extern bool hot_standby_feedback;
+extern session_local int	wal_receiver_status_interval;
+extern session_local int	wal_receiver_timeout;
+extern session_local bool hot_standby_feedback;
 
 /*
  * MAXCONNINFO: maximum size of a connection string.
@@ -238,7 +238,7 @@ typedef struct WalReceiverFunctionsType
 	walrcv_disconnect_fn walrcv_disconnect;
 } WalReceiverFunctionsType;
 
-extern PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
+extern session_local PGDLLIMPORT WalReceiverFunctionsType *WalReceiverFunctions;
 
 #define walrcv_connect(conninfo, logical, appname, err) \
 	WalReceiverFunctions->walrcv_connect(conninfo, logical, appname, err)

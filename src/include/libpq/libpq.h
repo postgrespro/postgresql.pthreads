@@ -33,7 +33,7 @@ typedef struct
 	void		(*endcopyout) (bool errorAbort);
 } PQcommMethods;
 
-extern PGDLLIMPORT PQcommMethods *PqCommMethods;
+extern session_local PGDLLIMPORT PQcommMethods *PqCommMethods;
 
 #define pq_comm_reset() (PqCommMethods->comm_reset())
 #define pq_flush() (PqCommMethods->flush())
@@ -75,11 +75,11 @@ extern int	pq_putbytes(const char *s, size_t len);
 /*
  * prototypes for functions in be-secure.c
  */
-extern char *ssl_cert_file;
-extern char *ssl_key_file;
-extern char *ssl_ca_file;
-extern char *ssl_crl_file;
-extern char *ssl_dh_params_file;
+extern session_local char *ssl_cert_file;
+extern session_local char *ssl_key_file;
+extern session_local char *ssl_ca_file;
+extern session_local char *ssl_crl_file;
+extern session_local char *ssl_dh_params_file;
 
 extern int	secure_initialize(bool isServerStart);
 extern bool secure_loaded_verify_locations(void);
@@ -91,13 +91,13 @@ extern ssize_t secure_write(Port *port, void *ptr, size_t len);
 extern ssize_t secure_raw_read(Port *port, void *ptr, size_t len);
 extern ssize_t secure_raw_write(Port *port, const void *ptr, size_t len);
 
-extern bool ssl_loaded_verify_locations;
+extern session_local bool ssl_loaded_verify_locations;
 
-extern WaitEventSet *FeBeWaitSet;
+extern session_local WaitEventSet *FeBeWaitSet;
 
 /* GUCs */
-extern char *SSLCipherSuites;
-extern char *SSLECDHCurve;
-extern bool SSLPreferServerCiphers;
+extern session_local char *SSLCipherSuites;
+extern session_local char *SSLECDHCurve;
+extern session_local bool SSLPreferServerCiphers;
 
 #endif							/* LIBPQ_H */

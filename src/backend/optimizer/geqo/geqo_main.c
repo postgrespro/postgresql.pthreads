@@ -36,11 +36,11 @@
 /*
  * Configuration options
  */
-int			Geqo_effort;
-int			Geqo_pool_size;
-int			Geqo_generations;
-double		Geqo_selection_bias;
-double		Geqo_seed;
+session_local int			Geqo_effort;
+session_local int			Geqo_pool_size;
+session_local int			Geqo_generations;
+session_local double		Geqo_selection_bias;
+session_local double		Geqo_seed;
 
 
 static int	gimme_pool_size(int nr_rel);

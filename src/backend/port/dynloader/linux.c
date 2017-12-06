@@ -35,7 +35,7 @@ pg_dlopen(const char *filename)
 	elog(ERROR, "dynamic load not supported");
 	return NULL;
 #else
-	static int	dl_initialized = 0;
+	static session_local session_local int	dl_initialized = 0;
 
 	/*
 	 * initializes the dynamic loader with the executable's pathname. (only

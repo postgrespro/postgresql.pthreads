@@ -111,21 +111,21 @@
 /*
  * GUC parameters
  */
-bool		autovacuum_start_daemon = false;
-int			autovacuum_max_workers;
-int			autovacuum_work_mem = -1;
-int			autovacuum_naptime;
-int			autovacuum_vac_thresh;
-double		autovacuum_vac_scale;
-int			autovacuum_anl_thresh;
-double		autovacuum_anl_scale;
-int			autovacuum_freeze_max_age;
-int			autovacuum_multixact_freeze_max_age;
+session_local bool		autovacuum_start_daemon = false;
+session_local int			autovacuum_max_workers;
+session_local int			autovacuum_work_mem = -1;
+session_local int			autovacuum_naptime;
+session_local int			autovacuum_vac_thresh;
+session_local double		autovacuum_vac_scale;
+session_local int			autovacuum_anl_thresh;
+session_local double		autovacuum_anl_scale;
+session_local int			autovacuum_freeze_max_age;
+session_local int			autovacuum_multixact_freeze_max_age;
 
-int			autovacuum_vac_cost_delay;
-int			autovacuum_vac_cost_limit;
+session_local int			autovacuum_vac_cost_delay;
+session_local int			autovacuum_vac_cost_limit;
 
-int			Log_autovacuum_min_duration = -1;
+session_local int			Log_autovacuum_min_duration = -1;
 
 /* how long to keep pgstat data in the launcher, in milliseconds */
 #define STATS_READ_DELAY 1000
@@ -135,26 +135,26 @@ int			Log_autovacuum_min_duration = -1;
 #define MAX_AUTOVAC_SLEEPTIME 300	/* seconds */
 
 /* Flags to tell if we are in an autovacuum process */
-static bool am_autovacuum_launcher = false;
-static bool am_autovacuum_worker = false;
+static session_local bool am_autovacuum_launcher = false;
+static session_local bool am_autovacuum_worker = false;
 
 /* Flags set by signal handlers */
-static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t got_SIGUSR2 = false;
-static volatile sig_atomic_t got_SIGTERM = false;
+static session_local volatile sig_atomic_t got_SIGHUP = false;
+static session_local volatile sig_atomic_t got_SIGUSR2 = false;
+static session_local volatile sig_atomic_t got_SIGTERM = false;
 
 /* Comparison points for determining whether freeze_max_age is exceeded */
-static TransactionId recentXid;
-static MultiXactId recentMulti;
+static session_local TransactionId recentXid;
+static session_local MultiXactId recentMulti;
 
 /* Default freeze ages to use for autovacuum (varies by database) */
-static int	default_freeze_min_age;
-static int	default_freeze_table_age;
-static int	default_multixact_freeze_min_age;
-static int	default_multixact_freeze_table_age;
+static session_local int	default_freeze_min_age;
+static session_local int	default_freeze_table_age;
+static session_local int	default_multixact_freeze_min_age;
+static session_local int	default_multixact_freeze_table_age;
 
 /* Memory context for long-lived data */
-static MemoryContext AutovacMemCxt;
+static session_local MemoryContext AutovacMemCxt;
 
 /* struct to keep track of databases in launcher */
 typedef struct avl_dbase
@@ -296,18 +296,18 @@ static AutoVacuumShmemStruct *AutoVacuumShmem;
  * the database list (of avl_dbase elements) in the launcher, and the context
  * that contains it
  */
-static dlist_head DatabaseList = DLIST_STATIC_INIT(DatabaseList);
-static MemoryContext DatabaseListCxt = NULL;
+static session_local dlist_head DatabaseList = DLIST_STATIC_INIT(DatabaseList);
+static session_local MemoryContext DatabaseListCxt = NULL;
 
 /* Pointer to my own WorkerInfo, valid on each worker */
-static WorkerInfo MyWorkerInfo = NULL;
+static session_local WorkerInfo MyWorkerInfo = NULL;
 
 /* PID of launcher, valid only in worker while shutting down */
-int			AutovacuumLauncherPid = 0;
+session_local int			AutovacuumLauncherPid = 0;
 
 #ifdef EXEC_BACKEND
-static pid_t avlauncher_forkexec(void);
-static pid_t avworker_forkexec(void);
+static session_local pid_t avlauncher_forkexec(void);
+static session_local pid_t avworker_forkexec(void);
 #endif
 NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]) pg_attribute_noreturn();
 NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) pg_attribute_noreturn();
@@ -3335,7 +3335,7 @@ autovac_refresh_stats(void)
 {
 	if (IsAutoVacuumLauncherProcess())
 	{
-		static TimestampTz last_read = 0;
+		static session_local TimestampTz last_read = 0;
 		TimestampTz current_time;
 
 		current_time = GetCurrentTimestamp();

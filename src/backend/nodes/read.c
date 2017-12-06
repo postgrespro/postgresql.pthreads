@@ -27,7 +27,7 @@
 
 
 /* Static state for pg_strtok */
-static char *pg_strtok_ptr = NULL;
+static session_local char *pg_strtok_ptr = NULL;
 
 
 /*

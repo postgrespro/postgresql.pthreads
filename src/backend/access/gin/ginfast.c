@@ -34,7 +34,7 @@
 #include "utils/builtins.h"
 
 /* GUC parameter */
-int			gin_pending_list_limit = 0;
+session_local int			gin_pending_list_limit = 0;
 
 #define GIN_PAGE_FREESIZE \
 	( BLCKSZ - MAXALIGN(SizeOfPageHeaderData) - MAXALIGN(sizeof(GinPageOpaqueData)) )

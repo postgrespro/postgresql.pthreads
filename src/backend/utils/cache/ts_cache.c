@@ -60,21 +60,21 @@
 #define MAXDICTSPERTT	100
 
 
-static HTAB *TSParserCacheHash = NULL;
-static TSParserCacheEntry *lastUsedParser = NULL;
+static session_local HTAB *TSParserCacheHash = NULL;
+static session_local TSParserCacheEntry *lastUsedParser = NULL;
 
-static HTAB *TSDictionaryCacheHash = NULL;
-static TSDictionaryCacheEntry *lastUsedDictionary = NULL;
+static session_local HTAB *TSDictionaryCacheHash = NULL;
+static session_local TSDictionaryCacheEntry *lastUsedDictionary = NULL;
 
-static HTAB *TSConfigCacheHash = NULL;
-static TSConfigCacheEntry *lastUsedConfig = NULL;
+static session_local HTAB *TSConfigCacheHash = NULL;
+static session_local TSConfigCacheEntry *lastUsedConfig = NULL;
 
 /*
  * GUC default_text_search_config, and a cache of the current config's OID
  */
-char	   *TSCurrentConfig = NULL;
+session_local char	   *TSCurrentConfig = NULL;
 
-static Oid	TSCurrentConfigCache = InvalidOid;
+static session_local Oid	TSCurrentConfigCache = InvalidOid;
 
 
 /*

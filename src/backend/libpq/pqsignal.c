@@ -19,7 +19,7 @@
 
 
 /* Global variables */
-sigset_t	UnBlockSig,
+session_local sigset_t	UnBlockSig,
 			BlockSig,
 			StartupBlockSig;
 

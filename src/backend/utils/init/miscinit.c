@@ -54,12 +54,12 @@
 
 #define DIRECTORY_LOCK_FILE		"postmaster.pid"
 
-ProcessingMode Mode = InitProcessing;
+session_local ProcessingMode Mode = InitProcessing;
 
 /* List of lock files to be removed at proc exit */
-static List *lock_files = NIL;
+static session_local List *lock_files = NIL;
 
-static Latch LocalLatchData;
+static session_local Latch LocalLatchData;
 
 /* ----------------------------------------------------------------
  *		ignoring system indexes support stuff
@@ -71,7 +71,7 @@ static Latch LocalLatchData;
  * ----------------------------------------------------------------
  */
 
-bool		IgnoreSystemIndexes = false;
+session_local bool		IgnoreSystemIndexes = false;
 
 
 /* ----------------------------------------------------------------
@@ -153,19 +153,19 @@ ChangeToDataDir(void)
  * convenient way to do it.
  * ----------------------------------------------------------------
  */
-static Oid	AuthenticatedUserId = InvalidOid;
-static Oid	SessionUserId = InvalidOid;
-static Oid	OuterUserId = InvalidOid;
-static Oid	CurrentUserId = InvalidOid;
+static session_local Oid	AuthenticatedUserId = InvalidOid;
+static session_local Oid	SessionUserId = InvalidOid;
+static session_local Oid	OuterUserId = InvalidOid;
+static session_local Oid	CurrentUserId = InvalidOid;
 
 /* We also have to remember the superuser state of some of these levels */
-static bool AuthenticatedUserIsSuperuser = false;
-static bool SessionUserIsSuperuser = false;
+static session_local bool AuthenticatedUserIsSuperuser = false;
+static session_local bool SessionUserIsSuperuser = false;
 
-static int	SecurityRestrictionContext = 0;
+static session_local int	SecurityRestrictionContext = 0;
 
 /* We also remember if a SET ROLE is currently active */
-static bool SetRoleIsActive = false;
+static session_local bool SetRoleIsActive = false;
 
 /*
  * Initialize the basic environment for a postmaster child
@@ -205,9 +205,11 @@ InitPostmasterChild(void)
 	 * children, but for consistency we make all postmaster child processes do
 	 * this.
 	 */
+#if 0
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 		elog(FATAL, "setsid() failed: %m");
+#endif
 #endif
 }
 
@@ -1418,12 +1420,12 @@ ValidatePgVersion(const char *path)
  * GUC variables: lists of library names to be preloaded at postmaster
  * start and at backend start
  */
-char	   *session_preload_libraries_string = NULL;
-char	   *shared_preload_libraries_string = NULL;
-char	   *local_preload_libraries_string = NULL;
+session_local char	   *session_preload_libraries_string = NULL;
+session_local char	   *shared_preload_libraries_string = NULL;
+session_local char	   *local_preload_libraries_string = NULL;
 
 /* Flag telling that we are loading shared_preload_libraries */
-bool		process_shared_preload_libraries_in_progress = false;
+session_local bool		process_shared_preload_libraries_in_progress = false;
 
 /*
  * load the shared libraries listed in 'libraries'

@@ -25,6 +25,8 @@
 
 #include "pg_config_ext.h"
 
+#define session_local __thread
+
 /*
  * Object ID is a fundamental type in Postgres.
  */

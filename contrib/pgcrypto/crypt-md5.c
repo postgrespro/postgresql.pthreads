@@ -36,8 +36,8 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 	static char *magic = "$1$"; /* This string is magic for this algorithm.
 								 * Having it this way, we can get better later
 								 * on */
-	static char *p;
-	static const char *sp,
+	static session_local char *p;
+	static session_local const char *sp,
 			   *ep;
 	unsigned char final[MD5_SIZE];
 	int			sl,

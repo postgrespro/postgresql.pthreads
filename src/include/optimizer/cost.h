@@ -45,30 +45,30 @@ typedef enum
  */
 
 /* parameter variables and flags */
-extern PGDLLIMPORT double seq_page_cost;
-extern PGDLLIMPORT double random_page_cost;
-extern PGDLLIMPORT double cpu_tuple_cost;
-extern PGDLLIMPORT double cpu_index_tuple_cost;
-extern PGDLLIMPORT double cpu_operator_cost;
-extern PGDLLIMPORT double parallel_tuple_cost;
-extern PGDLLIMPORT double parallel_setup_cost;
-extern PGDLLIMPORT int effective_cache_size;
-extern Cost disable_cost;
-extern int	max_parallel_workers_per_gather;
-extern bool enable_seqscan;
-extern bool enable_indexscan;
-extern bool enable_indexonlyscan;
-extern bool enable_bitmapscan;
-extern bool enable_tidscan;
-extern bool enable_sort;
-extern bool enable_hashagg;
-extern bool enable_nestloop;
-extern bool enable_material;
-extern bool enable_mergejoin;
-extern bool enable_hashjoin;
-extern bool enable_gathermerge;
-extern bool enable_partition_wise_join;
-extern int	constraint_exclusion;
+extern session_local PGDLLIMPORT double seq_page_cost;
+extern session_local PGDLLIMPORT double random_page_cost;
+extern session_local PGDLLIMPORT double cpu_tuple_cost;
+extern session_local PGDLLIMPORT double cpu_index_tuple_cost;
+extern session_local PGDLLIMPORT double cpu_operator_cost;
+extern session_local PGDLLIMPORT double parallel_tuple_cost;
+extern session_local PGDLLIMPORT double parallel_setup_cost;
+extern session_local PGDLLIMPORT int effective_cache_size;
+extern session_local Cost disable_cost;
+extern session_local int	max_parallel_workers_per_gather;
+extern session_local bool enable_seqscan;
+extern session_local bool enable_indexscan;
+extern session_local bool enable_indexonlyscan;
+extern session_local bool enable_bitmapscan;
+extern session_local bool enable_tidscan;
+extern session_local bool enable_sort;
+extern session_local bool enable_hashagg;
+extern session_local bool enable_nestloop;
+extern session_local bool enable_material;
+extern session_local bool enable_mergejoin;
+extern session_local bool enable_hashjoin;
+extern session_local bool enable_gathermerge;
+extern session_local bool enable_partition_wise_join;
+extern session_local int	constraint_exclusion;
 
 extern double clamp_row_est(double nrows);
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,

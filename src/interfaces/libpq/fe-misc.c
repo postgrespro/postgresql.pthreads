@@ -1217,7 +1217,7 @@ PQenv2encoding(void)
 static void
 libpq_binddomain()
 {
-	static bool already_bound = false;
+	static session_local bool already_bound = false;
 
 	if (!already_bound)
 	{

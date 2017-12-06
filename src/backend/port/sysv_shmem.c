@@ -72,12 +72,12 @@ typedef key_t IpcMemoryKey;		/* shared memory key passed to shmget(2) */
 typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
 
-unsigned long UsedShmemSegID = 0;
-void	   *UsedShmemSegAddr = NULL;
+session_local unsigned long UsedShmemSegID = 0;
+session_local void	   *UsedShmemSegAddr = NULL;
 
 #ifdef USE_ANONYMOUS_SHMEM
-static Size AnonymousShmemSize;
-static void *AnonymousShmem = NULL;
+static session_local Size AnonymousShmemSize;
+static session_local void *AnonymousShmem = NULL;
 #endif
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);

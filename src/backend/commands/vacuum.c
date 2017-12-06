@@ -56,15 +56,15 @@
 /*
  * GUC parameters
  */
-int			vacuum_freeze_min_age;
-int			vacuum_freeze_table_age;
-int			vacuum_multixact_freeze_min_age;
-int			vacuum_multixact_freeze_table_age;
+session_local int			vacuum_freeze_min_age;
+session_local int			vacuum_freeze_table_age;
+session_local int			vacuum_multixact_freeze_min_age;
+session_local int			vacuum_multixact_freeze_table_age;
 
 
 /* A few variables that don't seem worth passing around as parameters */
-static MemoryContext vac_context = NULL;
-static BufferAccessStrategy vac_strategy;
+static session_local MemoryContext vac_context = NULL;
+static session_local BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
@@ -166,7 +166,7 @@ void
 vacuum(int options, List *relations, VacuumParams *params,
 	   BufferAccessStrategy bstrategy, bool isTopLevel)
 {
-	static bool in_vacuum = false;
+	static session_local bool in_vacuum = false;
 
 	const char *stmttype;
 	volatile bool in_outer_xact,

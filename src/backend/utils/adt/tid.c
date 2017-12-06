@@ -246,7 +246,7 @@ tidsmaller(PG_FUNCTION_ARGS)
  *	Maybe these implementations should be moved to another place
  */
 
-static ItemPointerData Current_last_tid = {{0, 0}, 0};
+static session_local ItemPointerData Current_last_tid = {{0, 0}, 0};
 
 void
 setLastTid(const ItemPointer tid)

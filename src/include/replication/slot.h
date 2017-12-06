@@ -157,10 +157,10 @@ typedef struct ReplicationSlotCtlData
  * Pointers to shared memory
  */
 extern ReplicationSlotCtlData *ReplicationSlotCtl;
-extern PGDLLIMPORT ReplicationSlot *MyReplicationSlot;
+extern session_local PGDLLIMPORT ReplicationSlot *MyReplicationSlot;
 
 /* GUCs */
-extern PGDLLIMPORT int max_replication_slots;
+extern session_local PGDLLIMPORT int max_replication_slots;
 
 /* shmem initialization functions */
 extern Size ReplicationSlotsShmemSize(void);

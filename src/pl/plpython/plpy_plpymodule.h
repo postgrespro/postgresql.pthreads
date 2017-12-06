@@ -8,7 +8,7 @@
 #include "utils/hsearch.h"
 
 /* A hash table mapping sqlstates to exceptions, for speedy lookup */
-extern HTAB *PLy_spi_exceptions;
+extern session_local HTAB *PLy_spi_exceptions;
 
 
 #if PY_MAJOR_VERSION >= 3

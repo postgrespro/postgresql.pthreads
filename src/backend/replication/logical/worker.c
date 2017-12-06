@@ -96,7 +96,7 @@ typedef struct FlushPosition
 	XLogRecPtr	remote_end;
 } FlushPosition;
 
-static dlist_head lsn_mapping = DLIST_STATIC_INIT(lsn_mapping);
+static session_local dlist_head lsn_mapping = DLIST_STATIC_INIT(lsn_mapping);
 
 typedef struct SlotErrCallbackArg
 {
@@ -104,16 +104,16 @@ typedef struct SlotErrCallbackArg
 	int			attnum;
 } SlotErrCallbackArg;
 
-static MemoryContext ApplyMessageContext = NULL;
-MemoryContext ApplyContext = NULL;
+static session_local MemoryContext ApplyMessageContext = NULL;
+session_local MemoryContext ApplyContext = NULL;
 
-WalReceiverConn *wrconn = NULL;
+session_local WalReceiverConn *wrconn = NULL;
 
-Subscription *MySubscription = NULL;
-bool		MySubscriptionValid = false;
+session_local Subscription *MySubscription = NULL;
+session_local bool		MySubscriptionValid = false;
 
-bool		in_remote_transaction = false;
-static XLogRecPtr remote_final_lsn = InvalidXLogRecPtr;
+session_local bool		in_remote_transaction = false;
+static session_local XLogRecPtr remote_final_lsn = InvalidXLogRecPtr;
 
 static void send_feedback(XLogRecPtr recvpos, bool force, bool requestReply);
 
@@ -1247,12 +1247,12 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 static void
 send_feedback(XLogRecPtr recvpos, bool force, bool requestReply)
 {
-	static StringInfo reply_message = NULL;
-	static TimestampTz send_time = 0;
+	static session_local StringInfo reply_message = NULL;
+	static session_local TimestampTz send_time = 0;
 
-	static XLogRecPtr last_recvpos = InvalidXLogRecPtr;
-	static XLogRecPtr last_writepos = InvalidXLogRecPtr;
-	static XLogRecPtr last_flushpos = InvalidXLogRecPtr;
+	static session_local XLogRecPtr last_recvpos = InvalidXLogRecPtr;
+	static session_local XLogRecPtr last_writepos = InvalidXLogRecPtr;
+	static session_local XLogRecPtr last_flushpos = InvalidXLogRecPtr;
 
 	XLogRecPtr	writepos;
 	XLogRecPtr	flushpos;

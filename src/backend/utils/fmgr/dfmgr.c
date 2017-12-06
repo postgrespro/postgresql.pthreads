@@ -51,8 +51,8 @@ typedef struct df_files
 	char		filename[FLEXIBLE_ARRAY_MEMBER];	/* Full pathname of file */
 } DynamicFileList;
 
-static DynamicFileList *file_list = NULL;
-static DynamicFileList *file_tail = NULL;
+static session_local DynamicFileList *file_list = NULL;
+static session_local DynamicFileList *file_tail = NULL;
 
 /* stat() call under Win32 returns an st_ino field, but it has no meaning */
 #ifndef WIN32
@@ -61,7 +61,7 @@ static DynamicFileList *file_tail = NULL;
 #define SAME_INODE(A,B) false
 #endif
 
-char	   *Dynamic_library_path;
+session_local char	   *Dynamic_library_path;
 
 static void *internal_load_library(const char *libname);
 static void incompatible_module_error(const char *libname,
@@ -671,7 +671,7 @@ find_in_dynamic_libpath(const char *basename)
 void	  **
 find_rendezvous_variable(const char *varName)
 {
-	static HTAB *rendezvousHash = NULL;
+	static session_local HTAB *rendezvousHash = NULL;
 
 	rendezvousHashEntry *hentry;
 	bool		found;

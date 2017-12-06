@@ -438,7 +438,7 @@ KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
 		char		oldpath[MAXPGPATH];
 
 #ifdef WIN32
-		static unsigned int deletedcounter = 1;
+		static session_local unsigned int deletedcounter = 1;
 
 		/*
 		 * On Windows, if another process (e.g a walsender process) holds the

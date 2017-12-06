@@ -27,10 +27,10 @@
 #include "utils/memutils.h"
 
 /* Initially, we are not prepared to sleep on any condition variable. */
-static ConditionVariable *cv_sleep_target = NULL;
+static session_local ConditionVariable *cv_sleep_target = NULL;
 
 /* Reusable WaitEventSet. */
-static WaitEventSet *cv_wait_event_set = NULL;
+static session_local WaitEventSet *cv_wait_event_set = NULL;
 
 /*
  * Initialize a condition variable.

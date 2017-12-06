@@ -38,15 +38,15 @@
 /*
  * Flags set by interrupt handlers for later service in the redo loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t shutdown_requested = false;
-static volatile sig_atomic_t promote_triggered = false;
+static session_local volatile sig_atomic_t got_SIGHUP = false;
+static session_local volatile sig_atomic_t shutdown_requested = false;
+static session_local volatile sig_atomic_t promote_triggered = false;
 
 /*
  * Flag set when executing a restore command, to tell SIGTERM signal handler
  * that it's safe to just proc_exit.
  */
-static volatile sig_atomic_t in_restore_command = false;
+static session_local volatile sig_atomic_t in_restore_command = false;
 
 /* Signal handlers */
 static void startupproc_quickdie(SIGNAL_ARGS);

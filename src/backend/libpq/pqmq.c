@@ -21,10 +21,10 @@
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 
-static shm_mq_handle *pq_mq_handle;
-static bool pq_mq_busy = false;
-static pid_t pq_mq_parallel_master_pid = 0;
-static pid_t pq_mq_parallel_master_backend_id = InvalidBackendId;
+static session_local shm_mq_handle *pq_mq_handle;
+static session_local bool pq_mq_busy = false;
+static session_local pid_t pq_mq_parallel_master_pid = 0;
+static session_local pid_t pq_mq_parallel_master_backend_id = InvalidBackendId;
 
 static void pq_cleanup_redirect_to_shm_mq(dsm_segment *seg, Datum arg);
 static void mq_comm_reset(void);

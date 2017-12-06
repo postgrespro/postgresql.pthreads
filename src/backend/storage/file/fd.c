@@ -128,7 +128,7 @@
  * This GUC parameter lets the DBA limit max_safe_fds to something less than
  * what the postmaster's initial probe suggests will work.
  */
-int			max_files_per_process = 1000;
+session_local int			max_files_per_process = 1000;
 
 /*
  * Maximum number of file descriptors to open for either VFD entries or
@@ -141,7 +141,7 @@ int			max_files_per_process = 1000;
  * Note: the value of max_files_per_process is taken into account while
  * setting this variable, and so need not be tested separately.
  */
-int			max_safe_fds = 32;	/* default if not changed */
+session_local int			max_safe_fds = 32;	/* default if not changed */
 
 
 /* Debugging.... */
@@ -199,19 +199,19 @@ typedef struct vfd
  * needed.  'File' values are indexes into this array.
  * Note that VfdCache[0] is not a usable VFD, just a list header.
  */
-static Vfd *VfdCache;
-static Size SizeVfdCache = 0;
+static session_local Vfd *VfdCache;
+static session_local Size SizeVfdCache = 0;
 
 /*
  * Number of file descriptors known to be in use by VFD entries.
  */
-static int	nfile = 0;
+static session_local int	nfile = 0;
 
 /*
  * Flag to tell whether it's worth scanning VfdCache looking for temp files
  * to close
  */
-static bool have_xact_temporary_files = false;
+static session_local bool have_xact_temporary_files = false;
 
 /*
  * Tracks the total size of all temporary files.  Note: when temp_file_limit
@@ -219,7 +219,7 @@ static bool have_xact_temporary_files = false;
  * than INT_MAX kilobytes.  When not enforcing, it could theoretically
  * overflow, but we don't care.
  */
-static uint64 temporary_files_size = 0;
+static session_local uint64 temporary_files_size = 0;
 
 /*
  * List of OS handles opened with AllocateFile, AllocateDir and
@@ -245,23 +245,23 @@ typedef struct
 	}			desc;
 } AllocateDesc;
 
-static int	numAllocatedDescs = 0;
-static int	maxAllocatedDescs = 0;
-static AllocateDesc *allocatedDescs = NULL;
+static session_local int	numAllocatedDescs = 0;
+static session_local int	maxAllocatedDescs = 0;
+static session_local AllocateDesc *allocatedDescs = NULL;
 
 /*
  * Number of temporary files opened during the current session;
  * this is used in generation of tempfile names.
  */
-static long tempFileCounter = 0;
+static session_local long tempFileCounter = 0;
 
 /*
  * Array of OIDs of temp tablespaces.  When numTempTableSpaces is -1,
  * this has not been set in the current transaction.
  */
-static Oid *tempTableSpaces = NULL;
-static int	numTempTableSpaces = -1;
-static int	nextTempTableSpace = 0;
+static session_local Oid *tempTableSpaces = NULL;
+static session_local int	numTempTableSpaces = -1;
+static session_local int	nextTempTableSpace = 0;
 
 
 /*--------------------
@@ -454,7 +454,7 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 #if !defined(WIN32) && defined(MS_ASYNC)
 	{
 		void	   *p;
-		static int	pagesize = 0;
+		static session_local int	pagesize = 0;
 
 		/*
 		 * On several OSs msync(MS_ASYNC) on a mmap'ed file triggers

@@ -17,7 +17,7 @@
 #include "utils/guc.h"
 
 
-extern PGDLLIMPORT bool track_commit_timestamp;
+extern session_local PGDLLIMPORT bool track_commit_timestamp;
 
 extern bool check_track_commit_timestamp(bool *newval, void **extra,
 							 GucSource source);

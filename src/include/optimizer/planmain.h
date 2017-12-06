@@ -27,9 +27,9 @@ typedef enum
 
 /* GUC parameters */
 #define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
-extern double cursor_tuple_fraction;
-extern int	force_parallel_mode;
-extern bool parallel_leader_participation;
+extern session_local double cursor_tuple_fraction;
+extern session_local int	force_parallel_mode;
+extern session_local bool parallel_leader_participation;
 
 /* query_planner callback to compute query_pathkeys */
 typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
@@ -69,8 +69,8 @@ extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
 /*
  * prototypes for plan/initsplan.c
  */
-extern int	from_collapse_limit;
-extern int	join_collapse_limit;
+extern session_local int	from_collapse_limit;
+extern session_local int	join_collapse_limit;
 
 extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);

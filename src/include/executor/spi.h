@@ -72,10 +72,10 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_pop_conditional(pushed) ((void) 0)
 #define SPI_restore_connection()	((void) 0)
 
-extern PGDLLIMPORT uint64 SPI_processed;
-extern PGDLLIMPORT Oid SPI_lastoid;
-extern PGDLLIMPORT SPITupleTable *SPI_tuptable;
-extern PGDLLIMPORT int SPI_result;
+extern session_local PGDLLIMPORT uint64 SPI_processed;
+extern session_local PGDLLIMPORT Oid SPI_lastoid;
+extern session_local PGDLLIMPORT SPITupleTable *SPI_tuptable;
+extern session_local PGDLLIMPORT int SPI_result;
 
 extern int	SPI_connect(void);
 extern int	SPI_finish(void);

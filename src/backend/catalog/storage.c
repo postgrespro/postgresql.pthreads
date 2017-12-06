@@ -61,7 +61,7 @@ typedef struct PendingRelDelete
 	struct PendingRelDelete *next;	/* linked-list link */
 } PendingRelDelete;
 
-static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
+static session_local PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
 
 /*
  * RelationCreateStorage

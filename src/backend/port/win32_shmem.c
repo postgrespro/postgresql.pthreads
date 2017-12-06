@@ -17,9 +17,9 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 
-HANDLE		UsedShmemSegID = INVALID_HANDLE_VALUE;
-void	   *UsedShmemSegAddr = NULL;
-static Size UsedShmemSegSize = 0;
+session_local HANDLE		UsedShmemSegID = INVALID_HANDLE_VALUE;
+session_local void	   *UsedShmemSegAddr = NULL;
+static session_local Size UsedShmemSegSize = 0;
 
 static void pgwin32_SharedMemoryDelete(int status, Datum shmId);
 

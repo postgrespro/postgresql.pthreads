@@ -41,8 +41,8 @@
 
 
 /* GUC parameters */
-bool		operator_precedence_warning = false;
-bool		Transform_null_equals = false;
+session_local bool		operator_precedence_warning = false;
+session_local bool		Transform_null_equals = false;
 
 /*
  * Node-type groups for operator precedence warnings

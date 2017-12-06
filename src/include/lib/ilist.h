@@ -245,7 +245,10 @@ typedef struct slist_mutable_iter
 
 
 /* Static initializers */
+/* Can not get address of session_local variables 
 #define DLIST_STATIC_INIT(name) {{&(name).head, &(name).head}}
+*/
+#define DLIST_STATIC_INIT(name) {{NULL,NULL}}
 #define SLIST_STATIC_INIT(name) {{NULL}}
 
 

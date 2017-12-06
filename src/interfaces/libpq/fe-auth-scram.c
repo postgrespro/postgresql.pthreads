@@ -798,8 +798,8 @@ pg_frontend_random(char *dst, int len)
 	int			i;
 	char	   *end = dst + len;
 
-	static unsigned short seed[3];
-	static int	mypid = 0;
+	static session_local unsigned short seed[3];
+	static session_local int	mypid = 0;
 
 	pglock_thread();
 

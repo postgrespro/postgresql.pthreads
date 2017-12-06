@@ -51,9 +51,9 @@ typedef struct ParallelWorkerContext
 	shm_toc    *toc;
 } ParallelWorkerContext;
 
-extern volatile bool ParallelMessagePending;
-extern int	ParallelWorkerNumber;
-extern bool InitializingParallelWorker;
+extern session_local volatile bool ParallelMessagePending;
+extern session_local int	ParallelWorkerNumber;
+extern session_local bool InitializingParallelWorker;
 
 #define		IsParallelWorker()		(ParallelWorkerNumber >= 0)
 

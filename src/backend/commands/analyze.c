@@ -74,11 +74,11 @@ typedef struct AnlIndexData
 
 
 /* Default statistics target (GUC parameter) */
-int			default_statistics_target = 100;
+session_local int			default_statistics_target = 100;
 
 /* A few variables that don't seem worth passing around as parameters */
-static MemoryContext anl_context = NULL;
-static BufferAccessStrategy vac_strategy;
+static session_local MemoryContext anl_context = NULL;
+static session_local BufferAccessStrategy vac_strategy;
 
 
 static void do_analyze_rel(Relation onerel, int options,

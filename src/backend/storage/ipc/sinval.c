@@ -23,7 +23,7 @@
 #include "utils/inval.h"
 
 
-uint64		SharedInvalidMessageCounter;
+session_local uint64		SharedInvalidMessageCounter;
 
 
 /*
@@ -38,7 +38,7 @@ uint64		SharedInvalidMessageCounter;
  * interrupted while doing so, ProcessClientReadInterrupt() will call
  * ProcessCatchupEvent().
  */
-volatile sig_atomic_t catchupInterruptPending = false;
+session_local volatile sig_atomic_t catchupInterruptPending = false;
 
 
 /*
@@ -63,7 +63,7 @@ SendSharedInvalidMessages(const SharedInvalidationMessage *msgs, int n)
  * as a consequence of processing inside the invalFunction or resetFunction.
  * Furthermore, such a recursive call must guarantee that all outstanding
  * inval messages have been processed before it exits.  This is the reason
- * for the strange-looking choice to use a statically allocated buffer array
+ * for the strange-looking choice to use a static session_localally allocated buffer array
  * and counters; it's so that a recursive call can process messages already
  * sucked out of sinvaladt.c.
  */
@@ -73,14 +73,14 @@ ReceiveSharedInvalidMessages(
 							 void (*resetFunction) (void))
 {
 #define MAXINVALMSGS 32
-	static SharedInvalidationMessage messages[MAXINVALMSGS];
+	static session_local SharedInvalidationMessage messages[MAXINVALMSGS];
 
 	/*
 	 * We use volatile here to prevent bugs if a compiler doesn't realize that
 	 * recursion is a possibility ...
 	 */
-	static volatile int nextmsg = 0;
-	static volatile int nummsgs = 0;
+	static session_local volatile int nextmsg = 0;
+	static session_local volatile int nummsgs = 0;
 
 	/* Deal with any messages still pending from an outer recursion */
 	while (nextmsg < nummsgs)

@@ -77,7 +77,7 @@ typedef struct WalSnd
 	int			sync_standby_priority;
 } WalSnd;
 
-extern WalSnd *MyWalSnd;
+extern session_local WalSnd *MyWalSnd;
 
 /* There is one WalSndCtl struct for the whole database cluster */
 typedef struct
@@ -119,6 +119,6 @@ extern void replication_yyerror(const char *str) pg_attribute_noreturn();
 extern void replication_scanner_init(const char *query_string);
 extern void replication_scanner_finish(void);
 
-extern Node *replication_parse_result;
+extern session_local Node *replication_parse_result;
 
 #endif							/* _WALSENDER_PRIVATE_H */

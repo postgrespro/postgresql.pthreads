@@ -40,24 +40,24 @@
 #include "storage/proc.h"
 
 
-char	   *ssl_cert_file;
-char	   *ssl_key_file;
-char	   *ssl_ca_file;
-char	   *ssl_crl_file;
-char	   *ssl_dh_params_file;
+session_local char	   *ssl_cert_file;
+session_local char	   *ssl_key_file;
+session_local char	   *ssl_ca_file;
+session_local char	   *ssl_crl_file;
+session_local char	   *ssl_dh_params_file;
 
 #ifdef USE_SSL
-bool		ssl_loaded_verify_locations = false;
+session_local bool		ssl_loaded_verify_locations = false;
 #endif
 
 /* GUC variable controlling SSL cipher list */
-char	   *SSLCipherSuites = NULL;
+session_local char	   *SSLCipherSuites = NULL;
 
 /* GUC variable for default ECHD curve. */
-char	   *SSLECDHCurve;
+session_local char	   *SSLECDHCurve;
 
 /* GUC variable: if false, prefer client ciphers */
-bool		SSLPreferServerCiphers;
+session_local bool		SSLPreferServerCiphers;
 
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/

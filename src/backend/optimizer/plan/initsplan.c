@@ -34,8 +34,8 @@
 
 
 /* These parameters are set by GUC */
-int			from_collapse_limit;
-int			join_collapse_limit;
+session_local int			from_collapse_limit;
+session_local int			join_collapse_limit;
 
 
 /* Elements of the postponed_qual_list used during deconstruct_recurse */

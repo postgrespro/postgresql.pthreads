@@ -21,7 +21,7 @@
 #include "utils/memutils.h"
 
 /* GUC parameter */
-int			GinFuzzySearchLimit = 0;
+session_local int			GinFuzzySearchLimit = 0;
 
 typedef struct pendingPosition
 {

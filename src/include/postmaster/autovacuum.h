@@ -27,23 +27,23 @@ typedef enum
 
 
 /* GUC variables */
-extern bool autovacuum_start_daemon;
-extern int	autovacuum_max_workers;
-extern int	autovacuum_work_mem;
-extern int	autovacuum_naptime;
-extern int	autovacuum_vac_thresh;
-extern double autovacuum_vac_scale;
-extern int	autovacuum_anl_thresh;
-extern double autovacuum_anl_scale;
-extern int	autovacuum_freeze_max_age;
-extern int	autovacuum_multixact_freeze_max_age;
-extern int	autovacuum_vac_cost_delay;
-extern int	autovacuum_vac_cost_limit;
+extern session_local bool autovacuum_start_daemon;
+extern session_local int	autovacuum_max_workers;
+extern session_local int	autovacuum_work_mem;
+extern session_local int	autovacuum_naptime;
+extern session_local int	autovacuum_vac_thresh;
+extern session_local double autovacuum_vac_scale;
+extern session_local int	autovacuum_anl_thresh;
+extern session_local double autovacuum_anl_scale;
+extern session_local int	autovacuum_freeze_max_age;
+extern session_local int	autovacuum_multixact_freeze_max_age;
+extern session_local int	autovacuum_vac_cost_delay;
+extern session_local int	autovacuum_vac_cost_limit;
 
 /* autovacuum launcher PID, only valid when worker is shutting down */
-extern int	AutovacuumLauncherPid;
+extern session_local int	AutovacuumLauncherPid;
 
-extern int	Log_autovacuum_min_duration;
+extern session_local int	Log_autovacuum_min_duration;
 
 /* Status inquiry functions */
 extern bool AutoVacuumingActive(void);

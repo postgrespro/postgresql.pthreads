@@ -122,37 +122,37 @@
  * GUC parameters
  * ----------
  */
-bool		pgstat_track_activities = false;
-bool		pgstat_track_counts = false;
-int			pgstat_track_functions = TRACK_FUNC_OFF;
-int			pgstat_track_activity_query_size = 1024;
+session_local bool		pgstat_track_activities = false;
+session_local bool		pgstat_track_counts = false;
+session_local int			pgstat_track_functions = TRACK_FUNC_OFF;
+session_local int			pgstat_track_activity_query_size = 1024;
 
 /* ----------
  * Built from GUC parameter
  * ----------
  */
-char	   *pgstat_stat_directory = NULL;
-char	   *pgstat_stat_filename = NULL;
-char	   *pgstat_stat_tmpname = NULL;
+session_local char	   *pgstat_stat_directory = NULL;
+session_local char	   *pgstat_stat_filename = NULL;
+session_local char	   *pgstat_stat_tmpname = NULL;
 
 /*
  * BgWriter global statistics counters (unused in other processes).
  * Stored directly in a stats message structure so it can be sent
  * without needing to copy things around.  We assume this inits to zeroes.
  */
-PgStat_MsgBgWriter BgWriterStats;
+session_local PgStat_MsgBgWriter BgWriterStats;
 
 /* ----------
  * Local data
  * ----------
  */
-NON_EXEC_STATIC pgsocket pgStatSock = PGINVALID_SOCKET;
+session_local pgsocket pgStatSock = PGINVALID_SOCKET;
 
-static struct sockaddr_storage pgStatAddr;
+static session_local struct sockaddr_storage pgStatAddr;
 
-static time_t last_pgstat_start_time;
+static session_local time_t last_pgstat_start_time;
 
-static bool pgStatRunningInCollector = false;
+static session_local bool pgStatRunningInCollector = false;
 
 /*
  * Structures in which backends store per-table info that's waiting to be
@@ -174,7 +174,7 @@ typedef struct TabStatusArray
 	PgStat_TableStatus tsa_entries[TABSTAT_QUANTUM];	/* per-table data */
 } TabStatusArray;
 
-static TabStatusArray *pgStatTabList = NULL;
+static session_local TabStatusArray *pgStatTabList = NULL;
 
 /*
  * pgStatTabHash entry: map from relation OID to PgStat_TableStatus pointer
@@ -188,19 +188,19 @@ typedef struct TabStatHashEntry
 /*
  * Hash table for O(1) t_id -> tsa_entry lookup
  */
-static HTAB *pgStatTabHash = NULL;
+static session_local HTAB *pgStatTabHash = NULL;
 
 /*
  * Backends store per-function info that's waiting to be sent to the collector
  * in this hash table (indexed by function OID).
  */
-static HTAB *pgStatFunctions = NULL;
+static session_local HTAB *pgStatFunctions = NULL;
 
 /*
  * Indicates if backend has some function stats that it hasn't yet
  * sent to the collector.
  */
-static bool have_function_stats = false;
+static session_local bool have_function_stats = false;
 
 /*
  * Tuple insertion/deletion counts for an open transaction can't be propagated
@@ -216,12 +216,12 @@ typedef struct PgStat_SubXactStatus
 	PgStat_TableXactStatus *first;	/* head of list for this subxact */
 } PgStat_SubXactStatus;
 
-static PgStat_SubXactStatus *pgStatXactStack = NULL;
+static session_local PgStat_SubXactStatus *pgStatXactStack = NULL;
 
-static int	pgStatXactCommit = 0;
-static int	pgStatXactRollback = 0;
-PgStat_Counter pgStatBlockReadTime = 0;
-PgStat_Counter pgStatBlockWriteTime = 0;
+static session_local int	pgStatXactCommit = 0;
+static session_local int	pgStatXactRollback = 0;
+session_local PgStat_Counter pgStatBlockReadTime = 0;
+session_local PgStat_Counter pgStatBlockWriteTime = 0;
 
 /* Record that's written to 2PC state file when pgstat state is persisted */
 typedef struct TwoPhasePgStatRecord
@@ -240,40 +240,40 @@ typedef struct TwoPhasePgStatRecord
 /*
  * Info about current "snapshot" of stats file
  */
-static MemoryContext pgStatLocalContext = NULL;
-static HTAB *pgStatDBHash = NULL;
+static session_local MemoryContext pgStatLocalContext = NULL;
+static session_local HTAB *pgStatDBHash = NULL;
 
 /* Status for backends including auxiliary */
-static LocalPgBackendStatus *localBackendStatusTable = NULL;
+static session_local LocalPgBackendStatus *localBackendStatusTable = NULL;
 
 /* Total number of backends including auxiliary */
-static int	localNumBackends = 0;
+static session_local int	localNumBackends = 0;
 
 /*
  * Cluster wide statistics, kept in the stats collector.
  * Contains statistics that are not collected per database
  * or per table.
  */
-static PgStat_ArchiverStats archiverStats;
-static PgStat_GlobalStats globalStats;
+static session_local PgStat_ArchiverStats archiverStats;
+static session_local PgStat_GlobalStats globalStats;
 
 /*
  * List of OIDs of databases we need to write out.  If an entry is InvalidOid,
  * it means to write only the shared-catalog stats ("DB 0"); otherwise, we
  * will write both that DB's data and the shared stats.
  */
-static List *pending_write_requests = NIL;
+static session_local List *pending_write_requests = NIL;
 
 /* Signal handler flags */
-static volatile bool need_exit = false;
-static volatile bool got_SIGHUP = false;
+static session_local volatile bool need_exit = false;
+static session_local volatile bool got_SIGHUP = false;
 
 /*
  * Total time charged to functions so far in the current backend.
  * We use this to help separate "self" and "other" time charges.
  * (We assume this initializes to zero.)
  */
-static instr_time total_func_time;
+static session_local instr_time total_func_time;
 
 
 /* ----------
@@ -813,7 +813,7 @@ pgstat_report_stat(bool force)
 {
 	/* we assume this inits to all zeroes: */
 	static const PgStat_TableCounts all_zeroes;
-	static TimestampTz last_report = 0;
+	static session_local TimestampTz last_report = 0;
 
 	TimestampTz now;
 	PgStat_MsgTabstat regular_msg;
@@ -2587,7 +2587,7 @@ pgstat_fetch_global(void)
  */
 
 static PgBackendStatus *BackendStatusArray = NULL;
-static PgBackendStatus *MyBEEntry = NULL;
+static session_local PgBackendStatus *MyBEEntry = NULL;
 static char *BackendAppnameBuffer = NULL;
 static char *BackendClientHostnameBuffer = NULL;
 static char *BackendActivityBuffer = NULL;

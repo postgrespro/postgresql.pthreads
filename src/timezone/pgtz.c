@@ -25,10 +25,10 @@
 
 
 /* Current session timezone (controlled by TimeZone GUC) */
-pg_tz	   *session_timezone = NULL;
+session_local pg_tz	   *session_timezone = NULL;
 
 /* Current log timezone (controlled by log_timezone GUC) */
-pg_tz	   *log_timezone = NULL;
+session_local pg_tz	   *log_timezone = NULL;
 
 
 static bool scan_directory_ci(const char *dirname,
@@ -44,8 +44,8 @@ pg_TZDIR(void)
 {
 #ifndef SYSTEMTZDIR
 	/* normal case: timezone stuff is under our share dir */
-	static bool done_tzdir = false;
-	static char tzdir[MAXPGPATH];
+	static session_local bool done_tzdir = false;
+	static session_local char tzdir[MAXPGPATH];
 
 	if (done_tzdir)
 		return tzdir;
@@ -202,7 +202,7 @@ typedef struct
 	pg_tz		tz;
 } pg_tz_cache;
 
-static HTAB *timezone_cache = NULL;
+static session_local HTAB *timezone_cache = NULL;
 
 
 static bool

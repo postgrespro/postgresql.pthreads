@@ -71,7 +71,7 @@ extern Size SpinlockSemaSize(void);
 
 #ifndef HAVE_SPINLOCKS
 extern void SpinlockSemaInit(void);
-extern PGSemaphore *SpinlockSemaArray;
+extern session_local PGSemaphore *SpinlockSemaArray;
 #endif
 
 #endif							/* SPIN_H */

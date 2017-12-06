@@ -142,29 +142,29 @@ static CheckpointerShmemStruct *CheckpointerShmem;
 /*
  * GUC parameters
  */
-int			CheckPointTimeout = 300;
-int			CheckPointWarning = 30;
-double		CheckPointCompletionTarget = 0.5;
+session_local int			CheckPointTimeout = 300;
+session_local int			CheckPointWarning = 30;
+session_local double		CheckPointCompletionTarget = 0.5;
 
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t checkpoint_requested = false;
-static volatile sig_atomic_t shutdown_requested = false;
+static session_local volatile sig_atomic_t got_SIGHUP = false;
+static session_local volatile sig_atomic_t checkpoint_requested = false;
+static session_local volatile sig_atomic_t shutdown_requested = false;
 
 /*
  * Private state
  */
-static bool ckpt_active = false;
+static session_local bool ckpt_active = false;
 
 /* these values are valid when ckpt_active is true: */
-static pg_time_t ckpt_start_time;
-static XLogRecPtr ckpt_start_recptr;
-static double ckpt_cached_elapsed;
+static session_local pg_time_t ckpt_start_time;
+static session_local XLogRecPtr ckpt_start_recptr;
+static session_local double ckpt_cached_elapsed;
 
-static pg_time_t last_checkpoint_time;
-static pg_time_t last_xlog_switch_time;
+static session_local pg_time_t last_checkpoint_time;
+static session_local pg_time_t last_xlog_switch_time;
 
 /* Prototypes for private functions */
 
@@ -675,7 +675,7 @@ ImmediateCheckpointRequested(void)
 void
 CheckpointWriteDelay(int flags, double progress)
 {
-	static int	absorb_counter = WRITES_PER_ABSORB;
+	static session_local int	absorb_counter = WRITES_PER_ABSORB;
 
 	/* Do nothing if checkpoint is being executed by non-checkpointer process */
 	if (!AmCheckpointerProcess())
@@ -970,6 +970,8 @@ RequestCheckpoint(int flags)
 	int			old_failed,
 				old_started;
 
+	return;
+	
 	/*
 	 * If in a standalone backend, just do it ourselves.
 	 */
@@ -1375,7 +1377,7 @@ UpdateSharedMemoryConfig(void)
 bool
 FirstCallSinceLastCheckpoint(void)
 {
-	static int	ckpt_done = 0;
+	static session_local int	ckpt_done = 0;
 	int			new_done;
 	bool		FirstCall = false;
 

@@ -48,10 +48,10 @@
 #include "utils/snapmgr.h"
 
 
-shmem_startup_hook_type shmem_startup_hook = NULL;
+session_local shmem_startup_hook_type shmem_startup_hook = NULL;
 
-static Size total_addin_request = 0;
-static bool addin_request_allowed = true;
+static session_local Size total_addin_request = 0;
+static session_local bool addin_request_allowed = true;
 
 
 /*

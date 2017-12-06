@@ -1014,36 +1014,36 @@ typedef enum
 	IDENTIFIER_LOOKUP_EXPR		/* In SQL expression --- special case */
 } IdentifierLookup;
 
-extern IdentifierLookup plpgsql_IdentifierLookup;
+extern session_local IdentifierLookup plpgsql_IdentifierLookup;
 
-extern int	plpgsql_variable_conflict;
+extern session_local int	plpgsql_variable_conflict;
 
-extern bool plpgsql_print_strict_params;
+extern session_local bool plpgsql_print_strict_params;
 
-extern bool plpgsql_check_asserts;
+extern session_local bool plpgsql_check_asserts;
 
 /* extra compile-time checks */
 #define PLPGSQL_XCHECK_NONE			0
 #define PLPGSQL_XCHECK_SHADOWVAR	1
 #define PLPGSQL_XCHECK_ALL			((int) ~0)
 
-extern int	plpgsql_extra_warnings;
-extern int	plpgsql_extra_errors;
+extern session_local int	plpgsql_extra_warnings;
+extern session_local int	plpgsql_extra_errors;
 
-extern bool plpgsql_check_syntax;
-extern bool plpgsql_DumpExecTree;
+extern session_local bool plpgsql_check_syntax;
+extern session_local bool plpgsql_DumpExecTree;
 
-extern PLpgSQL_stmt_block *plpgsql_parse_result;
+extern session_local PLpgSQL_stmt_block *plpgsql_parse_result;
 
-extern int	plpgsql_nDatums;
-extern PLpgSQL_datum **plpgsql_Datums;
+extern session_local int	plpgsql_nDatums;
+extern session_local PLpgSQL_datum **plpgsql_Datums;
 
-extern char *plpgsql_error_funcname;
+extern session_local char *plpgsql_error_funcname;
 
-extern PLpgSQL_function *plpgsql_curr_compile;
-extern MemoryContext plpgsql_compile_tmp_cxt;
+extern session_local PLpgSQL_function *plpgsql_curr_compile;
+extern session_local MemoryContext plpgsql_compile_tmp_cxt;
 
-extern PLpgSQL_plugin **plpgsql_plugin_ptr;
+extern session_local PLpgSQL_plugin **plpgsql_plugin_ptr;
 
 /**********************************************************************
  * Function declarations

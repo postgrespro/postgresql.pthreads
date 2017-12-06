@@ -51,10 +51,10 @@
 
 
 /* GUC parameter */
-int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
+session_local int			constraint_exclusion = CONSTRAINT_EXCLUSION_PARTITION;
 
 /* Hook for plugins to get control in get_relation_info() */
-get_relation_info_hook_type get_relation_info_hook = NULL;
+session_local get_relation_info_hook_type get_relation_info_hook = NULL;
 
 
 static void get_relation_foreign_keys(PlannerInfo *root, RelOptInfo *rel,

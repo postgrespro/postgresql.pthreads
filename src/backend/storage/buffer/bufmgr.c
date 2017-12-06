@@ -105,19 +105,19 @@ typedef struct CkptTsStatus
 } CkptTsStatus;
 
 /* GUC variables */
-bool		zero_damaged_pages = false;
-int			bgwriter_lru_maxpages = 100;
-double		bgwriter_lru_multiplier = 2.0;
-bool		track_io_timing = false;
-int			effective_io_concurrency = 0;
+session_local bool		zero_damaged_pages = false;
+session_local int			bgwriter_lru_maxpages = 100;
+session_local double		bgwriter_lru_multiplier = 2.0;
+session_local bool		track_io_timing = false;
+session_local int			effective_io_concurrency = 0;
 
 /*
  * GUC variables about triggering kernel writeback for buffers written; OS
  * dependent defaults are set via the GUC mechanism.
  */
-int			checkpoint_flush_after = 0;
-int			bgwriter_flush_after = 0;
-int			backend_flush_after = 0;
+session_local int			checkpoint_flush_after = 0;
+session_local int			bgwriter_flush_after = 0;
+session_local int			backend_flush_after = 0;
 
 /*
  * How many buffers PrefetchBuffer callers should try to stay ahead of their
@@ -126,14 +126,14 @@ int			backend_flush_after = 0;
  * only used for buffers not belonging to tablespaces that have their
  * effective_io_concurrency parameter set.
  */
-int			target_prefetch_pages = 0;
+session_local int			target_prefetch_pages = 0;
 
 /* local state for StartBufferIO and related functions */
-static BufferDesc *InProgressBuf = NULL;
-static bool IsForInput;
+static session_local BufferDesc *InProgressBuf = NULL;
+static session_local bool IsForInput;
 
 /* local state for LockBufferForCleanup */
-static BufferDesc *PinCountWaitBuf = NULL;
+static session_local BufferDesc *PinCountWaitBuf = NULL;
 
 /*
  * Backend-Private refcount management:
@@ -165,11 +165,11 @@ static BufferDesc *PinCountWaitBuf = NULL;
  * memory allocations in NewPrivateRefCountEntry() which can be important
  * because in some scenarios it's called with a spinlock held...
  */
-static struct PrivateRefCountEntry PrivateRefCountArray[REFCOUNT_ARRAY_ENTRIES];
-static HTAB *PrivateRefCountHash = NULL;
-static int32 PrivateRefCountOverflowed = 0;
-static uint32 PrivateRefCountClock = 0;
-static PrivateRefCountEntry *ReservedRefCountEntry = NULL;
+static session_local struct PrivateRefCountEntry PrivateRefCountArray[REFCOUNT_ARRAY_ENTRIES];
+static session_local HTAB *PrivateRefCountHash = NULL;
+static session_local int32 PrivateRefCountOverflowed = 0;
+static session_local uint32 PrivateRefCountClock = 0;
+static session_local PrivateRefCountEntry *ReservedRefCountEntry = NULL;
 
 static void ReservePrivateRefCountEntry(void);
 static PrivateRefCountEntry *NewPrivateRefCountEntry(Buffer buffer);
@@ -2053,15 +2053,15 @@ BgBufferSync(WritebackContext *wb_context)
 	 * Information saved between calls so we can determine the strategy
 	 * point's advance rate and avoid scanning already-cleaned buffers.
 	 */
-	static bool saved_info_valid = false;
-	static int	prev_strategy_buf_id;
-	static uint32 prev_strategy_passes;
-	static int	next_to_clean;
-	static uint32 next_passes;
+	static session_local bool saved_info_valid = false;
+	static session_local int	prev_strategy_buf_id;
+	static session_local uint32 prev_strategy_passes;
+	static session_local int	next_to_clean;
+	static session_local uint32 next_passes;
 
 	/* Moving averages of allocation rate and clean-buffer density */
-	static float smoothed_alloc = 0;
-	static float smoothed_density = 10.0;
+	static session_local float smoothed_alloc = 0;
+	static session_local float smoothed_density = 10.0;
 
 	/* Potentially these could be tunables, but for now, not */
 	float		smoothing_samples = 16;

@@ -50,7 +50,7 @@ typedef struct portalhashent
 	Portal		portal;
 } PortalHashEnt;
 
-static HTAB *PortalHashTable = NULL;
+static session_local HTAB *PortalHashTable = NULL;
 
 #define PortalHashTableLookup(NAME, PORTAL) \
 do { \
@@ -87,7 +87,7 @@ do { \
 		elog(WARNING, "trying to delete portal name that does not exist"); \
 } while(0)
 
-static MemoryContext PortalMemory = NULL;
+static session_local MemoryContext PortalMemory = NULL;
 
 
 /* ----------------------------------------------------------------
@@ -229,7 +229,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 Portal
 CreateNewPortal(void)
 {
-	static unsigned int unnamed_portal_count = 0;
+	static session_local unsigned int unnamed_portal_count = 0;
 
 	char		portalname[MAX_PORTALNAME_LEN];
 

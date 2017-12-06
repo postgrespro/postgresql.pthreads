@@ -2572,7 +2572,7 @@ is_objectclass_supported(Oid class_id)
 static const ObjectPropertyType *
 get_object_property_data(Oid class_id)
 {
-	static const ObjectPropertyType *prop_last = NULL;
+	static session_local const ObjectPropertyType *prop_last = NULL;
 	int			index;
 
 	/*

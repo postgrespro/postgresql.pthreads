@@ -30,10 +30,10 @@
 #include "utils/relmapper.h"
 
 /* Hash table for informations about each relfilenode <-> oid pair */
-static HTAB *RelfilenodeMapHash = NULL;
+static session_local HTAB *RelfilenodeMapHash = NULL;
 
 /* built first time through in InitializeRelfilenodeMap */
-static ScanKeyData relfilenode_skey[2];
+static session_local ScanKeyData relfilenode_skey[2];
 
 typedef struct
 {

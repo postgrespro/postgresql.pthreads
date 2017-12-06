@@ -272,7 +272,7 @@ static bool has_seq_scans(HTAB *hashp);
 /*
  * memory allocation support
  */
-static MemoryContext CurrentDynaHashCxt = NULL;
+static session_local MemoryContext CurrentDynaHashCxt = NULL;
 
 static void *
 DynaHashAlloc(Size size)
@@ -1773,9 +1773,9 @@ next_pow2_int(long num)
 
 #define MAX_SEQ_SCANS 100
 
-static HTAB *seq_scan_tables[MAX_SEQ_SCANS];	/* tables being scanned */
-static int	seq_scan_level[MAX_SEQ_SCANS];	/* subtransaction nest level */
-static int	num_seq_scans = 0;
+static session_local HTAB *seq_scan_tables[MAX_SEQ_SCANS];	/* tables being scanned */
+static session_local int	seq_scan_level[MAX_SEQ_SCANS];	/* subtransaction nest level */
+static session_local int	num_seq_scans = 0;
 
 
 /* Register a table as having an active hash_seq_search scan */

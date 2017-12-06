@@ -106,7 +106,7 @@ static const struct locale_map locale_map_result[] = {
 static const char *
 map_locale(const struct locale_map *map, const char *locale)
 {
-	static char aliasbuf[MAX_LOCALE_NAME_LEN];
+	static session_local char aliasbuf[MAX_LOCALE_NAME_LEN];
 	int			i;
 
 	/* Check if the locale name matches any of the problematic ones. */

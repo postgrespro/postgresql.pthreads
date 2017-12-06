@@ -64,7 +64,7 @@
 /*
  * GUC parameters
  */
-int			BgWriterDelay = 200;
+session_local int			BgWriterDelay = 200;
 
 /*
  * Multiplier to apply to BgWriterDelay when we decide to hibernate.
@@ -83,14 +83,14 @@ int			BgWriterDelay = 200;
  * doing so too often or repeatedly if there has been no other write activity
  * in the system.
  */
-static TimestampTz last_snapshot_ts;
-static XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
+static session_local TimestampTz last_snapshot_ts;
+static session_local XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
 
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t shutdown_requested = false;
+static session_local volatile sig_atomic_t got_SIGHUP = false;
+static session_local volatile sig_atomic_t shutdown_requested = false;
 
 /* Signal handlers */
 

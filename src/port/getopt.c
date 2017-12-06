@@ -47,10 +47,10 @@ static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
  */
 #ifndef HAVE_INT_OPTERR
 
-int			opterr = 1,			/* if error message should be printed */
+session_local int			opterr = 1,			/* if error message should be printed */
 			optind = 1,			/* index into parent argv vector */
 			optopt;				/* character checked for validity */
-char	   *optarg;				/* argument associated with option */
+session_local char	   *optarg;				/* argument associated with option */
 
 #endif
 
@@ -71,7 +71,7 @@ char	   *optarg;				/* argument associated with option */
 int
 getopt(int nargc, char *const *nargv, const char *ostr)
 {
-	static char *place = EMSG;	/* option letter processing */
+	static session_local char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */
 
 	if (!*place)

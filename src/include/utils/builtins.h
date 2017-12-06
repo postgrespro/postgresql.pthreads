@@ -51,7 +51,7 @@ extern char *pg_ltostr(char *str, int32 value);
 extern uint64 pg_strtouint64(const char *str, char **endptr, int base);
 
 /* float.c */
-extern PGDLLIMPORT int extra_float_digits;
+extern session_local PGDLLIMPORT int extra_float_digits;
 
 extern double get_float8_infinity(void);
 extern float get_float4_infinity(void);
@@ -74,7 +74,7 @@ extern char *regexp_fixed_prefix(text *text_re, bool case_insensitive,
 					Oid collation, bool *exact);
 
 /* ruleutils.c */
-extern bool quote_all_identifiers;
+extern session_local bool quote_all_identifiers;
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *qualifier,
 						   const char *ident);

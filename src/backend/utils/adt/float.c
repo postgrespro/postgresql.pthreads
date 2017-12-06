@@ -65,17 +65,17 @@ do {															\
 
 
 /* Configurable GUC parameter */
-int			extra_float_digits = 0; /* Added to DBL_DIG or FLT_DIG */
+session_local int			extra_float_digits = 0; /* Added to DBL_DIG or FLT_DIG */
 
 /* Cached constants for degree-based trig functions */
-static bool degree_consts_set = false;
-static float8 sin_30 = 0;
-static float8 one_minus_cos_60 = 0;
-static float8 asin_0_5 = 0;
-static float8 acos_0_5 = 0;
-static float8 atan_1_0 = 0;
-static float8 tan_45 = 0;
-static float8 cot_45 = 0;
+static session_local bool degree_consts_set = false;
+static session_local float8 sin_30 = 0;
+static session_local float8 one_minus_cos_60 = 0;
+static session_local float8 asin_0_5 = 0;
+static session_local float8 acos_0_5 = 0;
+static session_local float8 atan_1_0 = 0;
+static session_local float8 tan_45 = 0;
+static session_local float8 cot_45 = 0;
 
 /*
  * These are intentionally not static; don't "fix" them.  They will never

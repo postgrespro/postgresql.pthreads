@@ -162,8 +162,8 @@ static int	CheckCertAuth(Port *port);
  * Kerberos and GSSAPI GUCs
  *----------------------------------------------------------------
  */
-char	   *pg_krb_server_keyfile;
-bool		pg_krb_caseins_users;
+session_local char	   *pg_krb_server_keyfile;
+session_local bool		pg_krb_caseins_users;
 
 
 /*----------------------------------------------------------------
@@ -238,7 +238,7 @@ static int	PerformRadiusTransaction(const char *server, const char *secret, cons
  * but before the user has been informed about the results.  It could be used
  * to record login events, insert a delay after failed authentication, etc.
  */
-ClientAuthentication_hook_type ClientAuthentication_hook = NULL;
+session_local ClientAuthentication_hook_type ClientAuthentication_hook = NULL;
 
 /*
  * Tell the user the authentication failed, but not (much about) why.
@@ -2384,7 +2384,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 #ifndef WIN32
 		if ((r = ldap_start_tls_s(*ldap, NULL, NULL)) != LDAP_SUCCESS)
 #else
-		static __ldap_start_tls_sA _ldap_start_tls_sA = NULL;
+		static session_local __ldap_start_tls_sA _ldap_start_tls_sA = NULL;
 
 		if (_ldap_start_tls_sA == NULL)
 		{

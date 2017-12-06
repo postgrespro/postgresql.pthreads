@@ -16,7 +16,6 @@
 
 #include "nodes/execnodes.h"
 
-
 /*
  * MAXATTR is the maximum number of attributes in a relation supported
  * at bootstrap time (i.e., the max possible in a system table).
@@ -27,10 +26,9 @@
 #define BOOTCOL_NULL_FORCE_NULL		2
 #define BOOTCOL_NULL_FORCE_NOT_NULL 3
 
-extern Relation boot_reldesc;
-extern Form_pg_attribute attrtypes[MAXATTR];
-extern int	numattr;
-
+extern session_local Relation boot_reldesc;
+extern session_local Form_pg_attribute attrtypes[MAXATTR];
+extern session_local int	numattr;
 
 extern void AuxiliaryProcessMain(int argc, char *argv[]) pg_attribute_noreturn();
 

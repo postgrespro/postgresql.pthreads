@@ -111,8 +111,8 @@ extern slock_t *ShmemLock;
  * This is indexed by tranche ID and stores the names of all tranches known
  * to the current backend.
  */
-static const char **LWLockTrancheArray = NULL;
-static int	LWLockTranchesAllocated = 0;
+static session_local const char **LWLockTrancheArray = NULL;
+static session_local int	LWLockTranchesAllocated = 0;
 
 #define T_NAME(lock) \
 	(LWLockTrancheArray[(lock)->tranche])
@@ -122,7 +122,7 @@ static int	LWLockTranchesAllocated = 0;
  * the pointer by fork from the postmaster (except in the EXEC_BACKEND case,
  * where we have special measures to pass it down).
  */
-LWLockPadded *MainLWLockArray = NULL;
+session_local LWLockPadded *MainLWLockArray = NULL;
 
 /*
  * We use this structure to keep track of locked LWLocks for release
@@ -139,8 +139,8 @@ typedef struct LWLockHandle
 	LWLockMode	mode;
 } LWLockHandle;
 
-static int	num_held_lwlocks = 0;
-static LWLockHandle held_lwlocks[MAX_SIMUL_LWLOCKS];
+static session_local int	num_held_lwlocks = 0;
+static session_local LWLockHandle held_lwlocks[MAX_SIMUL_LWLOCKS];
 
 /* struct representing the LWLock tranche request for named tranche */
 typedef struct NamedLWLockTrancheRequest
@@ -149,13 +149,13 @@ typedef struct NamedLWLockTrancheRequest
 	int			num_lwlocks;
 } NamedLWLockTrancheRequest;
 
-NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray = NULL;
-static int	NamedLWLockTrancheRequestsAllocated = 0;
-int			NamedLWLockTrancheRequests = 0;
+session_local NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray = NULL;
+static session_local int	NamedLWLockTrancheRequestsAllocated = 0;
+session_local int			NamedLWLockTrancheRequests = 0;
 
-NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
+session_local NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
 
-static bool lock_named_request_allowed = true;
+static session_local bool lock_named_request_allowed = true;
 
 static void InitializeLWLocks(void);
 static void RegisterLWLockTranches(void);
@@ -238,8 +238,8 @@ static void
 init_lwlock_stats(void)
 {
 	HASHCTL		ctl;
-	static MemoryContext lwlock_stats_cxt = NULL;
-	static bool exit_registered = false;
+	static session_local MemoryContext lwlock_stats_cxt = NULL;
+	static session_local bool exit_registered = false;
 
 	if (lwlock_stats_cxt != NULL)
 		MemoryContextDelete(lwlock_stats_cxt);

@@ -85,34 +85,34 @@
 
 
 /* GUC settings */
-char	   *locale_messages;
-char	   *locale_monetary;
-char	   *locale_numeric;
-char	   *locale_time;
+session_local char	   *locale_messages;
+session_local char	   *locale_monetary;
+session_local char	   *locale_numeric;
+session_local char	   *locale_time;
 
 /* lc_time localization cache */
-char	   *localized_abbrev_days[7];
-char	   *localized_full_days[7];
-char	   *localized_abbrev_months[12];
-char	   *localized_full_months[12];
+session_local char	   *localized_abbrev_days[7];
+session_local char	   *localized_full_days[7];
+session_local char	   *localized_abbrev_months[12];
+session_local char	   *localized_full_months[12];
 
 /* indicates whether locale information cache is valid */
-static bool CurrentLocaleConvValid = false;
-static bool CurrentLCTimeValid = false;
+static session_local bool CurrentLocaleConvValid = false;
+static session_local bool CurrentLCTimeValid = false;
 
 /* Environment variable storage area */
 
 #define LC_ENV_BUFSIZE (NAMEDATALEN + 20)
 
-static char lc_collate_envbuf[LC_ENV_BUFSIZE];
-static char lc_ctype_envbuf[LC_ENV_BUFSIZE];
+static session_local char lc_collate_envbuf[LC_ENV_BUFSIZE];
+static session_local char lc_ctype_envbuf[LC_ENV_BUFSIZE];
 
 #ifdef LC_MESSAGES
-static char lc_messages_envbuf[LC_ENV_BUFSIZE];
+static session_local char lc_messages_envbuf[LC_ENV_BUFSIZE];
 #endif
-static char lc_monetary_envbuf[LC_ENV_BUFSIZE];
-static char lc_numeric_envbuf[LC_ENV_BUFSIZE];
-static char lc_time_envbuf[LC_ENV_BUFSIZE];
+static session_local char lc_monetary_envbuf[LC_ENV_BUFSIZE];
+static session_local char lc_numeric_envbuf[LC_ENV_BUFSIZE];
+static session_local char lc_time_envbuf[LC_ENV_BUFSIZE];
 
 /* Cache for collation-related knowledge */
 
@@ -125,11 +125,11 @@ typedef struct
 	pg_locale_t locale;			/* locale_t struct, or 0 if not valid */
 } collation_cache_entry;
 
-static HTAB *collation_cache = NULL;
+static session_local HTAB *collation_cache = NULL;
 
 
 #if defined(WIN32) && defined(LC_MESSAGES)
-static char *IsoLocaleName(const char *);	/* MSVC specific */
+static session_local char *IsoLocaleName(const char *);	/* MSVC specific */
 #endif
 
 
@@ -188,7 +188,7 @@ pg_perm_setlocale(int category, const char *locale)
 	 */
 	if (category == LC_CTYPE)
 	{
-		static char save_lc_ctype[LC_ENV_BUFSIZE];
+		static session_local char save_lc_ctype[LC_ENV_BUFSIZE];
 
 		/* copy setlocale() return value before callee invokes it again */
 		strlcpy(save_lc_ctype, result, sizeof(save_lc_ctype));
@@ -482,8 +482,8 @@ db_encoding_convert(int encoding, char **str)
 struct lconv *
 PGLC_localeconv(void)
 {
-	static struct lconv CurrentLocaleConv;
-	static bool CurrentLocaleConvAllocated = false;
+	static session_local struct lconv CurrentLocaleConv;
+	static session_local bool CurrentLocaleConvAllocated = false;
 	struct lconv *extlconv;
 	struct lconv worklconv;
 	bool		trouble = false;
@@ -911,7 +911,7 @@ static char *
 IsoLocaleName(const char *winlocname)
 {
 #if (_MSC_VER >= 1400)			/* VC8.0 or later */
-	static char iso_lc_messages[32];
+	static session_local char iso_lc_messages[32];
 	_locale_t	loct = NULL;
 
 	if (pg_strcasecmp("c", winlocname) == 0 ||
@@ -1140,7 +1140,7 @@ lc_collate_is_c(Oid collation)
 	 */
 	if (collation == DEFAULT_COLLATION_OID)
 	{
-		static int	result = -1;
+		static session_local int	result = -1;
 		char	   *localeptr;
 
 		if (result >= 0)
@@ -1190,7 +1190,7 @@ lc_ctype_is_c(Oid collation)
 	 */
 	if (collation == DEFAULT_COLLATION_OID)
 	{
-		static int	result = -1;
+		static session_local int	result = -1;
 		char	   *localeptr;
 
 		if (result >= 0)

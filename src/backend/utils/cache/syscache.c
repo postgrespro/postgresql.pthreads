@@ -971,17 +971,17 @@ static const struct cachedesc cacheinfo[] = {
 	}
 };
 
-static CatCache *SysCache[SysCacheSize];
+static session_local CatCache *SysCache[SysCacheSize];
 
-static bool CacheInitialized = false;
+static session_local bool CacheInitialized = false;
 
 /* Sorted array of OIDs of tables that have caches on them */
-static Oid	SysCacheRelationOid[SysCacheSize];
-static int	SysCacheRelationOidSize;
+static session_local Oid	SysCacheRelationOid[SysCacheSize];
+static session_local int	SysCacheRelationOidSize;
 
 /* Sorted array of OIDs of tables and indexes used by caches */
-static Oid	SysCacheSupportingRelOid[SysCacheSize * 2];
-static int	SysCacheSupportingRelOidSize;
+static session_local Oid	SysCacheSupportingRelOid[SysCacheSize * 2];
+static session_local int	SysCacheSupportingRelOidSize;
 
 static int	oid_compare(const void *a, const void *b);
 

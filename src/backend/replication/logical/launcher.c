@@ -57,10 +57,10 @@
 /* max sleep time between cycles (3min) */
 #define DEFAULT_NAPTIME_PER_CYCLE 180000L
 
-int			max_logical_replication_workers = 4;
-int			max_sync_workers_per_subscription = 2;
+session_local int			max_logical_replication_workers = 4;
+session_local int			max_sync_workers_per_subscription = 2;
 
-LogicalRepWorker *MyLogicalRepWorker = NULL;
+session_local LogicalRepWorker *MyLogicalRepWorker = NULL;
 
 typedef struct LogicalRepCtxStruct
 {
@@ -79,7 +79,7 @@ typedef struct LogicalRepWorkerId
 	Oid			relid;
 } LogicalRepWorkerId;
 
-static List *on_commit_stop_workers = NIL;
+static session_local List *on_commit_stop_workers = NIL;
 
 static void ApplyLauncherWakeup(void);
 static void logicalrep_launcher_onexit(int code, Datum arg);
@@ -88,9 +88,9 @@ static void logicalrep_worker_detach(void);
 static void logicalrep_worker_cleanup(LogicalRepWorker *worker);
 
 /* Flags set by signal handlers */
-static volatile sig_atomic_t got_SIGHUP = false;
+static session_local volatile sig_atomic_t got_SIGHUP = false;
 
-static bool on_commit_launcher_wakeup = false;
+static session_local bool on_commit_launcher_wakeup = false;
 
 Datum		pg_stat_get_subscription(PG_FUNCTION_ARGS);
 

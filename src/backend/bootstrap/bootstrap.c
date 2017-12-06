@@ -46,8 +46,9 @@
 #include "utils/rel.h"
 #include "utils/relmapper.h"
 #include "utils/tqual.h"
+#include "utils/guc.h"
 
-uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
+session_local uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
 
 
 #define ALLOC(t, c) \
@@ -66,12 +67,12 @@ static void cleanup(void);
  * ----------------
  */
 
-AuxProcType MyAuxProcType = NotAnAuxProcess;	/* declared in miscadmin.h */
+session_local AuxProcType MyAuxProcType = NotAnAuxProcess;	/* declared in miscadmin.h */
 
-Relation	boot_reldesc;		/* current relation descriptor */
+session_local Relation	boot_reldesc;		/* current relation descriptor */
 
-Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
-int			numattr;			/* number of attributes for cur. rel */
+session_local Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
+session_local int			numattr;			/* number of attributes for cur. rel */
 
 
 /*
@@ -158,13 +159,13 @@ struct typmap
 	FormData_pg_type am_typ;
 };
 
-static struct typmap **Typ = NULL;
-static struct typmap *Ap = NULL;
+static session_local struct typmap **Typ = NULL;
+static session_local struct typmap *Ap = NULL;
 
-static Datum values[MAXATTR];	/* current row's attribute values */
-static bool Nulls[MAXATTR];
+static session_local Datum values[MAXATTR];	/* current row's attribute values */
+static session_local bool Nulls[MAXATTR];
 
-static MemoryContext nogc = NULL;	/* special no-gc mem context */
+static session_local MemoryContext nogc = NULL;	/* special no-gc mem context */
 
 /*
  *	At bootstrap time, we first declare all the indices to be built, and
@@ -180,7 +181,7 @@ typedef struct _IndexList
 	struct _IndexList *il_next;
 } IndexList;
 
-static IndexList *ILHead = NULL;
+static session_local IndexList *ILHead = NULL;
 
 
 /*
@@ -197,6 +198,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	char	   *progname = argv[0];
 	int			flag;
 	char	   *userDoption = NULL;
+
 
 	/*
 	 * Initialize process environment (already done if under postmaster, but
@@ -349,7 +351,6 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			proc_exit(1);
 	}
 
-	/* Validate we have been given a reasonable-looking DataDir */
 	Assert(DataDir);
 	ValidatePgVersion(DataDir);
 
@@ -375,6 +376,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	 * InitPostgres pushups, but there are a couple of things that need to get
 	 * lit up even in an auxiliary process.
 	 */
+
 	if (IsUnderPostmaster)
 	{
 		/*

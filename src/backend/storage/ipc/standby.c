@@ -34,11 +34,11 @@
 #include "utils/timestamp.h"
 
 /* User-settable GUC parameters */
-int			vacuum_defer_cleanup_age;
-int			max_standby_archive_delay = 30 * 1000;
-int			max_standby_streaming_delay = 30 * 1000;
+session_local int			vacuum_defer_cleanup_age;
+session_local int			max_standby_archive_delay = 30 * 1000;
+session_local int			max_standby_streaming_delay = 30 * 1000;
 
-static List *RecoveryLockList;
+static session_local List *RecoveryLockList;
 
 static void ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 									   ProcSignalReason reason);
@@ -149,7 +149,7 @@ GetStandbyLimitTime(void)
 }
 
 #define STANDBY_INITIAL_WAIT_US  1000
-static int	standbyWait_us = STANDBY_INITIAL_WAIT_US;
+static session_local int	standbyWait_us = STANDBY_INITIAL_WAIT_US;
 
 /*
  * Standby wait logic for ResolveRecoveryConflictWithVirtualXIDs.

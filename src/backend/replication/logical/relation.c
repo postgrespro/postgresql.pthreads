@@ -30,10 +30,10 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
-static MemoryContext LogicalRepRelMapContext = NULL;
+static session_local MemoryContext LogicalRepRelMapContext = NULL;
 
-static HTAB *LogicalRepRelMap = NULL;
-static HTAB *LogicalRepTypMap = NULL;
+static session_local HTAB *LogicalRepRelMap = NULL;
+static session_local HTAB *LogicalRepTypMap = NULL;
 
 static void logicalrep_typmap_invalidate_cb(Datum arg, int cacheid,
 								uint32 hashvalue);

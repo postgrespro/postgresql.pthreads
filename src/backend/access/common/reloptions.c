@@ -434,12 +434,12 @@ static relopt_string stringRelOpts[] =
 	{{NULL}}
 };
 
-static relopt_gen **relOpts = NULL;
-static bits32 last_assigned_kind = RELOPT_KIND_LAST_DEFAULT;
+static session_local relopt_gen **relOpts = NULL;
+static session_local bits32 last_assigned_kind = RELOPT_KIND_LAST_DEFAULT;
 
-static int	num_custom_options = 0;
-static relopt_gen **custom_options = NULL;
-static bool need_initialization = true;
+static session_local int	num_custom_options = 0;
+static session_local relopt_gen **custom_options = NULL;
+static session_local bool need_initialization = true;
 
 static void initialize_reloptions(void);
 static void parse_one_reloption(relopt_value *option, char *text_str,
@@ -560,7 +560,7 @@ add_reloption_kind(void)
 static void
 add_reloption(relopt_gen *newoption)
 {
-	static int	max_custom_options = 0;
+	static session_local int	max_custom_options = 0;
 
 	if (num_custom_options >= max_custom_options)
 	{

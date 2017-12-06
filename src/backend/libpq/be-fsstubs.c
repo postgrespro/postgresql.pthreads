@@ -64,10 +64,10 @@
  * dynamically allocated in that context.  Its current allocated size is
  * cookies_len entries, of which any unused entries will be NULL.
  */
-static LargeObjectDesc **cookies = NULL;
-static int	cookies_size = 0;
+static session_local LargeObjectDesc **cookies = NULL;
+static session_local int	cookies_size = 0;
 
-static MemoryContext fscxt = NULL;
+static session_local MemoryContext fscxt = NULL;
 
 #define CreateFSContext() \
 	do { \

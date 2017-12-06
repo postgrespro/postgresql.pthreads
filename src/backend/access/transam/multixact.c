@@ -319,9 +319,9 @@ typedef struct mXactCacheEnt
 } mXactCacheEnt;
 
 #define MAX_CACHE_ENTRIES	256
-static dlist_head MXactCache = DLIST_STATIC_INIT(MXactCache);
-static int	MXactCacheMembers = 0;
-static MemoryContext MXactContext = NULL;
+static session_local dlist_head MXactCache = DLIST_STATIC_INIT(MXactCache);
+static session_local int	MXactCacheMembers = 0;
+static session_local MemoryContext MXactContext = NULL;
 
 #ifdef MULTIXACT_DEBUG
 #define debug_elog2(a,b) elog(a,b)
@@ -1630,7 +1630,7 @@ mxstatus_to_string(MultiXactStatus status)
 char *
 mxid_to_string(MultiXactId multi, int nmembers, MultiXactMember *members)
 {
-	static char *str = NULL;
+	static session_local char *str = NULL;
 	StringInfoData buf;
 	int			i;
 

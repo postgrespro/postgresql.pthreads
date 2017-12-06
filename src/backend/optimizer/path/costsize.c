@@ -101,33 +101,33 @@
 #define LOG2(x)  (log(x) / 0.693147180559945)
 
 
-double		seq_page_cost = DEFAULT_SEQ_PAGE_COST;
-double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
-double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
-double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
-double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
-double		parallel_tuple_cost = DEFAULT_PARALLEL_TUPLE_COST;
-double		parallel_setup_cost = DEFAULT_PARALLEL_SETUP_COST;
+session_local double		seq_page_cost = DEFAULT_SEQ_PAGE_COST;
+session_local double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
+session_local double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
+session_local double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
+session_local double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
+session_local double		parallel_tuple_cost = DEFAULT_PARALLEL_TUPLE_COST;
+session_local double		parallel_setup_cost = DEFAULT_PARALLEL_SETUP_COST;
 
-int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
+session_local int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
-Cost		disable_cost = 1.0e10;
+session_local Cost		disable_cost = 1.0e10;
 
-int			max_parallel_workers_per_gather = 2;
+session_local int			max_parallel_workers_per_gather = 2;
 
-bool		enable_seqscan = true;
-bool		enable_indexscan = true;
-bool		enable_indexonlyscan = true;
-bool		enable_bitmapscan = true;
-bool		enable_tidscan = true;
-bool		enable_sort = true;
-bool		enable_hashagg = true;
-bool		enable_nestloop = true;
-bool		enable_material = true;
-bool		enable_mergejoin = true;
-bool		enable_hashjoin = true;
-bool		enable_gathermerge = true;
-bool		enable_partition_wise_join = false;
+session_local bool		enable_seqscan = true;
+session_local bool		enable_indexscan = true;
+session_local bool		enable_indexonlyscan = true;
+session_local bool		enable_bitmapscan = true;
+session_local bool		enable_tidscan = true;
+session_local bool		enable_sort = true;
+session_local bool		enable_hashagg = true;
+session_local bool		enable_nestloop = true;
+session_local bool		enable_material = true;
+session_local bool		enable_mergejoin = true;
+session_local bool		enable_hashjoin = true;
+session_local bool		enable_gathermerge = true;
+session_local bool		enable_partition_wise_join = false;
 
 typedef struct
 {

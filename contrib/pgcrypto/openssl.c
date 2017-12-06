@@ -460,7 +460,7 @@ bf_init(PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	OSSLCipher *od = c->ptr;
 	unsigned	bs = gen_ossl_block_size(c);
-	static int	bf_is_strong = -1;
+	static session_local int	bf_is_strong = -1;
 
 	/*
 	 * Test if key len is supported. BF_set_key silently cut large keys and it

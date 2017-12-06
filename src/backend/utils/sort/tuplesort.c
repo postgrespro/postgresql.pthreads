@@ -115,11 +115,11 @@
 
 /* GUC variables */
 #ifdef TRACE_SORT
-bool		trace_sort = false;
+session_local bool		trace_sort = false;
 #endif
 
 #ifdef DEBUG_BOUNDED_SORT
-bool		optimize_bounded_sort = true;
+session_local bool		optimize_bounded_sort = true;
 #endif
 
 

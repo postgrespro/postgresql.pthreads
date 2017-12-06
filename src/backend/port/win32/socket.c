@@ -167,9 +167,9 @@ isDataGram(SOCKET s)
 int
 pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 {
-	static HANDLE waitevent = INVALID_HANDLE_VALUE;
-	static SOCKET current_socket = INVALID_SOCKET;
-	static int	isUDP = 0;
+	static session_local HANDLE waitevent = INVALID_HANDLE_VALUE;
+	static session_local SOCKET current_socket = INVALID_SOCKET;
+	static session_local int	isUDP = 0;
 	HANDLE		events[2];
 	int			r;
 
@@ -700,7 +700,7 @@ static char wserrbuf[256];
 const char *
 pgwin32_socket_strerror(int err)
 {
-	static HANDLE handleDLL = INVALID_HANDLE_VALUE;
+	static session_local HANDLE handleDLL = INVALID_HANDLE_VALUE;
 
 	if (handleDLL == INVALID_HANDLE_VALUE)
 	{

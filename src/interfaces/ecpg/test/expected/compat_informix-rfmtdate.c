@@ -26,7 +26,7 @@ check_return(int ret);
 static void
 date_test_strdate(const char *input)
 {
-	static int i;
+	static session_local int i;
 	date d;
 	int r, q;
 	char dbuf[11];
@@ -51,7 +51,7 @@ date_test_strdate(const char *input)
 static void
 date_test_defmt(const char *fmt, const char *input)
 {
-	static int i;
+	static session_local int i;
 	char dbuf[11];
 	date d;
 	int q, r;
@@ -76,7 +76,7 @@ date_test_defmt(const char *fmt, const char *input)
 static void
 date_test_fmt(date d, const char *fmt)
 {
-	static int i;
+	static session_local int i;
 	char buf[200];
 	int r;
 

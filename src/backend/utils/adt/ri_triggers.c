@@ -179,11 +179,11 @@ typedef struct RI_CompareHashEntry
  * Local data
  * ----------
  */
-static HTAB *ri_constraint_cache = NULL;
-static HTAB *ri_query_cache = NULL;
-static HTAB *ri_compare_cache = NULL;
-static dlist_head ri_constraint_cache_valid_list;
-static int	ri_constraint_cache_valid_count = 0;
+static session_local HTAB *ri_constraint_cache = NULL;
+static session_local HTAB *ri_query_cache = NULL;
+static session_local HTAB *ri_compare_cache = NULL;
+static session_local dlist_head ri_constraint_cache_valid_list;
+static session_local int	ri_constraint_cache_valid_count = 0;
 
 
 /* ----------

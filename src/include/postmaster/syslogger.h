@@ -62,20 +62,20 @@ typedef union
 
 
 /* GUC options */
-extern bool Logging_collector;
-extern int	Log_RotationAge;
-extern int	Log_RotationSize;
-extern PGDLLIMPORT char *Log_directory;
-extern PGDLLIMPORT char *Log_filename;
-extern bool Log_truncate_on_rotation;
-extern int	Log_file_mode;
+extern session_local bool Logging_collector;
+extern session_local int	Log_RotationAge;
+extern session_local int	Log_RotationSize;
+extern session_local PGDLLIMPORT char *Log_directory;
+extern session_local PGDLLIMPORT char *Log_filename;
+extern session_local bool Log_truncate_on_rotation;
+extern session_local int	Log_file_mode;
 
-extern bool am_syslogger;
+extern session_local bool am_syslogger;
 
 #ifndef WIN32
-extern int	syslogPipe[2];
+extern session_local int	syslogPipe[2];
 #else
-extern HANDLE syslogPipe[2];
+extern session_local HANDLE syslogPipe[2];
 #endif
 
 

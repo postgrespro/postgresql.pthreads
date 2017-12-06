@@ -112,7 +112,7 @@ typedef struct _MdfdVec
 	BlockNumber mdfd_segno;		/* segment number, from 0 */
 } MdfdVec;
 
-static MemoryContext MdCxt;		/* context for all MdfdVec objects */
+static session_local MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 
 /*
@@ -152,12 +152,12 @@ typedef struct
 	CycleCtr	cycle_ctr;		/* mdckpt_cycle_ctr when request was made */
 } PendingUnlinkEntry;
 
-static HTAB *pendingOpsTable = NULL;
-static List *pendingUnlinks = NIL;
-static MemoryContext pendingOpsCxt; /* context for the above  */
+static session_local HTAB *pendingOpsTable = NULL;
+static session_local List *pendingUnlinks = NIL;
+static session_local MemoryContext pendingOpsCxt; /* context for the above  */
 
-static CycleCtr mdsync_cycle_ctr = 0;
-static CycleCtr mdckpt_cycle_ctr = 0;
+static session_local CycleCtr mdsync_cycle_ctr = 0;
+static session_local CycleCtr mdckpt_cycle_ctr = 0;
 
 
 /*** behavior for mdopen & _mdfd_getseg ***/
@@ -1053,7 +1053,7 @@ mdimmedsync(SMgrRelation reln, ForkNumber forknum)
 void
 mdsync(void)
 {
-	static bool mdsync_in_progress = false;
+	static session_local bool mdsync_in_progress = false;
 
 	HASH_SEQ_STATUS hstat;
 	PendingOperationEntry *entry;

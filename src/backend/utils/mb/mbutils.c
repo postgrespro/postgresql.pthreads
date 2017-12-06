@@ -58,21 +58,21 @@ typedef struct ConvProcInfo
 	FmgrInfo	to_client_info;
 } ConvProcInfo;
 
-static List *ConvProcList = NIL;	/* List of ConvProcInfo */
+static session_local List *ConvProcList = NIL;	/* List of ConvProcInfo */
 
 /*
  * These variables point to the currently active conversion functions,
  * or are NULL when no conversion is needed.
  */
-static FmgrInfo *ToServerConvProc = NULL;
-static FmgrInfo *ToClientConvProc = NULL;
+static session_local FmgrInfo *ToServerConvProc = NULL;
+static session_local FmgrInfo *ToClientConvProc = NULL;
 
 /*
  * These variables track the currently-selected encodings.
  */
-static const pg_enc2name *ClientEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
-static const pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
-static const pg_enc2name *MessageEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
+static session_local const pg_enc2name *ClientEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
+static session_local const pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
+static session_local const pg_enc2name *MessageEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
 
 /*
  * During backend startup we can't set client encoding because we (a)
@@ -80,8 +80,8 @@ static const pg_enc2name *MessageEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
  * encoding yet either.  So SetClientEncoding() just accepts anything and
  * remembers it for InitializeClientEncoding() to apply later.
  */
-static bool backend_startup_complete = false;
-static int	pending_client_encoding = PG_SQL_ASCII;
+static session_local bool backend_startup_complete = false;
+static session_local int	pending_client_encoding = PG_SQL_ASCII;
 
 
 /* Internal functions */

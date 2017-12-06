@@ -32,7 +32,7 @@
 #include "utils/guc.h"
 
 extern char **environ;
-bool		update_process_title = true;
+session_local bool		update_process_title = true;
 
 
 /*
@@ -87,21 +87,21 @@ bool		update_process_title = true;
 #ifndef PS_USE_CLOBBER_ARGV
 /* all but one option need a buffer to write their ps line in */
 #define PS_BUFFER_SIZE 256
-static char ps_buffer[PS_BUFFER_SIZE];
-static const size_t ps_buffer_size = PS_BUFFER_SIZE;
+static session_local char ps_buffer[PS_BUFFER_SIZE];
+static session_local const size_t ps_buffer_size = PS_BUFFER_SIZE;
 #else							/* PS_USE_CLOBBER_ARGV */
-static char *ps_buffer;			/* will point to argv area */
-static size_t ps_buffer_size;	/* space determined at run time */
-static size_t last_status_len;	/* use to minimize length of clobber */
+static session_local char *ps_buffer;			/* will point to argv area */
+static session_local size_t ps_buffer_size;	/* space determined at run time */
+static session_local size_t last_status_len;	/* use to minimize length of clobber */
 #endif							/* PS_USE_CLOBBER_ARGV */
 
-static size_t ps_buffer_cur_len;	/* nominal strlen(ps_buffer) */
+static session_local size_t ps_buffer_cur_len;	/* nominal strlen(ps_buffer) */
 
-static size_t ps_buffer_fixed_size; /* size of the constant prefix */
+static session_local size_t ps_buffer_fixed_size; /* size of the constant prefix */
 
 /* save the original argv[] location here */
-static int	save_argc;
-static char **save_argv;
+static session_local int	save_argc;
+static session_local char **save_argv;
 
 
 /*
@@ -380,7 +380,7 @@ set_ps_display(const char *activity, bool force)
 		 * all possible to track which backend is doing what, we create a
 		 * named object that can be viewed with for example Process Explorer.
 		 */
-		static HANDLE ident_handle = INVALID_HANDLE_VALUE;
+		static session_local HANDLE ident_handle = INVALID_HANDLE_VALUE;
 		char		name[PS_BUFFER_SIZE + 32];
 
 		if (ident_handle != INVALID_HANDLE_VALUE)

@@ -653,7 +653,7 @@ is_scram_printable(char *p)
 static char *
 sanitize_char(char c)
 {
-	static char buf[5];
+	static session_local char buf[5];
 
 	if (c >= 0x21 && c <= 0x7E)
 		snprintf(buf, sizeof(buf), "'%c'", c);
@@ -1245,7 +1245,7 @@ static char *
 scram_mock_salt(const char *username)
 {
 	pg_sha256_ctx ctx;
-	static uint8 sha_digest[PG_SHA256_DIGEST_LENGTH];
+	static session_local uint8 sha_digest[PG_SHA256_DIGEST_LENGTH];
 	char	   *mock_auth_nonce = GetMockAuthenticationNonce();
 
 	/*

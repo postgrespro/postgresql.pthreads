@@ -392,7 +392,7 @@ _PG_init(void)
 	 * get a rather cryptic: ERROR:  attempt to redefine parameter
 	 * "plperl.use_strict"
 	 */
-	static bool inited = false;
+	static session_local bool inited = false;
 	HASHCTL		hash_ctl;
 
 	if (inited)
@@ -782,7 +782,7 @@ plperl_init_interp(void)
 	 */
 #if defined(PERL_SYS_INIT3) && !defined(MYMALLOC)
 	{
-		static int	perl_sys_init_done;
+		static session_local int	perl_sys_init_done;
 
 		/* only call this the first time through, as per perlembed man page */
 		if (!perl_sys_init_done)

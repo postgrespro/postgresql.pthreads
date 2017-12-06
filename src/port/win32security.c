@@ -116,7 +116,7 @@ pgwin32_is_admin(void)
 int
 pgwin32_is_service(void)
 {
-	static int	_is_service = -1;
+	static session_local int	_is_service = -1;
 	BOOL		IsMember;
 	PSID		ServiceSid;
 	PSID		LocalSystemSid;

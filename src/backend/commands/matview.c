@@ -54,7 +54,7 @@ typedef struct
 	BulkInsertState bistate;	/* bulk insert state */
 } DR_transientrel;
 
-static int	matview_maintenance_depth = 0;
+static session_local int	matview_maintenance_depth = 0;
 
 static void transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
 static bool transientrel_receive(TupleTableSlot *slot, DestReceiver *self);

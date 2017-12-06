@@ -74,7 +74,7 @@
 
 
 /* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_index_pg_class_oid = InvalidOid;
+session_local Oid			binary_upgrade_next_index_pg_class_oid = InvalidOid;
 
 /* state info for validate_index bulkdelete callback */
 typedef struct
@@ -3657,9 +3657,9 @@ reindex_relation(Oid relid, int flags, int options)
  * ----------------------------------------------------------------
  */
 
-static Oid	currentlyReindexedHeap = InvalidOid;
-static Oid	currentlyReindexedIndex = InvalidOid;
-static List *pendingReindexedIndexes = NIL;
+static session_local Oid	currentlyReindexedHeap = InvalidOid;
+static session_local Oid	currentlyReindexedIndex = InvalidOid;
+static session_local List *pendingReindexedIndexes = NIL;
 
 /*
  * ReindexIsProcessingHeap

@@ -183,6 +183,12 @@ typedef void (*GucRealAssignHook) (double newval, void *extra);
 typedef void (*GucStringAssignHook) (const char *newval, void *extra);
 typedef void (*GucEnumAssignHook) (int newval, void *extra);
 
+typedef bool* (*GucBoolAddressHook) (void);
+typedef int* (*GucIntAddressHook) (void);
+typedef double* (*GucRealAddressHook) (void);
+typedef char** (*GucStringAddressHook) (void);
+typedef int* (*GucEnumAddressHook) (void);
+
 typedef const char *(*GucShowHook) (void);
 
 /*
@@ -231,46 +237,46 @@ typedef enum
 
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
-extern bool log_duration;
-extern bool Debug_print_plan;
-extern bool Debug_print_parse;
-extern bool Debug_print_rewritten;
-extern bool Debug_pretty_print;
+extern session_local bool log_duration;
+extern session_local bool Debug_print_plan;
+extern session_local bool Debug_print_parse;
+extern session_local bool Debug_print_rewritten;
+extern session_local bool Debug_pretty_print;
 
-extern bool log_parser_stats;
-extern bool log_planner_stats;
-extern bool log_executor_stats;
-extern bool log_statement_stats;
-extern bool log_btree_build_stats;
+extern session_local bool log_parser_stats;
+extern session_local bool log_planner_stats;
+extern session_local bool log_executor_stats;
+extern session_local bool log_statement_stats;
+extern session_local bool log_btree_build_stats;
 
-extern PGDLLIMPORT bool check_function_bodies;
-extern bool default_with_oids;
-extern bool	session_auth_is_superuser;
+extern session_local PGDLLIMPORT bool check_function_bodies;
+extern session_local bool default_with_oids;
+extern session_local bool	session_auth_is_superuser;
 
-extern int	log_min_error_statement;
-extern int	log_min_messages;
-extern int	client_min_messages;
-extern int	log_min_duration_statement;
-extern int	log_temp_files;
+extern session_local int	log_min_error_statement;
+extern session_local int	log_min_messages;
+extern session_local int	client_min_messages;
+extern session_local int	log_min_duration_statement;
+extern session_local int	log_temp_files;
 
-extern int	temp_file_limit;
+extern session_local int	temp_file_limit;
 
-extern int	num_temp_buffers;
+extern session_local int	num_temp_buffers;
 
-extern char *cluster_name;
-extern char *ConfigFileName;
-extern char *HbaFileName;
-extern char *IdentFileName;
-extern char *external_pid_file;
+extern session_local char *cluster_name;
+extern session_local char *ConfigFileName;
+extern session_local char *HbaFileName;
+extern session_local char *IdentFileName;
+extern session_local char *external_pid_file;
 
-extern char *application_name;
+extern session_local char *application_name;
 
-extern int	tcp_keepalives_idle;
-extern int	tcp_keepalives_interval;
-extern int	tcp_keepalives_count;
+extern session_local int	tcp_keepalives_idle;
+extern session_local int	tcp_keepalives_interval;
+extern session_local int	tcp_keepalives_count;
 
 #ifdef TRACE_SORT
-extern bool trace_sort;
+extern session_local bool trace_sort;
 #endif
 
 /*
@@ -396,9 +402,9 @@ extern void RestoreGUCState(void *gucstate);
 
 /* Support for messages reported from GUC check hooks */
 
-extern PGDLLIMPORT char *GUC_check_errmsg_string;
-extern PGDLLIMPORT char *GUC_check_errdetail_string;
-extern PGDLLIMPORT char *GUC_check_errhint_string;
+extern session_local PGDLLIMPORT char *GUC_check_errmsg_string;
+extern session_local PGDLLIMPORT char *GUC_check_errdetail_string;
+extern session_local PGDLLIMPORT char *GUC_check_errhint_string;
 
 extern void GUC_check_errcode(int sqlerrcode);
 
@@ -433,5 +439,27 @@ extern void assign_search_path(const char *newval, void *extra);
 /* in access/transam/xlog.c */
 extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
+
+#define DEFINE_BOOL_GUC(guc)							\
+    static bool* guc##AddressHook(void) { return &guc; }
+
+#define DEFINE_INT_GUC(guc)								\
+	static int* guc##AddressHook(void) { return &guc; }
+
+#define DEFINE_REAL_GUC(guc)							\
+	static double* guc##AddressHook(void) { return &guc; }
+
+#define DEFINE_STR_GUC(guc)								\
+	static char** guc##AddressHook(void) { return &guc; }
+
+#define DEFINE_ENUM_GUC(guc)							\
+	static int* guc##AddressHook(void) { return &guc; }
+
+
+#define DECLARE_BOOL_GUC(guc,default_value) NULL, default_value, NULL, NULL, NULL, &guc##AddressHook
+#define DECLARE_INT_GUC(guc,default_value,min_value,max_value) NULL, default_value, min_value, max_value, NULL, NULL, NULL, &guc##AddressHook
+#define DECLARE_REAL_GUC(guc,default_value,min_value,max_value) NULL, default_value, min_value, max_value, NULL, NULL, NULL, &guc##AddressHook
+#define DECLARE_STR_GUC(guc,default_value) NULL, default_value, NULL, NULL, NULL, &guc##AddressHook
+#define DECLARE_ENUM_GUC(guc,default_value,options) NULL, default_value, options, NULL, NULL, NULL, &guc##AddressHook
 
 #endif							/* GUC_H */

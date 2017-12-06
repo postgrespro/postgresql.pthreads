@@ -83,7 +83,7 @@ typedef struct
 } RelToCheck;
 
 /* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_array_pg_type_oid = InvalidOid;
+session_local Oid			binary_upgrade_next_array_pg_type_oid = InvalidOid;
 
 static void makeRangeConstructors(const char *name, Oid namespace,
 					  Oid rangeOid, Oid subtype);

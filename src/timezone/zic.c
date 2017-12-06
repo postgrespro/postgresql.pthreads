@@ -162,28 +162,28 @@ enum
 {
 WORK_AROUND_QTBUG_53071 = true};
 
-static int	charcnt;
-static bool errors;
-static bool warnings;
-static const char *filename;
-static int	leapcnt;
-static bool leapseen;
-static zic_t leapminyear;
-static zic_t leapmaxyear;
-static lineno_t linenum;
-static int	max_abbrvar_len = PERCENT_Z_LEN_BOUND;
-static int	max_format_len;
-static zic_t max_year;
-static zic_t min_year;
-static bool noise;
-static bool print_abbrevs;
-static zic_t print_cutoff;
-static const char *rfilename;
-static lineno_t rlinenum;
-static const char *progname;
-static ptrdiff_t timecnt;
-static ptrdiff_t timecnt_alloc;
-static int	typecnt;
+static session_local int	charcnt;
+static session_local bool errors;
+static session_local bool warnings;
+static session_local const char *filename;
+static session_local int	leapcnt;
+static session_local bool leapseen;
+static session_local zic_t leapminyear;
+static session_local zic_t leapmaxyear;
+static session_local lineno_t linenum;
+static session_local int	max_abbrvar_len = PERCENT_Z_LEN_BOUND;
+static session_local int	max_format_len;
+static session_local zic_t max_year;
+static session_local zic_t min_year;
+static session_local bool noise;
+static session_local bool print_abbrevs;
+static session_local zic_t print_cutoff;
+static session_local const char *rfilename;
+static session_local lineno_t rlinenum;
+static session_local const char *progname;
+static session_local ptrdiff_t timecnt;
+static session_local ptrdiff_t timecnt_alloc;
+static session_local int	typecnt;
 
 /*
  * Line codes.
@@ -266,13 +266,13 @@ static int	typecnt;
 #define YR_MAXIMUM	1
 #define YR_ONLY		2
 
-static struct rule *rules;
-static ptrdiff_t nrules;		/* number of rules */
-static ptrdiff_t nrules_alloc;
+static session_local struct rule *rules;
+static session_local ptrdiff_t nrules;		/* number of rules */
+static session_local ptrdiff_t nrules_alloc;
 
-static struct zone *zones;
-static ptrdiff_t nzones;		/* number of zones */
-static ptrdiff_t nzones_alloc;
+static session_local struct zone *zones;
+static session_local ptrdiff_t nzones;		/* number of zones */
+static session_local ptrdiff_t nzones_alloc;
 
 struct link
 {
@@ -282,9 +282,9 @@ struct link
 	const char *l_to;
 };
 
-static struct link *links;
-static ptrdiff_t nlinks;
-static ptrdiff_t nlinks_alloc;
+static session_local struct link *links;
+static session_local ptrdiff_t nlinks;
+static session_local ptrdiff_t nlinks_alloc;
 
 struct lookup
 {
@@ -1314,7 +1314,7 @@ gethms(char const *string, char const *errstring, bool signable)
 static void
 inrule(char **fields, int nfields)
 {
-	static struct rule r;
+	static session_local struct rule r;
 
 	if (nfields != RULE_FIELDS)
 	{
@@ -1393,7 +1393,7 @@ inzsub(char **fields, int nfields, bool iscont)
 {
 	char	   *cp;
 	char	   *cp1;
-	static struct zone z;
+	static session_local struct zone z;
 	int			i_gmtoff,
 				i_rule,
 				i_format;
@@ -1874,8 +1874,8 @@ writezone(const char *const name, const char *const string, char version)
 	ptrdiff_t	timecnt32,
 				timei32;
 	int			pass;
-	static const struct tzhead tzh0;
-	static struct tzhead tzh;
+	static session_local const struct tzhead tzh0;
+	struct tzhead tzh;
 	bool		dir_checked = false;
 	zic_t		one = 1;
 	zic_t		y2038_boundary = one << 31;

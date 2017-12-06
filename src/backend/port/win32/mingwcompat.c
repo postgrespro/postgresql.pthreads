@@ -27,7 +27,7 @@ const struct in6_addr in6addr_any = {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
  * import libraries. It's only for actual Win32 API functions, so they are
  * all present in proper Win32 compilers.
  */
-static HMODULE kernel32 = NULL;
+session_local static HMODULE kernel32 = NULL;
 
 /*
  * Load DLL file just once regardless of how many functions

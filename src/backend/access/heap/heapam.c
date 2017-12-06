@@ -77,7 +77,7 @@
 
 
 /* GUC variable */
-bool		synchronize_seqscans = true;
+session_local bool		synchronize_seqscans = true;
 
 
 static HeapScanDesc heap_beginscan_internal(Relation relation,

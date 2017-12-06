@@ -110,27 +110,27 @@
 #define REALTYPE_PRECISION 17
 
 /* XXX these should appear in other modules' header files */
-extern bool Log_disconnections;
-extern int	CommitDelay;
-extern int	CommitSiblings;
-extern char *default_tablespace;
-extern char *temp_tablespaces;
-extern bool ignore_checksum_failure;
-extern bool synchronize_seqscans;
+extern session_local bool Log_disconnections;
+extern session_local int	CommitDelay;
+extern session_local int	CommitSiblings;
+extern session_local char *default_tablespace;
+extern session_local char *temp_tablespaces;
+extern session_local bool ignore_checksum_failure;
+extern session_local bool synchronize_seqscans;
 
 #ifdef TRACE_SYNCSCAN
-extern bool trace_syncscan;
+extern session_local bool trace_syncscan;
 #endif
 #ifdef DEBUG_BOUNDED_SORT
-extern bool optimize_bounded_sort;
+extern session_local bool optimize_bounded_sort;
 #endif
 
-static int	GUC_check_errcode_value;
+static session_local int	GUC_check_errcode_value;
 
 /* global variables for check hook support */
-char	   *GUC_check_errmsg_string;
-char	   *GUC_check_errdetail_string;
-char	   *GUC_check_errhint_string;
+session_local char	   *GUC_check_errmsg_string;
+session_local char	   *GUC_check_errdetail_string;
+session_local char	   *GUC_check_errhint_string;
 
 static void do_serialize(char **destptr, Size *maxbytes, const char *fmt,...) pg_attribute_printf(3, 4);
 
@@ -155,9 +155,9 @@ static bool check_wal_consistency_checking(char **newval, void **extra,
 static void assign_wal_consistency_checking(const char *newval, void *extra);
 
 #ifdef HAVE_SYSLOG
-static int	syslog_facility = LOG_LOCAL0;
+static session_local int	syslog_facility = LOG_LOCAL0;
 #else
-static int	syslog_facility = 0;
+static session_local int	syslog_facility = 0;
 #endif
 
 static void assign_syslog_facility(int newval, void *extra);
@@ -429,49 +429,49 @@ extern const struct config_enum_entry dynamic_shared_memory_options[];
 /*
  * GUC option variables that are exported from this module
  */
-bool		log_duration = false;
-bool		Debug_print_plan = false;
-bool		Debug_print_parse = false;
-bool		Debug_print_rewritten = false;
-bool		Debug_pretty_print = true;
+session_local bool		log_duration = false;
+session_local bool		Debug_print_plan = false;
+session_local bool		Debug_print_parse = false;
+session_local bool		Debug_print_rewritten = false;
+session_local bool		Debug_pretty_print = true;
 
-bool		log_parser_stats = false;
-bool		log_planner_stats = false;
-bool		log_executor_stats = false;
-bool		log_statement_stats = false;	/* this is sort of all three above
+session_local bool		log_parser_stats = false;
+session_local bool		log_planner_stats = false;
+session_local bool		log_executor_stats = false;
+session_local bool		log_statement_stats = false;	/* this is sort of all three above
 											 * together */
-bool		log_btree_build_stats = false;
-char	   *event_source;
+session_local bool		log_btree_build_stats = false;
+session_local char	   *event_source;
 
-bool		row_security;
-bool		check_function_bodies = true;
-bool		default_with_oids = false;
-bool		session_auth_is_superuser;
+session_local bool		row_security;
+session_local bool		check_function_bodies = true;
+session_local bool		default_with_oids = false;
+session_local bool		session_auth_is_superuser;
 
-int			log_min_error_statement = ERROR;
-int			log_min_messages = WARNING;
-int			client_min_messages = NOTICE;
-int			log_min_duration_statement = -1;
-int			log_temp_files = -1;
-int			trace_recovery_messages = LOG;
+session_local int			log_min_error_statement = ERROR;
+session_local int			log_min_messages = WARNING;
+session_local int			client_min_messages = NOTICE;
+session_local int			log_min_duration_statement = -1;
+session_local int			log_temp_files = -1;
+session_local int			trace_recovery_messages = LOG;
 
-int			temp_file_limit = -1;
+session_local int			temp_file_limit = -1;
 
-int			num_temp_buffers = 1024;
+session_local int			num_temp_buffers = 1024;
 
-char	   *cluster_name = "";
-char	   *ConfigFileName;
-char	   *HbaFileName;
-char	   *IdentFileName;
-char	   *external_pid_file;
+session_local char	   *cluster_name = "";
+session_local char	   *ConfigFileName;
+session_local char	   *HbaFileName;
+session_local char	   *IdentFileName;
+session_local char	   *external_pid_file;
 
-char	   *pgstat_temp_directory;
+session_local char	   *pgstat_temp_directory;
 
-char	   *application_name;
+session_local char	   *application_name;
 
-int			tcp_keepalives_idle;
-int			tcp_keepalives_interval;
-int			tcp_keepalives_count;
+session_local int			tcp_keepalives_idle;
+session_local int			tcp_keepalives_interval;
+session_local int			tcp_keepalives_count;
 
 /*
  * SSL renegotiation was been removed in PostgreSQL 9.5, but we tolerate it
@@ -479,46 +479,46 @@ int			tcp_keepalives_count;
  * This avoids breaking compatibility with clients that have never supported
  * renegotiation and therefore always try to zero it.
  */
-int			ssl_renegotiation_limit;
+session_local int			ssl_renegotiation_limit;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
  * need to be duplicated in all the different implementations of pg_shmem.c.
  */
-int			huge_pages;
+session_local int			huge_pages;
 
 /*
  * These variables are all dummies that don't do anything, except in some
  * cases provide the value for SHOW to display.  The real state is elsewhere
  * and is kept in sync by assign_hooks.
  */
-static char *syslog_ident_str;
-static double phony_random_seed;
-static char *client_encoding_string;
-static char *datestyle_string;
-static char *locale_collate;
-static char *locale_ctype;
-static char *server_encoding_string;
-static char *server_version_string;
-static int	server_version_num;
-static char *timezone_string;
-static char *log_timezone_string;
-static char *timezone_abbreviations_string;
-static char *XactIsoLevel_string;
-static char *data_directory;
-static char *session_authorization_string;
-static int	max_function_args;
-static int	max_index_keys;
-static int	max_identifier_length;
-static int	block_size;
-static int	segment_size;
-static int	wal_block_size;
-static bool data_checksums;
-static bool integer_datetimes;
-static bool assert_enabled;
+static session_local char *syslog_ident_str;
+static session_local double phony_random_seed;
+static session_local char *client_encoding_string;
+static session_local char *datestyle_string;
+static session_local char *locale_collate;
+static session_local char *locale_ctype;
+static session_local char *server_encoding_string;
+static session_local char *server_version_string;
+static session_local int	server_version_num;
+static session_local char *timezone_string;
+static session_local char *log_timezone_string;
+static session_local char *timezone_abbreviations_string;
+static session_local char *XactIsoLevel_string;
+static session_local char *data_directory;
+static session_local char *session_authorization_string;
+static session_local int	max_function_args;
+static session_local int	max_index_keys;
+static session_local int	max_identifier_length;
+static session_local int	block_size;
+static session_local int	segment_size;
+static session_local int	wal_block_size;
+static session_local bool data_checksums;
+static session_local bool integer_datetimes;
+static session_local bool assert_enabled;
 
 /* should be static, but commands/variable.c needs to get at this */
-char	   *role_string;
+session_local char	   *role_string;
 
 
 /*
@@ -799,6 +799,309 @@ static const unit_conversion time_unit_conversion_table[] =
  */
 
 
+DEFINE_BOOL_GUC(enable_seqscan)
+DEFINE_BOOL_GUC(enable_indexscan)
+DEFINE_BOOL_GUC(enable_indexonlyscan)
+DEFINE_BOOL_GUC(enable_bitmapscan)
+DEFINE_BOOL_GUC(enable_tidscan)
+DEFINE_BOOL_GUC(enable_sort)
+DEFINE_BOOL_GUC(enable_hashagg)
+DEFINE_BOOL_GUC(enable_material)
+DEFINE_BOOL_GUC(enable_nestloop)
+DEFINE_BOOL_GUC(enable_mergejoin)
+DEFINE_BOOL_GUC(enable_hashjoin)
+DEFINE_BOOL_GUC(enable_gathermerge)
+DEFINE_BOOL_GUC(enable_partition_wise_join)
+DEFINE_BOOL_GUC(enable_geqo)
+DEFINE_BOOL_GUC(session_auth_is_superuser)
+DEFINE_BOOL_GUC(track_commit_timestamp)
+DEFINE_BOOL_GUC(enable_bonjour)
+DEFINE_BOOL_GUC(EnableSSL)
+DEFINE_BOOL_GUC(SSLPreferServerCiphers)
+DEFINE_BOOL_GUC(enableFsync)
+DEFINE_BOOL_GUC(ignore_checksum_failure)
+DEFINE_BOOL_GUC(zero_damaged_pages)
+DEFINE_BOOL_GUC(fullPageWrites)
+DEFINE_BOOL_GUC(wal_log_hints)
+DEFINE_BOOL_GUC(wal_compression)
+DEFINE_BOOL_GUC(log_checkpoints)
+DEFINE_BOOL_GUC(Log_connections)
+DEFINE_BOOL_GUC(Log_disconnections)
+DEFINE_BOOL_GUC(log_replication_commands)
+DEFINE_BOOL_GUC(assert_enabled)
+DEFINE_BOOL_GUC(ExitOnAnyError)
+DEFINE_BOOL_GUC(restart_after_crash)
+DEFINE_BOOL_GUC(log_duration)
+DEFINE_BOOL_GUC(Debug_print_parse)
+DEFINE_BOOL_GUC(Debug_print_rewritten)
+DEFINE_BOOL_GUC(Debug_print_plan)
+DEFINE_BOOL_GUC(Debug_pretty_print)
+DEFINE_BOOL_GUC(log_parser_stats)
+DEFINE_BOOL_GUC(log_planner_stats)
+DEFINE_BOOL_GUC(log_executor_stats)
+#ifdef BTREE_BUILD_STATS
+DEFINE_BOOL_GUC(log_btree_build_stats)
+#endif
+DEFINE_BOOL_GUC(pgstat_track_activities)
+DEFINE_BOOL_GUC(pgstat_track_counts)
+DEFINE_BOOL_GUC(track_io_timing)
+DEFINE_BOOL_GUC(update_process_title)
+DEFINE_BOOL_GUC(autovacuum_start_daemon)
+DEFINE_BOOL_GUC(log_lock_waits)
+DEFINE_BOOL_GUC(log_hostname)
+DEFINE_BOOL_GUC(Transform_null_equals)
+DEFINE_BOOL_GUC(Db_user_namespace)
+DEFINE_BOOL_GUC(DefaultXactReadOnly)
+DEFINE_BOOL_GUC(DefaultXactDeferrable)
+DEFINE_BOOL_GUC(row_security)
+DEFINE_BOOL_GUC(check_function_bodies)
+DEFINE_BOOL_GUC(Array_nulls)
+DEFINE_BOOL_GUC(default_with_oids)
+DEFINE_BOOL_GUC(Logging_collector)
+DEFINE_BOOL_GUC(Log_truncate_on_rotation)
+DEFINE_BOOL_GUC(trace_sort)
+#ifdef TRACE_SYNCSCAN
+DEFINE_BOOL_GUC(trace_syncscan)
+#endif
+#ifdef DEBUG_BOUNDED_SORT
+DEFINE_BOOL_GUC(optimize_bounded_sort)
+#endif
+#ifdef WAL_DEBUG
+DEFINE_BOOL_GUC(XLOG_DEBUG)
+#endif
+DEFINE_BOOL_GUC(integer_datetimes)
+DEFINE_BOOL_GUC(pg_krb_caseins_users)
+DEFINE_BOOL_GUC(escape_string_warning)
+DEFINE_BOOL_GUC(standard_conforming_strings)
+DEFINE_BOOL_GUC(synchronize_seqscans)
+DEFINE_BOOL_GUC(EnableHotStandby)
+DEFINE_BOOL_GUC(hot_standby_feedback)
+DEFINE_BOOL_GUC(allowSystemTableMods)
+DEFINE_BOOL_GUC(IgnoreSystemIndexes)
+DEFINE_BOOL_GUC(lo_compat_privileges)
+DEFINE_BOOL_GUC(operator_precedence_warning)
+DEFINE_BOOL_GUC(quote_all_identifiers)
+DEFINE_BOOL_GUC(data_checksums)
+DEFINE_BOOL_GUC(syslog_sequence_numbers)
+DEFINE_BOOL_GUC(syslog_split_messages)
+DEFINE_BOOL_GUC(parallel_leader_participation)
+DEFINE_INT_GUC(Log_file_mode)
+DEFINE_INT_GUC(Unix_socket_permissions)
+DEFINE_INT_GUC(XLogArchiveTimeout)
+DEFINE_INT_GUC(PostAuthDelay)
+DEFINE_INT_GUC(default_statistics_target)
+DEFINE_INT_GUC(from_collapse_limit)
+DEFINE_INT_GUC(join_collapse_limit)
+DEFINE_INT_GUC(geqo_threshold)
+DEFINE_INT_GUC(Geqo_effort)
+DEFINE_INT_GUC(Geqo_pool_size)
+DEFINE_INT_GUC(Geqo_generations)
+DEFINE_INT_GUC(DeadlockTimeout)
+DEFINE_INT_GUC(max_standby_archive_delay)
+DEFINE_INT_GUC(max_standby_streaming_delay)
+DEFINE_INT_GUC(wal_receiver_status_interval)
+DEFINE_INT_GUC(wal_receiver_timeout)
+DEFINE_INT_GUC(MaxConnections)
+DEFINE_INT_GUC(ReservedBackends)
+DEFINE_INT_GUC(NBuffers)
+DEFINE_INT_GUC(work_mem)
+DEFINE_INT_GUC(maintenance_work_mem)
+DEFINE_INT_GUC(temp_file_limit)
+DEFINE_INT_GUC(VacuumCostPageHit)
+DEFINE_INT_GUC(VacuumCostPageMiss)
+DEFINE_INT_GUC(VacuumCostPageDirty)
+DEFINE_INT_GUC(VacuumCostLimit)
+DEFINE_INT_GUC(VacuumCostDelay)
+DEFINE_INT_GUC(autovacuum_vac_cost_delay)
+DEFINE_INT_GUC(autovacuum_vac_cost_limit)
+DEFINE_INT_GUC(max_files_per_process)
+DEFINE_INT_GUC(max_prepared_xacts)
+DEFINE_INT_GUC(StatementTimeout)
+DEFINE_INT_GUC(LockTimeout)
+DEFINE_INT_GUC(IdleInTransactionSessionTimeout)
+DEFINE_INT_GUC(vacuum_freeze_min_age)
+DEFINE_INT_GUC(vacuum_freeze_table_age)
+DEFINE_INT_GUC(vacuum_multixact_freeze_min_age)
+DEFINE_INT_GUC(vacuum_multixact_freeze_table_age)
+DEFINE_INT_GUC(vacuum_defer_cleanup_age)
+DEFINE_INT_GUC(max_locks_per_xact)
+DEFINE_INT_GUC(max_predicate_locks_per_xact)
+DEFINE_INT_GUC(max_predicate_locks_per_relation)
+DEFINE_INT_GUC(max_predicate_locks_per_page)
+DEFINE_INT_GUC(AuthenticationTimeout)
+DEFINE_INT_GUC(PreAuthDelay)
+DEFINE_INT_GUC(wal_keep_segments)
+DEFINE_INT_GUC(min_wal_size_mb)
+DEFINE_INT_GUC(max_wal_size_mb)
+DEFINE_INT_GUC(CheckPointTimeout)
+DEFINE_INT_GUC(CheckPointWarning)
+DEFINE_INT_GUC(checkpoint_flush_after)
+DEFINE_INT_GUC(bgwriter_lru_maxpages)
+DEFINE_INT_GUC(WalWriterDelay)
+DEFINE_INT_GUC(WalWriterFlushAfter)
+DEFINE_INT_GUC(max_wal_senders)
+DEFINE_INT_GUC(max_replication_slots)
+DEFINE_INT_GUC(wal_sender_timeout)
+DEFINE_INT_GUC(CommitDelay)
+DEFINE_INT_GUC(CommitSiblings)
+DEFINE_INT_GUC(extra_float_digits)
+DEFINE_INT_GUC(log_min_duration_statement)
+DEFINE_INT_GUC(Log_autovacuum_min_duration)
+DEFINE_INT_GUC(BgWriterDelay)
+DEFINE_INT_GUC(bgwriter_flush_after)
+DEFINE_INT_GUC(backend_flush_after)
+DEFINE_INT_GUC(max_logical_replication_workers)
+DEFINE_INT_GUC(max_sync_workers_per_subscription)
+DEFINE_INT_GUC(Log_RotationAge)
+DEFINE_INT_GUC(Log_RotationSize)
+DEFINE_INT_GUC(max_function_args)
+DEFINE_INT_GUC(max_index_keys)
+DEFINE_INT_GUC(max_identifier_length)
+DEFINE_INT_GUC(block_size)
+DEFINE_INT_GUC(segment_size)
+DEFINE_INT_GUC(wal_block_size)
+DEFINE_INT_GUC(wal_retrieve_retry_interval)
+DEFINE_INT_GUC(wal_segment_size)
+DEFINE_INT_GUC(autovacuum_naptime)
+DEFINE_INT_GUC(autovacuum_vac_thresh)
+DEFINE_INT_GUC(autovacuum_anl_thresh)
+DEFINE_INT_GUC(autovacuum_freeze_max_age)
+DEFINE_INT_GUC(autovacuum_multixact_freeze_max_age)
+DEFINE_INT_GUC(max_parallel_workers_per_gather)
+DEFINE_INT_GUC(max_parallel_workers)
+DEFINE_INT_GUC(old_snapshot_threshold)
+DEFINE_INT_GUC(ssl_renegotiation_limit)
+DEFINE_INT_GUC(GinFuzzySearchLimit)
+DEFINE_INT_GUC(effective_cache_size)
+DEFINE_INT_GUC(min_parallel_table_scan_size)
+DEFINE_INT_GUC(min_parallel_index_scan_size)
+DEFINE_INT_GUC(server_version_num)
+DEFINE_INT_GUC(log_temp_files)
+DEFINE_INT_GUC(pgstat_track_activity_query_size)
+DEFINE_INT_GUC(gin_pending_list_limit)
+DEFINE_INT_GUC(thread_stack_size)
+DEFINE_INT_GUC(PostPortNumber)
+DEFINE_INT_GUC(num_temp_buffers)
+DEFINE_INT_GUC(tcp_keepalives_idle)
+DEFINE_INT_GUC(tcp_keepalives_interval)
+DEFINE_INT_GUC(tcp_keepalives_count)
+DEFINE_REAL_GUC(seq_page_cost)
+DEFINE_REAL_GUC(random_page_cost)
+DEFINE_REAL_GUC(cpu_tuple_cost)
+DEFINE_REAL_GUC(cpu_index_tuple_cost)
+DEFINE_REAL_GUC(cpu_operator_cost)
+DEFINE_REAL_GUC(parallel_tuple_cost)
+DEFINE_REAL_GUC(parallel_setup_cost)
+DEFINE_REAL_GUC(cursor_tuple_fraction)
+DEFINE_REAL_GUC(Geqo_selection_bias)
+DEFINE_REAL_GUC(Geqo_seed)
+DEFINE_REAL_GUC(bgwriter_lru_multiplier)
+DEFINE_REAL_GUC(phony_random_seed)
+DEFINE_REAL_GUC(autovacuum_vac_scale)
+DEFINE_REAL_GUC(autovacuum_anl_scale)
+DEFINE_REAL_GUC(CheckPointCompletionTarget)
+DEFINE_STR_GUC(Log_line_prefix)
+DEFINE_STR_GUC(log_timezone_string)
+DEFINE_STR_GUC(Dynamic_library_path)
+DEFINE_STR_GUC(pg_krb_server_keyfile)
+DEFINE_STR_GUC(bonjour_name)
+DEFINE_STR_GUC(locale_collate)
+DEFINE_STR_GUC(locale_ctype)
+DEFINE_STR_GUC(session_preload_libraries_string)
+DEFINE_STR_GUC(shared_preload_libraries_string)
+DEFINE_STR_GUC(local_preload_libraries_string)
+DEFINE_STR_GUC(server_encoding_string)
+DEFINE_STR_GUC(server_version_string)
+DEFINE_STR_GUC(role_string)
+DEFINE_STR_GUC(Log_filename)
+DEFINE_STR_GUC(event_source)
+DEFINE_STR_GUC(XactIsoLevel_string)
+DEFINE_STR_GUC(Unix_socket_group)
+DEFINE_STR_GUC(Unix_socket_directories)
+DEFINE_STR_GUC(ListenAddresses)
+DEFINE_STR_GUC(data_directory)
+DEFINE_STR_GUC(ConfigFileName)
+DEFINE_STR_GUC(HbaFileName)
+DEFINE_STR_GUC(IdentFileName)
+DEFINE_STR_GUC(ssl_cert_file)
+DEFINE_STR_GUC(ssl_key_file)
+DEFINE_STR_GUC(ssl_ca_file)
+DEFINE_STR_GUC(ssl_crl_file)
+DEFINE_STR_GUC(TSCurrentConfig)
+DEFINE_STR_GUC(SSLCipherSuites)
+DEFINE_STR_GUC(SSLECDHCurve)
+DEFINE_STR_GUC(ssl_dh_params_file)
+DEFINE_ENUM_GUC(backslash_quote)
+DEFINE_ENUM_GUC(bytea_output)
+DEFINE_ENUM_GUC(client_min_messages)
+DEFINE_ENUM_GUC(constraint_exclusion)
+DEFINE_ENUM_GUC(DefaultXactIsoLevel)
+DEFINE_ENUM_GUC(IntervalStyle)
+DEFINE_ENUM_GUC(Log_error_verbosity)
+DEFINE_ENUM_GUC(log_min_messages)
+DEFINE_ENUM_GUC(log_min_error_statement)
+DEFINE_ENUM_GUC(log_statement)
+DEFINE_ENUM_GUC(XLogArchiveMode)
+DEFINE_ENUM_GUC(trace_recovery_messages)
+DEFINE_ENUM_GUC(pgstat_track_functions)
+DEFINE_ENUM_GUC(dynamic_shared_memory_type)
+DEFINE_ENUM_GUC(wal_level)
+DEFINE_ENUM_GUC(xmlbinary)
+DEFINE_ENUM_GUC(xmloption)
+DEFINE_ENUM_GUC(huge_pages)
+DEFINE_ENUM_GUC(force_parallel_mode)
+DEFINE_ENUM_GUC(Password_encryption)
+DEFINE_ENUM_GUC(syslog_facility)
+
+DEFINE_BOOL_GUC(log_statement_stats)
+DEFINE_BOOL_GUC(XactReadOnly)
+DEFINE_BOOL_GUC(XactDeferrable)
+
+DEFINE_INT_GUC(max_stack_depth)
+DEFINE_INT_GUC(XLOGbuffers)
+DEFINE_INT_GUC(effective_io_concurrency)
+DEFINE_INT_GUC(max_worker_processes)
+DEFINE_INT_GUC(autovacuum_max_workers)
+DEFINE_INT_GUC(autovacuum_work_mem)
+
+DEFINE_STR_GUC(XLogArchiveCommand)
+DEFINE_STR_GUC(client_encoding_string)
+DEFINE_STR_GUC(datestyle_string)
+DEFINE_STR_GUC(default_tablespace)
+DEFINE_STR_GUC(temp_tablespaces)
+DEFINE_STR_GUC(locale_messages)
+DEFINE_STR_GUC(locale_monetary)
+DEFINE_STR_GUC(locale_numeric)
+DEFINE_STR_GUC(locale_time)
+DEFINE_STR_GUC(namespace_search_path)
+DEFINE_STR_GUC(session_authorization_string)
+DEFINE_STR_GUC(Log_destination_string)
+DEFINE_STR_GUC(Log_directory)
+DEFINE_STR_GUC(syslog_ident_str)
+DEFINE_STR_GUC(timezone_abbreviations_string)
+DEFINE_STR_GUC(timezone_string)
+DEFINE_STR_GUC(external_pid_file)
+DEFINE_STR_GUC(pgstat_temp_directory)
+DEFINE_STR_GUC(SyncRepStandbyNames)
+DEFINE_STR_GUC(application_name)
+DEFINE_STR_GUC(cluster_name)
+DEFINE_STR_GUC(wal_consistency_checking_string)
+
+DEFINE_ENUM_GUC(SessionReplicationRole)
+DEFINE_ENUM_GUC(synchronous_commit)
+DEFINE_ENUM_GUC(sync_method)
+DEFINE_BOOL_GUC(Trace_notify)
+
+#ifdef LOCK_DEBUG
+DEFINE_BOOL_GUC(Trace_locks)
+DEFINE_BOOL_GUC(Trace_userlocks)
+DEFINE_BOOL_GUC(Trace_lwlocks)
+DEFINE_BOOL_GUC(Debug_deadlocks)
+DEFINE_INT_GUC(Trace_lock_oidmin)
+DEFINE_INT_GUC(Trace_lock_table)
+#endif
+
+
 /******** option records follow ********/
 
 static struct config_bool ConfigureNamesBool[] =
@@ -808,117 +1111,91 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Enables the planner's use of sequential-scan plans."),
 			NULL
 		},
-		&enable_seqscan,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_seqscan, true)
 	},
 	{
 		{"enable_indexscan", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of index-scan plans."),
 			NULL
 		},
-		&enable_indexscan,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_indexscan, true)
 	},
 	{
 		{"enable_indexonlyscan", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of index-only-scan plans."),
 			NULL
 		},
-		&enable_indexonlyscan,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_indexonlyscan, true)
 	},
 	{
 		{"enable_bitmapscan", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of bitmap-scan plans."),
 			NULL
 		},
-		&enable_bitmapscan,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_bitmapscan, true)
 	},
 	{
 		{"enable_tidscan", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of TID scan plans."),
 			NULL
 		},
-		&enable_tidscan,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_tidscan,	true)
 	},
 	{
 		{"enable_sort", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of explicit sort steps."),
 			NULL
 		},
-		&enable_sort,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_sort, true)
 	},
 	{
 		{"enable_hashagg", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of hashed aggregation plans."),
 			NULL
 		},
-		&enable_hashagg,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_hashagg,	true)
 	},
 	{
 		{"enable_material", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of materialization."),
 			NULL
 		},
-		&enable_material,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_material, true)
 	},
 	{
 		{"enable_nestloop", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of nested-loop join plans."),
 			NULL
 		},
-		&enable_nestloop,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_nestloop, true)
 	},
 	{
 		{"enable_mergejoin", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of merge join plans."),
 			NULL
 		},
-		&enable_mergejoin,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_mergejoin, true)
 	},
 	{
 		{"enable_hashjoin", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of hash join plans."),
 			NULL
 		},
-		&enable_hashjoin,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_hashjoin, true)
 	},
 	{
 		{"enable_gathermerge", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of gather merge plans."),
 			NULL
 		},
-		&enable_gathermerge,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_gathermerge,	true)
 	},
 	{
 		{"enable_partition_wise_join", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables partition-wise join."),
 			NULL
 		},
-		&enable_partition_wise_join,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_partition_wise_join,	false)
 	},
 
 	{
@@ -927,9 +1204,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("This algorithm attempts to do planning without "
 						 "exhaustive searching.")
 		},
-		&enable_geqo,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enable_geqo, true)
 	},
 	{
 		/* Not for general use --- used by SET SESSION AUTHORIZATION */
@@ -938,45 +1213,39 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&session_auth_is_superuser,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(session_auth_is_superuser, false)
 	},
 	{
 		{"bonjour", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Enables advertising the server via Bonjour."),
 			NULL
 		},
-		&enable_bonjour,
+		NULL,
 		false,
-		check_bonjour, NULL, NULL
+		check_bonjour, NULL, NULL, enable_bonjourAddressHook
 	},
 	{
 		{"track_commit_timestamp", PGC_POSTMASTER, REPLICATION,
 			gettext_noop("Collects transaction commit time."),
 			NULL
 		},
-		&track_commit_timestamp,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(track_commit_timestamp,	false)
 	},
 	{
 		{"ssl", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Enables SSL connections."),
 			NULL
 		},
-		&EnableSSL,
+		NULL,
 		false,
-		check_ssl, NULL, NULL
+		check_ssl, NULL, NULL, EnableSSLAddressHook
 	},
 	{
 		{"ssl_prefer_server_ciphers", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Give priority to server ciphersuite order."),
 			NULL
 		},
-		&SSLPreferServerCiphers,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(SSLPreferServerCiphers,	true)
 	},
 	{
 		{"fsync", PGC_SIGHUP, WAL_SETTINGS,
@@ -986,9 +1255,7 @@ static struct config_bool ConfigureNamesBool[] =
 						 "that a database cluster will recover to a consistent state after "
 						 "an operating system or hardware crash.")
 		},
-		&enableFsync,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(enableFsync, true)
 	},
 	{
 		{"ignore_checksum_failure", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -1001,9 +1268,7 @@ static struct config_bool ConfigureNamesBool[] =
 						 "has an effect if checksums are enabled."),
 			GUC_NOT_IN_SAMPLE
 		},
-		&ignore_checksum_failure,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(ignore_checksum_failure, false)
 	},
 	{
 		{"zero_damaged_pages", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -1015,9 +1280,7 @@ static struct config_bool ConfigureNamesBool[] =
 						 "behavior will destroy data, namely all the rows on the damaged page."),
 			GUC_NOT_IN_SAMPLE
 		},
-		&zero_damaged_pages,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(zero_damaged_pages,	false)
 	},
 	{
 		{"full_page_writes", PGC_SIGHUP, WAL_SETTINGS,
@@ -1028,9 +1291,7 @@ static struct config_bool ConfigureNamesBool[] =
 						 "pages when first modified after a checkpoint to WAL so full recovery "
 						 "is possible.")
 		},
-		&fullPageWrites,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(fullPageWrites,	true)
 	},
 
 	{
@@ -1038,9 +1299,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Writes full pages to WAL when first modified after a checkpoint, even for a non-critical modifications."),
 			NULL
 		},
-		&wal_log_hints,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(wal_log_hints, false)
 	},
 
 	{
@@ -1048,9 +1307,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Compresses full-page writes written in WAL file."),
 			NULL
 		},
-		&wal_compression,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(wal_compression, false)
 	},
 
 	{
@@ -1058,36 +1315,28 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Logs each checkpoint."),
 			NULL
 		},
-		&log_checkpoints,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(log_checkpoints, false)
 	},
 	{
 		{"log_connections", PGC_SU_BACKEND, LOGGING_WHAT,
 			gettext_noop("Logs each successful connection."),
 			NULL
 		},
-		&Log_connections,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Log_connections, false)
 	},
 	{
 		{"log_disconnections", PGC_SU_BACKEND, LOGGING_WHAT,
 			gettext_noop("Logs end of a session, including duration."),
 			NULL
 		},
-		&Log_disconnections,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Log_disconnections,	false)
 	},
 	{
 		{"log_replication_commands", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Logs each replication command."),
 			NULL
 		},
-		&log_replication_commands,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(log_replication_commands, false)
 	},
 	{
 		{"debug_assertions", PGC_INTERNAL, PRESET_OPTIONS,
@@ -1095,13 +1344,13 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&assert_enabled,
+		DECLARE_BOOL_GUC(assert_enabled,
 #ifdef USE_ASSERT_CHECKING
-		true,
+		true
 #else
-		false,
+		false
 #endif
-		NULL, NULL, NULL
+		)
 	},
 
 	{
@@ -1109,18 +1358,14 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Terminate session on any error."),
 			NULL
 		},
-		&ExitOnAnyError,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(ExitOnAnyError,	false)
 	},
 	{
 		{"restart_after_crash", PGC_SIGHUP, ERROR_HANDLING_OPTIONS,
 			gettext_noop("Reinitialize server after backend crash."),
 			NULL
 		},
-		&restart_after_crash,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(restart_after_crash,	true)
 	},
 
 	{
@@ -1128,81 +1373,67 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Logs the duration of each completed SQL statement."),
 			NULL
 		},
-		&log_duration,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(log_duration,	false)
 	},
 	{
 		{"debug_print_parse", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Logs each query's parse tree."),
 			NULL
 		},
-		&Debug_print_parse,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Debug_print_parse,	false)
 	},
 	{
 		{"debug_print_rewritten", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Logs each query's rewritten parse tree."),
 			NULL
 		},
-		&Debug_print_rewritten,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Debug_print_rewritten,	false)
 	},
 	{
 		{"debug_print_plan", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Logs each query's execution plan."),
 			NULL
 		},
-		&Debug_print_plan,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Debug_print_plan,	false)
 	},
 	{
 		{"debug_pretty_print", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Indents parse and plan tree displays."),
 			NULL
 		},
-		&Debug_pretty_print,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Debug_pretty_print,	true)
 	},
 	{
 		{"log_parser_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes parser performance statistics to the server log."),
 			NULL
 		},
-		&log_parser_stats,
+		NULL,
 		false,
-		check_stage_log_stats, NULL, NULL
+		check_stage_log_stats, NULL, NULL, log_parser_statsAddressHook
 	},
 	{
 		{"log_planner_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes planner performance statistics to the server log."),
 			NULL
 		},
-		&log_planner_stats,
-		false,
-		check_stage_log_stats, NULL, NULL
+		DECLARE_BOOL_GUC(log_planner_stats,	false)
 	},
 	{
 		{"log_executor_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes executor performance statistics to the server log."),
 			NULL
 		},
-		&log_executor_stats,
-		false,
-		check_stage_log_stats, NULL, NULL
+		DECLARE_BOOL_GUC(log_executor_stats,	false)
 	},
 	{
 		{"log_statement_stats", PGC_SUSET, STATS_MONITORING,
 			gettext_noop("Writes cumulative performance statistics to the server log."),
 			NULL
 		},
-		&log_statement_stats,
+		NULL,
 		false,
-		check_log_stats, NULL, NULL
+		check_log_stats, NULL, NULL, log_statement_statsAddressHook
 	},
 #ifdef BTREE_BUILD_STATS
 	{
@@ -1211,9 +1442,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&log_btree_build_stats,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(log_btree_build_stats,	false)
 	},
 #endif
 
@@ -1224,27 +1453,21 @@ static struct config_bool ConfigureNamesBool[] =
 						 "executing command of each session, along with "
 						 "the time at which that command began execution.")
 		},
-		&pgstat_track_activities,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(pgstat_track_activities,	true)
 	},
 	{
 		{"track_counts", PGC_SUSET, STATS_COLLECTOR,
 			gettext_noop("Collects statistics on database activity."),
 			NULL
 		},
-		&pgstat_track_counts,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(pgstat_track_counts,	true)
 	},
 	{
 		{"track_io_timing", PGC_SUSET, STATS_COLLECTOR,
 			gettext_noop("Collects timing statistics for database I/O activity."),
 			NULL
 		},
-		&track_io_timing,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(track_io_timing,	false)
 	},
 
 	{
@@ -1252,13 +1475,13 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Updates the process title to show the active SQL command."),
 			gettext_noop("Enables updating of the process title every time a new SQL command is received by the server.")
 		},
-		&update_process_title,
+		DECLARE_BOOL_GUC(update_process_title,
 #ifdef WIN32
-		false,
+		false
 #else
-		true,
+		true
 #endif
-		NULL, NULL, NULL
+		)
 	},
 
 	{
@@ -1266,9 +1489,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Starts the autovacuum subprocess."),
 			NULL
 		},
-		&autovacuum_start_daemon,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(autovacuum_start_daemon,	true)
 	},
 
 	{
@@ -1277,9 +1498,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&Trace_notify,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Trace_notify,	false)
 	},
 
 #ifdef LOCK_DEBUG
@@ -1289,9 +1508,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&Trace_locks,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Trace_locks,	false)
 	},
 	{
 		{"trace_userlocks", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -1299,9 +1516,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&Trace_userlocks,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Trace_userlocks,	false)
 	},
 	{
 		{"trace_lwlocks", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -1309,9 +1524,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&Trace_lwlocks,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Trace_lwlocks,	false)
 	},
 	{
 		{"debug_deadlocks", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -1319,9 +1532,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&Debug_deadlocks,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Debug_deadlocks,	false)
 	},
 #endif
 
@@ -1330,9 +1541,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Logs long lock waits."),
 			NULL
 		},
-		&log_lock_waits,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(log_lock_waits,	false)
 	},
 
 	{
@@ -1343,9 +1552,7 @@ static struct config_bool ConfigureNamesBool[] =
 						 "can turn this on, but depending on your host name resolution "
 						 "setup it might impose a non-negligible performance penalty.")
 		},
-		&log_hostname,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(log_hostname,	false)
 	},
 	{
 		{"transform_null_equals", PGC_USERSET, COMPAT_OPTIONS_CLIENT,
@@ -1356,27 +1563,21 @@ static struct config_bool ConfigureNamesBool[] =
 						 "otherwise. The correct behavior of expr = NULL is to always "
 						 "return null (unknown).")
 		},
-		&Transform_null_equals,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Transform_null_equals,	false)
 	},
 	{
 		{"db_user_namespace", PGC_SIGHUP, CONN_AUTH_SECURITY,
 			gettext_noop("Enables per-database user names."),
 			NULL
 		},
-		&Db_user_namespace,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Db_user_namespace,	false)
 	},
 	{
 		{"default_transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default read-only status of new transactions."),
 			NULL
 		},
-		&DefaultXactReadOnly,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(DefaultXactReadOnly,	false)
 	},
 	{
 		{"transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
@@ -1384,18 +1585,16 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&XactReadOnly,
+		NULL,
 		false,
-		check_transaction_read_only, NULL, NULL
+		check_transaction_read_only, NULL, NULL, XactReadOnlyAddressHook
 	},
 	{
 		{"default_transaction_deferrable", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default deferrable status of new transactions."),
 			NULL
 		},
-		&DefaultXactDeferrable,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(DefaultXactDeferrable,	false)
 	},
 	{
 		{"transaction_deferrable", PGC_USERSET, CLIENT_CONN_STATEMENT,
@@ -1403,27 +1602,23 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&XactDeferrable,
+		NULL,
 		false,
-		check_transaction_deferrable, NULL, NULL
+		check_transaction_deferrable, NULL, NULL, XactDeferrableAddressHook
 	},
 	{
 		{"row_security", PGC_USERSET, CONN_AUTH_SECURITY,
 			gettext_noop("Enable row security."),
 			gettext_noop("When enabled, row security will be applied to all users.")
 		},
-		&row_security,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(row_security,	true)
 	},
 	{
 		{"check_function_bodies", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Check function bodies during CREATE FUNCTION."),
 			NULL
 		},
-		&check_function_bodies,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(check_function_bodies,	true)
 	},
 	{
 		{"array_nulls", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
@@ -1432,36 +1627,28 @@ static struct config_bool ConfigureNamesBool[] =
 						 "value means a null value; "
 						 "otherwise it is taken literally.")
 		},
-		&Array_nulls,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Array_nulls,	true)
 	},
 	{
 		{"default_with_oids", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Create new tables with OIDs by default."),
 			NULL
 		},
-		&default_with_oids,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(default_with_oids,	false)
 	},
 	{
 		{"logging_collector", PGC_POSTMASTER, LOGGING_WHERE,
 			gettext_noop("Start a subprocess to capture stderr output and/or csvlogs into log files."),
 			NULL
 		},
-		&Logging_collector,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Logging_collector,	false)
 	},
 	{
 		{"log_truncate_on_rotation", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Truncate existing log files of same name during log rotation."),
 			NULL
 		},
-		&Log_truncate_on_rotation,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(Log_truncate_on_rotation,	false)
 	},
 
 #ifdef TRACE_SORT
@@ -1471,9 +1658,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&trace_sort,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(trace_sort,	false)
 	},
 #endif
 
@@ -1485,9 +1670,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&trace_syncscan,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(trace_syncscan,	false)
 	},
 #endif
 
@@ -1500,9 +1683,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&optimize_bounded_sort,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(optimize_bounded_sort,	true)
 	},
 #endif
 
@@ -1513,9 +1694,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&XLOG_DEBUG,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(XLOG_DEBUG,	false)
 	},
 #endif
 
@@ -1525,9 +1704,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&integer_datetimes,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(integer_datetimes,	true)
 	},
 
 	{
@@ -1535,9 +1712,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Sets whether Kerberos and GSSAPI user names should be treated as case-insensitive."),
 			NULL
 		},
-		&pg_krb_caseins_users,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(pg_krb_caseins_users,	false)
 	},
 
 	{
@@ -1545,9 +1720,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Warn about backslash escapes in ordinary string literals."),
 			NULL
 		},
-		&escape_string_warning,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(escape_string_warning,	true)
 	},
 
 	{
@@ -1556,9 +1729,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_REPORT
 		},
-		&standard_conforming_strings,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(standard_conforming_strings,	true)
 	},
 
 	{
@@ -1566,9 +1737,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Enable synchronized sequential scans."),
 			NULL
 		},
-		&synchronize_seqscans,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(synchronize_seqscans,	true)
 	},
 
 	{
@@ -1576,9 +1745,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Allows connections and queries during recovery."),
 			NULL
 		},
-		&EnableHotStandby,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(EnableHotStandby,	true)
 	},
 
 	{
@@ -1586,9 +1753,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Allows feedback from a hot standby to the primary that will avoid query conflicts."),
 			NULL
 		},
-		&hot_standby_feedback,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(hot_standby_feedback,	false)
 	},
 
 	{
@@ -1597,9 +1762,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&allowSystemTableMods,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(allowSystemTableMods,	false)
 	},
 
 	{
@@ -1609,9 +1772,7 @@ static struct config_bool ConfigureNamesBool[] =
 						 "to use.  The worst consequence is slowness."),
 			GUC_NOT_IN_SAMPLE
 		},
-		&IgnoreSystemIndexes,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(IgnoreSystemIndexes,	false)
 	},
 
 	{
@@ -1620,9 +1781,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Skips privilege checks when reading or modifying large objects, "
 						 "for compatibility with PostgreSQL releases prior to 9.0.")
 		},
-		&lo_compat_privileges,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(lo_compat_privileges,	false)
 	},
 
 	{
@@ -1630,9 +1789,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Emit a warning for constructs that changed meaning since PostgreSQL 9.4."),
 			NULL,
 		},
-		&operator_precedence_warning,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(operator_precedence_warning,	false)
 	},
 
 	{
@@ -1640,9 +1797,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("When generating SQL fragments, quote all identifiers."),
 			NULL,
 		},
-		&quote_all_identifiers,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(quote_all_identifiers,	false)
 	},
 
 	{
@@ -1651,9 +1806,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&data_checksums,
-		false,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(data_checksums,	false)
 	},
 
 	{
@@ -1661,9 +1814,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Add sequence number to syslog messages to avoid duplicate suppression."),
 			NULL
 		},
-		&syslog_sequence_numbers,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(syslog_sequence_numbers,	true)
 	},
 
 	{
@@ -1671,9 +1822,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Split messages sent to syslog by lines and to fit into 1024 bytes."),
 			NULL
 		},
-		&syslog_split_messages,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(syslog_split_messages,	true)
 	},
 
 	{
@@ -1681,9 +1830,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("Controls whether Gather and Gather Merge also run subplans."),
 			gettext_noop("Should gather nodes also run subplans, or just gather tuples?")
 		},
-		&parallel_leader_participation,
-		true,
-		NULL, NULL, NULL
+		DECLARE_BOOL_GUC(parallel_leader_participation,	true)
 	},
 
 	/* End-of-list marker */
@@ -1702,9 +1849,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_S
 		},
-		&XLogArchiveTimeout,
-		0, 0, INT_MAX / 2,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(XLogArchiveTimeout,	0, 0, INT_MAX / 2)
 	},
 	{
 		{"post_auth_delay", PGC_BACKEND, DEVELOPER_OPTIONS,
@@ -1712,9 +1857,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("This allows attaching a debugger to the process."),
 			GUC_NOT_IN_SAMPLE | GUC_UNIT_S
 		},
-		&PostAuthDelay,
-		0, 0, INT_MAX / 1000000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(PostAuthDelay,	0, 0, INT_MAX / 1000000)
 	},
 	{
 		{"default_statistics_target", PGC_USERSET, QUERY_TUNING_OTHER,
@@ -1722,9 +1865,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("This applies to table columns that have not had a "
 						 "column-specific target set via ALTER TABLE SET STATISTICS.")
 		},
-		&default_statistics_target,
-		100, 1, 10000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(default_statistics_target,	100, 1, 10000)
 	},
 	{
 		{"from_collapse_limit", PGC_USERSET, QUERY_TUNING_OTHER,
@@ -1734,9 +1875,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "queries if the resulting FROM list would have no more than "
 						 "this many items.")
 		},
-		&from_collapse_limit,
-		8, 1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(from_collapse_limit,	8, 1, INT_MAX)
 	},
 	{
 		{"join_collapse_limit", PGC_USERSET, QUERY_TUNING_OTHER,
@@ -1746,45 +1885,35 @@ static struct config_int ConfigureNamesInt[] =
 						 "constructs into lists of FROM items whenever a "
 						 "list of no more than this many items would result.")
 		},
-		&join_collapse_limit,
-		8, 1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(join_collapse_limit,	8, 1, INT_MAX)
 	},
 	{
 		{"geqo_threshold", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("Sets the threshold of FROM items beyond which GEQO is used."),
 			NULL
 		},
-		&geqo_threshold,
-		12, 2, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(geqo_threshold,	12, 2, INT_MAX)
 	},
 	{
 		{"geqo_effort", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("GEQO: effort is used to set the default for other GEQO parameters."),
 			NULL
 		},
-		&Geqo_effort,
-		DEFAULT_GEQO_EFFORT, MIN_GEQO_EFFORT, MAX_GEQO_EFFORT,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(Geqo_effort,	DEFAULT_GEQO_EFFORT, MIN_GEQO_EFFORT, MAX_GEQO_EFFORT)
 	},
 	{
 		{"geqo_pool_size", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("GEQO: number of individuals in the population."),
 			gettext_noop("Zero selects a suitable default value.")
 		},
-		&Geqo_pool_size,
-		0, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(Geqo_pool_size,	0, 0, INT_MAX)
 	},
 	{
 		{"geqo_generations", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("GEQO: number of iterations of the algorithm."),
 			gettext_noop("Zero selects a suitable default value.")
 		},
-		&Geqo_generations,
-		0, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(Geqo_generations,	0, 0, INT_MAX)
 	},
 
 	{
@@ -1794,9 +1923,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&DeadlockTimeout,
-		1000, 1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(DeadlockTimeout,	1000, 1, INT_MAX)
 	},
 
 	{
@@ -1805,9 +1932,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&max_standby_archive_delay,
-		30 * 1000, -1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_standby_archive_delay,	30 * 1000, -1, INT_MAX)
 	},
 
 	{
@@ -1816,9 +1941,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&max_standby_streaming_delay,
-		30 * 1000, -1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_standby_streaming_delay,	30 * 1000, -1, INT_MAX)
 	},
 
 	{
@@ -1827,9 +1950,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_S
 		},
-		&wal_receiver_status_interval,
-		10, 0, INT_MAX / 1000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(wal_receiver_status_interval, 10, 0, INT_MAX / 1000)
 	},
 
 	{
@@ -1838,9 +1959,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&wal_receiver_timeout,
-		60 * 1000, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(wal_receiver_timeout, 60 * 1000, 0, INT_MAX)
 	},
 
 	{
@@ -1848,9 +1967,9 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of concurrent connections."),
 			NULL
 		},
-		&MaxConnections,
+		NULL,
 		100, 1, MAX_BACKENDS,
-		check_maxconnections, NULL, NULL
+		check_maxconnections, NULL, NULL, MaxConnectionsAddressHook
 	},
 
 	{
@@ -1858,9 +1977,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the number of connection slots reserved for superusers."),
 			NULL
 		},
-		&ReservedBackends,
-		3, 0, MAX_BACKENDS,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(ReservedBackends,	3, 0, MAX_BACKENDS)
 	},
 
 	/*
@@ -1873,9 +1990,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BLOCKS
 		},
-		&NBuffers,
-		1024, 16, INT_MAX / 2,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(NBuffers,	1024, 16, INT_MAX / 2)
 	},
 
 	{
@@ -1884,9 +1999,9 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BLOCKS
 		},
-		&num_temp_buffers,
+		NULL,
 		1024, 100, INT_MAX / 2,
-		check_temp_buffers, NULL, NULL
+		check_temp_buffers, NULL, NULL, num_temp_buffersAddressHook
 	},
 
 	{
@@ -1894,9 +2009,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the TCP port the server listens on."),
 			NULL
 		},
-		&PostPortNumber,
-		DEF_PGPORT, 1, 65535,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(PostPortNumber,	DEF_PGPORT, 1, 65535)
 	},
 
 	{
@@ -1909,9 +2022,9 @@ static struct config_int ConfigureNamesInt[] =
 						 "(To use the customary octal format the number must "
 						 "start with a 0 (zero).)")
 		},
-		&Unix_socket_permissions,
+		NULL,
 		0777, 0000, 0777,
-		NULL, NULL, show_unix_socket_permissions
+		NULL, NULL, show_unix_socket_permissions, Unix_socket_permissionsAddressHook
 	},
 
 	{
@@ -1923,9 +2036,9 @@ static struct config_int ConfigureNamesInt[] =
 						 "(To use the customary octal format the number must "
 						 "start with a 0 (zero).)")
 		},
-		&Log_file_mode,
+		NULL,
 		0600, 0000, 0777,
-		NULL, NULL, show_log_file_mode
+		NULL, NULL, show_log_file_mode, Log_file_modeAddressHook
 	},
 
 	{
@@ -1936,9 +2049,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "temporary disk files."),
 			GUC_UNIT_KB
 		},
-		&work_mem,
-		4096, 64, MAX_KILOBYTES,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(work_mem,	4096, 64, MAX_KILOBYTES)
 	},
 
 	{
@@ -1947,9 +2058,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("This includes operations such as VACUUM and CREATE INDEX."),
 			GUC_UNIT_KB
 		},
-		&maintenance_work_mem,
-		65536, 1024, MAX_KILOBYTES,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(maintenance_work_mem,	65536, 1024, MAX_KILOBYTES)
 	},
 
 	/*
@@ -1963,9 +2072,9 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_KB
 		},
-		&max_stack_depth,
+		NULL,
 		100, 100, MAX_KILOBYTES,
-		check_max_stack_depth, assign_max_stack_depth, NULL
+		check_max_stack_depth, assign_max_stack_depth, NULL, max_stack_depthAddressHook
 	},
 
 	{
@@ -1974,9 +2083,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("-1 means no limit."),
 			GUC_UNIT_KB
 		},
-		&temp_file_limit,
-		-1, -1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(temp_file_limit,	-1, -1, INT_MAX)
 	},
 
 	{
@@ -1984,9 +2091,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Vacuum cost for a page found in the buffer cache."),
 			NULL
 		},
-		&VacuumCostPageHit,
-		1, 0, 10000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(VacuumCostPageHit,	1, 0, 10000)
 	},
 
 	{
@@ -1994,9 +2099,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Vacuum cost for a page not found in the buffer cache."),
 			NULL
 		},
-		&VacuumCostPageMiss,
-		10, 0, 10000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(VacuumCostPageMiss,	10, 0, 10000)
 	},
 
 	{
@@ -2004,9 +2107,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Vacuum cost for a page dirtied by vacuum."),
 			NULL
 		},
-		&VacuumCostPageDirty,
-		20, 0, 10000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(VacuumCostPageDirty,	20, 0, 10000)
 	},
 
 	{
@@ -2014,9 +2115,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Vacuum cost amount available before napping."),
 			NULL
 		},
-		&VacuumCostLimit,
-		200, 1, 10000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(VacuumCostLimit,	200, 1, 10000)
 	},
 
 	{
@@ -2025,9 +2124,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&VacuumCostDelay,
-		0, 0, 100,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(VacuumCostDelay,	0, 0, 100)
 	},
 
 	{
@@ -2036,9 +2133,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&autovacuum_vac_cost_delay,
-		20, -1, 100,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(autovacuum_vac_cost_delay,	20, -1, 100)
 	},
 
 	{
@@ -2046,9 +2141,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Vacuum cost amount available before napping, for autovacuum."),
 			NULL
 		},
-		&autovacuum_vac_cost_limit,
-		-1, -1, 10000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(autovacuum_vac_cost_limit,	-1, -1, 10000)
 	},
 
 	{
@@ -2056,9 +2149,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of simultaneously open files for each server process."),
 			NULL
 		},
-		&max_files_per_process,
-		1000, 25, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_files_per_process,	1000, 25, INT_MAX)
 	},
 
 	/*
@@ -2069,9 +2160,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of simultaneously prepared transactions."),
 			NULL
 		},
-		&max_prepared_xacts,
-		0, 0, MAX_BACKENDS,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_prepared_xacts,	0, 0, MAX_BACKENDS)
 	},
 
 #ifdef LOCK_DEBUG
@@ -2081,9 +2170,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Is used to avoid output on system tables."),
 			GUC_NOT_IN_SAMPLE
 		},
-		&Trace_lock_oidmin,
-		FirstNormalObjectId, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(Trace_lock_oidmin,	FirstNormalObjectId, 0, INT_MAX)
 	},
 	{
 		{"trace_lock_table", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -2091,9 +2178,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE
 		},
-		&Trace_lock_table,
-		0, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(Trace_lock_table,	0, 0, INT_MAX)
 	},
 #endif
 
@@ -2103,9 +2188,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("A value of 0 turns off the timeout."),
 			GUC_UNIT_MS
 		},
-		&StatementTimeout,
-		0, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(StatementTimeout,	0, 0, INT_MAX)
 	},
 
 	{
@@ -2114,9 +2197,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("A value of 0 turns off the timeout."),
 			GUC_UNIT_MS
 		},
-		&LockTimeout,
-		0, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(LockTimeout,	0, 0, INT_MAX)
 	},
 
 	{
@@ -2125,9 +2206,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("A value of 0 turns off the timeout."),
 			GUC_UNIT_MS
 		},
-		&IdleInTransactionSessionTimeout,
-		0, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(IdleInTransactionSessionTimeout,	0, 0, INT_MAX)
 	},
 
 	{
@@ -2135,9 +2214,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Minimum age at which VACUUM should freeze a table row."),
 			NULL
 		},
-		&vacuum_freeze_min_age,
-		50000000, 0, 1000000000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(vacuum_freeze_min_age,	50000000, 0, 1000000000)
 	},
 
 	{
@@ -2145,9 +2222,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Age at which VACUUM should scan whole table to freeze tuples."),
 			NULL
 		},
-		&vacuum_freeze_table_age,
-		150000000, 0, 2000000000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(vacuum_freeze_table_age,	150000000, 0, 2000000000)
 	},
 
 	{
@@ -2155,9 +2230,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Minimum age at which VACUUM should freeze a MultiXactId in a table row."),
 			NULL
 		},
-		&vacuum_multixact_freeze_min_age,
-		5000000, 0, 1000000000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(vacuum_multixact_freeze_min_age,	5000000, 0, 1000000000)
 	},
 
 	{
@@ -2165,9 +2238,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Multixact age at which VACUUM should scan whole table to freeze tuples."),
 			NULL
 		},
-		&vacuum_multixact_freeze_table_age,
-		150000000, 0, 2000000000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(vacuum_multixact_freeze_table_age,	150000000, 0, 2000000000)
 	},
 
 	{
@@ -2175,9 +2246,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Number of transactions by which VACUUM and HOT cleanup should be deferred, if any."),
 			NULL
 		},
-		&vacuum_defer_cleanup_age,
-		0, 0, 1000000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(vacuum_defer_cleanup_age,	0, 0, 1000000)
 	},
 
 	/*
@@ -2190,9 +2259,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "at most max_locks_per_transaction * max_connections distinct "
 						 "objects will need to be locked at any one time.")
 		},
-		&max_locks_per_xact,
-		64, 10, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_locks_per_xact,	64, 10, INT_MAX)
 	},
 
 	{
@@ -2202,9 +2269,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "at most max_pred_locks_per_transaction * max_connections distinct "
 						 "objects will need to be locked at any one time.")
 		},
-		&max_predicate_locks_per_xact,
-		64, 10, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_predicate_locks_per_xact,	64, 10, INT_MAX)
 	},
 
 	{
@@ -2213,9 +2278,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("If more than this total of pages and tuples in the same relation are locked "
 						 "by a connection, those locks are replaced by a relation-level lock.")
 		},
-		&max_predicate_locks_per_relation,
-		-2, INT_MIN, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_predicate_locks_per_relation,	-2, INT_MIN, INT_MAX)
 	},
 
 	{
@@ -2224,9 +2287,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("If more than this number of tuples on the same page are locked "
 						 "by a connection, those locks are replaced by a page-level lock.")
 		},
-		&max_predicate_locks_per_page,
-		2, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_predicate_locks_per_page,	2, 0, INT_MAX)
 	},
 
 	{
@@ -2235,9 +2296,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_S
 		},
-		&AuthenticationTimeout,
-		60, 1, 600,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(AuthenticationTimeout,	60, 1, 600)
 	},
 
 	{
@@ -2247,9 +2306,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("This allows attaching a debugger to the process."),
 			GUC_NOT_IN_SAMPLE | GUC_UNIT_S
 		},
-		&PreAuthDelay,
-		0, 0, 60,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(PreAuthDelay,	0, 0, 60)
 	},
 
 	{
@@ -2257,9 +2314,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the number of WAL files held for standby servers."),
 			NULL
 		},
-		&wal_keep_segments,
-		0, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(wal_keep_segments,	0, 0, INT_MAX)
 	},
 
 	{
@@ -2268,10 +2323,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MB
 		},
-		&min_wal_size_mb,
-		DEFAULT_MIN_WAL_SEGS * (DEFAULT_XLOG_SEG_SIZE / (1024 * 1024)),
-		2, MAX_KILOBYTES,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(min_wal_size_mb,	DEFAULT_MIN_WAL_SEGS * (DEFAULT_XLOG_SEG_SIZE / (1024 * 1024)),	2, MAX_KILOBYTES)
 	},
 
 	{
@@ -2280,10 +2332,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MB
 		},
-		&max_wal_size_mb,
-		DEFAULT_MAX_WAL_SEGS * (DEFAULT_XLOG_SEG_SIZE / (1024 * 1024)),
-		2, MAX_KILOBYTES,
-		NULL, assign_max_wal_size, NULL
+		DECLARE_INT_GUC(max_wal_size_mb,	DEFAULT_MAX_WAL_SEGS * (DEFAULT_XLOG_SEG_SIZE / (1024 * 1024)),		2, MAX_KILOBYTES)
 	},
 
 	{
@@ -2292,9 +2341,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_S
 		},
-		&CheckPointTimeout,
-		300, 30, 86400,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(CheckPointTimeout,	300, 30, 86400)
 	},
 
 	{
@@ -2306,9 +2353,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "frequently than this number of seconds. Zero turns off the warning."),
 			GUC_UNIT_S
 		},
-		&CheckPointWarning,
-		30, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(CheckPointWarning,	30, 0, INT_MAX)
 	},
 
 	{
@@ -2317,9 +2362,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BLOCKS
 		},
-		&checkpoint_flush_after,
-		DEFAULT_CHECKPOINT_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(checkpoint_flush_after,	DEFAULT_CHECKPOINT_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES)
 	},
 
 	{
@@ -2328,9 +2371,9 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_XBLOCKS
 		},
-		&XLOGbuffers,
+		NULL,
 		-1, -1, (INT_MAX / XLOG_BLCKSZ),
-		check_wal_buffers, NULL, NULL
+		check_wal_buffers, NULL, NULL, XLOGbuffersAddressHook
 	},
 
 	{
@@ -2339,9 +2382,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&WalWriterDelay,
-		200, 1, 10000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(WalWriterDelay,	200, 1, 10000)
 	},
 
 	{
@@ -2350,9 +2391,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_XBLOCKS
 		},
-		&WalWriterFlushAfter,
-		(1024 * 1024) / XLOG_BLCKSZ, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(WalWriterFlushAfter,	(1024 * 1024) / XLOG_BLCKSZ, 0, INT_MAX)
 	},
 
 	{
@@ -2361,9 +2400,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of simultaneously running WAL sender processes."),
 			NULL
 		},
-		&max_wal_senders,
-		10, 0, MAX_BACKENDS,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_wal_senders,	10, 0, MAX_BACKENDS)
 	},
 
 	{
@@ -2372,9 +2409,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of simultaneously defined replication slots."),
 			NULL
 		},
-		&max_replication_slots,
-		10, 0, MAX_BACKENDS /* XXX? */ ,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_replication_slots,	10, 0, MAX_BACKENDS /* XXX? */ )
 	},
 
 	{
@@ -2383,9 +2418,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&wal_sender_timeout,
-		60 * 1000, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(wal_sender_timeout,	60 * 1000, 0, INT_MAX)
 	},
 
 	{
@@ -2395,9 +2428,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 			/* we have no microseconds designation, so can't supply units here */
 		},
-		&CommitDelay,
-		0, 0, 100000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(CommitDelay,	0, 0, 100000)
 	},
 
 	{
@@ -2406,9 +2437,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "commit_delay."),
 			NULL
 		},
-		&CommitSiblings,
-		5, 0, 1000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(CommitSiblings,	5, 0, 1000)
 	},
 
 	{
@@ -2418,9 +2447,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "The parameter value is added to the standard number of digits "
 						 "(FLT_DIG or DBL_DIG as appropriate).")
 		},
-		&extra_float_digits,
-		0, -15, 3,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(extra_float_digits,	0, -15, 3)
 	},
 
 	{
@@ -2430,9 +2457,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Zero prints all queries. -1 turns this feature off."),
 			GUC_UNIT_MS
 		},
-		&log_min_duration_statement,
-		-1, -1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(log_min_duration_statement,	-1, -1, INT_MAX)
 	},
 
 	{
@@ -2442,9 +2467,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Zero prints all actions. -1 turns autovacuum logging off."),
 			GUC_UNIT_MS
 		},
-		&Log_autovacuum_min_duration,
-		-1, -1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(Log_autovacuum_min_duration,	-1, -1, INT_MAX)
 	},
 
 	{
@@ -2453,9 +2476,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&BgWriterDelay,
-		200, 10, 10000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(BgWriterDelay,	200, 10, 10000)
 	},
 
 	{
@@ -2463,9 +2484,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Background writer maximum number of LRU pages to flush per round."),
 			NULL
 		},
-		&bgwriter_lru_maxpages,
-		100, 0, INT_MAX / 2,	/* Same upper limit as shared_buffers */
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(bgwriter_lru_maxpages,	100, 0, INT_MAX / 2)	/* Same upper limit as shared_buffers */
 	},
 
 	{
@@ -2474,9 +2493,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BLOCKS
 		},
-		&bgwriter_flush_after,
-		DEFAULT_BGWRITER_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(bgwriter_flush_after,	DEFAULT_BGWRITER_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES)
 	},
 
 	{
@@ -2486,13 +2503,13 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Number of simultaneous requests that can be handled efficiently by the disk subsystem."),
 			gettext_noop("For RAID arrays, this should be approximately the number of drive spindles in the array.")
 		},
-		&effective_io_concurrency,
+		NULL,
 #ifdef USE_PREFETCH
 		1, 0, MAX_IO_CONCURRENCY,
 #else
 		0, 0, 0,
 #endif
-		check_effective_io_concurrency, assign_effective_io_concurrency, NULL
+		check_effective_io_concurrency, assign_effective_io_concurrency, NULL, effective_io_concurrencyAddressHook
 	},
 
 	{
@@ -2501,9 +2518,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BLOCKS
 		},
-		&backend_flush_after,
-		DEFAULT_BACKEND_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(backend_flush_after,	DEFAULT_BACKEND_FLUSH_AFTER, 0, WRITEBACK_MAX_PENDING_FLUSHES)
 	},
 
 	{
@@ -2513,9 +2528,9 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Maximum number of concurrent worker processes."),
 			NULL,
 		},
-		&max_worker_processes,
+		NULL,
 		8, 0, MAX_BACKENDS,
-		check_max_worker_processes, NULL, NULL
+		check_max_worker_processes, NULL, NULL, max_worker_processesAddressHook
 	},
 
 	{
@@ -2525,9 +2540,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Maximum number of logical replication worker processes."),
 			NULL,
 		},
-		&max_logical_replication_workers,
-		4, 0, MAX_BACKENDS,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_logical_replication_workers,	4, 0, MAX_BACKENDS)
 	},
 
 	{
@@ -2537,9 +2550,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Maximum number of table synchronization workers per subscription."),
 			NULL,
 		},
-		&max_sync_workers_per_subscription,
-		2, 0, MAX_BACKENDS,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_sync_workers_per_subscription,	2, 0, MAX_BACKENDS)
 	},
 
 	{
@@ -2548,9 +2559,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MIN
 		},
-		&Log_RotationAge,
-		HOURS_PER_DAY * MINS_PER_HOUR, 0, INT_MAX / SECS_PER_MINUTE,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(Log_RotationAge,	HOURS_PER_DAY * MINS_PER_HOUR, 0, INT_MAX / SECS_PER_MINUTE)
 	},
 
 	{
@@ -2559,9 +2568,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_KB
 		},
-		&Log_RotationSize,
-		10 * 1024, 0, INT_MAX / 1024,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(Log_RotationSize,	10 * 1024, 0, INT_MAX / 1024)
 	},
 
 	{
@@ -2570,9 +2577,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&max_function_args,
-		FUNC_MAX_ARGS, FUNC_MAX_ARGS, FUNC_MAX_ARGS,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_function_args,	FUNC_MAX_ARGS, FUNC_MAX_ARGS, FUNC_MAX_ARGS)
 	},
 
 	{
@@ -2581,9 +2586,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&max_index_keys,
-		INDEX_MAX_KEYS, INDEX_MAX_KEYS, INDEX_MAX_KEYS,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_index_keys,	INDEX_MAX_KEYS, INDEX_MAX_KEYS, INDEX_MAX_KEYS)
 	},
 
 	{
@@ -2592,9 +2595,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&max_identifier_length,
-		NAMEDATALEN - 1, NAMEDATALEN - 1, NAMEDATALEN - 1,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_identifier_length,	NAMEDATALEN - 1, NAMEDATALEN - 1, NAMEDATALEN - 1)
 	},
 
 	{
@@ -2603,9 +2604,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&block_size,
-		BLCKSZ, BLCKSZ, BLCKSZ,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(block_size,	BLCKSZ, BLCKSZ, BLCKSZ)
 	},
 
 	{
@@ -2614,9 +2613,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BLOCKS | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&segment_size,
-		RELSEG_SIZE, RELSEG_SIZE, RELSEG_SIZE,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(segment_size,	RELSEG_SIZE, RELSEG_SIZE, RELSEG_SIZE)
 	},
 
 	{
@@ -2625,9 +2622,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&wal_block_size,
-		XLOG_BLCKSZ, XLOG_BLCKSZ, XLOG_BLCKSZ,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(wal_block_size,	XLOG_BLCKSZ, XLOG_BLCKSZ, XLOG_BLCKSZ)
 	},
 
 	{
@@ -2637,9 +2632,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_MS
 		},
-		&wal_retrieve_retry_interval,
-		5000, 1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(wal_retrieve_retry_interval,	5000, 1, INT_MAX)
 	},
 
 	{
@@ -2648,11 +2641,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BYTE | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&wal_segment_size,
-		DEFAULT_XLOG_SEG_SIZE,
-		WalSegMinSize,
-		WalSegMaxSize,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(wal_segment_size,	DEFAULT_XLOG_SEG_SIZE, WalSegMinSize, WalSegMaxSize)
 	},
 
 	{
@@ -2661,27 +2650,21 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_S
 		},
-		&autovacuum_naptime,
-		60, 1, INT_MAX / 1000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(autovacuum_naptime,	60, 1, INT_MAX / 1000)
 	},
 	{
 		{"autovacuum_vacuum_threshold", PGC_SIGHUP, AUTOVACUUM,
 			gettext_noop("Minimum number of tuple updates or deletes prior to vacuum."),
 			NULL
 		},
-		&autovacuum_vac_thresh,
-		50, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(autovacuum_vac_thresh,	50, 0, INT_MAX)
 	},
 	{
 		{"autovacuum_analyze_threshold", PGC_SIGHUP, AUTOVACUUM,
 			gettext_noop("Minimum number of tuple inserts, updates, or deletes prior to analyze."),
 			NULL
 		},
-		&autovacuum_anl_thresh,
-		50, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(autovacuum_anl_thresh,	50, 0, INT_MAX)
 	},
 	{
 		/* see varsup.c for why this is PGC_POSTMASTER not PGC_SIGHUP */
@@ -2689,10 +2672,8 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Age at which to autovacuum a table to prevent transaction ID wraparound."),
 			NULL
 		},
-		&autovacuum_freeze_max_age,
 		/* see pg_resetwal if you change the upper-limit value */
-		200000000, 100000, 2000000000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(autovacuum_freeze_max_age,	200000000, 100000, 2000000000)
 	},
 	{
 		/* see multixact.c for why this is PGC_POSTMASTER not PGC_SIGHUP */
@@ -2700,9 +2681,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Multixact age at which to autovacuum a table to prevent multixact wraparound."),
 			NULL
 		},
-		&autovacuum_multixact_freeze_max_age,
-		400000000, 10000, 2000000000,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(autovacuum_multixact_freeze_max_age,	400000000, 10000, 2000000000)
 	},
 	{
 		/* see max_connections */
@@ -2710,9 +2689,9 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of simultaneously running autovacuum worker processes."),
 			NULL
 		},
-		&autovacuum_max_workers,
+		NULL,
 		3, 1, MAX_BACKENDS,
-		check_autovacuum_max_workers, NULL, NULL
+		check_autovacuum_max_workers, NULL, NULL, autovacuum_max_workersAddressHook
 	},
 
 	{
@@ -2720,9 +2699,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of parallel processes per executor node."),
 			NULL
 		},
-		&max_parallel_workers_per_gather,
-		2, 0, MAX_PARALLEL_WORKER_LIMIT,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_parallel_workers_per_gather,	2, 0, MAX_PARALLEL_WORKER_LIMIT)
 	},
 
 	{
@@ -2730,9 +2707,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of parallel workers than can be active at one time."),
 			NULL
 		},
-		&max_parallel_workers,
-		8, 0, MAX_PARALLEL_WORKER_LIMIT,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(max_parallel_workers,	8, 0, MAX_PARALLEL_WORKER_LIMIT)
 	},
 
 	{
@@ -2741,9 +2716,9 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_KB
 		},
-		&autovacuum_work_mem,
+		NULL,
 		-1, -1, MAX_KILOBYTES,
-		check_autovacuum_work_mem, NULL, NULL
+		check_autovacuum_work_mem, NULL, NULL, autovacuum_work_memAddressHook
 	},
 
 	{
@@ -2752,9 +2727,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("A value of -1 disables this feature."),
 			GUC_UNIT_MIN
 		},
-		&old_snapshot_threshold,
-		-1, -1, MINS_PER_HOUR * HOURS_PER_DAY * 60,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(old_snapshot_threshold,	-1, -1, MINS_PER_HOUR * HOURS_PER_DAY * 60)
 	},
 
 	{
@@ -2763,9 +2736,9 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_S
 		},
-		&tcp_keepalives_idle,
+		NULL,
 		0, 0, INT_MAX,
-		NULL, assign_tcp_keepalives_idle, show_tcp_keepalives_idle
+		NULL, assign_tcp_keepalives_idle, show_tcp_keepalives_idle, tcp_keepalives_idleAddressHook
 	},
 
 	{
@@ -2774,9 +2747,9 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_S
 		},
-		&tcp_keepalives_interval,
+		NULL,
 		0, 0, INT_MAX,
-		NULL, assign_tcp_keepalives_interval, show_tcp_keepalives_interval
+		NULL, assign_tcp_keepalives_interval, show_tcp_keepalives_interval, tcp_keepalives_intervalAddressHook
 	},
 
 	{
@@ -2785,9 +2758,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE,
 		},
-		&ssl_renegotiation_limit,
-		0, 0, 0,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(ssl_renegotiation_limit,	0, 0, 0)
 	},
 
 	{
@@ -2797,9 +2768,9 @@ static struct config_int ConfigureNamesInt[] =
 						 "lost before a connection is considered dead. A value of 0 uses the "
 						 "system default."),
 		},
-		&tcp_keepalives_count,
+		NULL,
 		0, 0, INT_MAX,
-		NULL, assign_tcp_keepalives_count, show_tcp_keepalives_count
+		NULL, assign_tcp_keepalives_count, show_tcp_keepalives_count, &tcp_keepalives_countAddressHook
 	},
 
 	{
@@ -2808,9 +2779,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			0
 		},
-		&GinFuzzySearchLimit,
-		0, 0, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(GinFuzzySearchLimit,	0, 0, INT_MAX)
 	},
 
 	{
@@ -2821,9 +2790,7 @@ static struct config_int ConfigureNamesInt[] =
 						 "pages, which are normally 8 kB each."),
 			GUC_UNIT_BLOCKS,
 		},
-		&effective_cache_size,
-		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(effective_cache_size,	DEFAULT_EFFECTIVE_CACHE_SIZE, 1, INT_MAX)
 	},
 
 	{
@@ -2832,9 +2799,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("If the planner estimates that it will read a number of table pages too small to reach this limit, a parallel scan will not be considered."),
 			GUC_UNIT_BLOCKS,
 		},
-		&min_parallel_table_scan_size,
-		(8 * 1024 * 1024) / BLCKSZ, 0, INT_MAX / 3,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(min_parallel_table_scan_size,	(8 * 1024 * 1024) / BLCKSZ, 0, INT_MAX / 3)
 	},
 
 	{
@@ -2843,9 +2808,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("If the planner estimates that it will read a number of index pages too small to reach this limit, a parallel scan will not be considered."),
 			GUC_UNIT_BLOCKS,
 		},
-		&min_parallel_index_scan_size,
-		(512 * 1024) / BLCKSZ, 0, INT_MAX / 3,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(min_parallel_index_scan_size,	(512 * 1024) / BLCKSZ, 0, INT_MAX / 3)
 	},
 
 	{
@@ -2855,9 +2818,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&server_version_num,
-		PG_VERSION_NUM, PG_VERSION_NUM, PG_VERSION_NUM,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(server_version_num,	PG_VERSION_NUM, PG_VERSION_NUM, PG_VERSION_NUM)
 	},
 
 	{
@@ -2866,9 +2827,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Zero logs all files. The default is -1 (turning this feature off)."),
 			GUC_UNIT_KB
 		},
-		&log_temp_files,
-		-1, -1, INT_MAX,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(log_temp_files,	-1, -1, INT_MAX)
 	},
 
 	{
@@ -2877,9 +2836,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BYTE
 		},
-		&pgstat_track_activity_query_size,
-		1024, 100, 102400,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(pgstat_track_activity_query_size,	1024, 100, 102400)
 	},
 
 	{
@@ -2888,9 +2845,16 @@ static struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_KB
 		},
-		&gin_pending_list_limit,
-		4096, 64, MAX_KILOBYTES,
-		NULL, NULL, NULL
+		DECLARE_INT_GUC(gin_pending_list_limit,	4096, 64, MAX_KILOBYTES)
+	},
+
+	{
+		{"thread_stack_size", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("Size of thread stack."),
+			NULL,
+			GUC_UNIT_BYTE
+		},
+		DECLARE_INT_GUC(thread_stack_size, 1024*1024, 8*1024, 128*1024*1024)
 	},
 
 	/* End-of-list marker */
@@ -2908,9 +2872,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "sequentially fetched disk page."),
 			NULL
 		},
-		&seq_page_cost,
-		DEFAULT_SEQ_PAGE_COST, 0, DBL_MAX,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(seq_page_cost,	DEFAULT_SEQ_PAGE_COST, 0, DBL_MAX)
 	},
 	{
 		{"random_page_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2918,9 +2880,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "nonsequentially fetched disk page."),
 			NULL
 		},
-		&random_page_cost,
-		DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(random_page_cost,	DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX)
 	},
 	{
 		{"cpu_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2928,9 +2888,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "processing each tuple (row)."),
 			NULL
 		},
-		&cpu_tuple_cost,
-		DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(cpu_tuple_cost,	DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX)
 	},
 	{
 		{"cpu_index_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2938,9 +2896,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "processing each index entry during an index scan."),
 			NULL
 		},
-		&cpu_index_tuple_cost,
-		DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(cpu_index_tuple_cost,	DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX)
 	},
 	{
 		{"cpu_operator_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2948,9 +2904,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "processing each operator or function call."),
 			NULL
 		},
-		&cpu_operator_cost,
-		DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(cpu_operator_cost,	DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX)
 	},
 	{
 		{"parallel_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2958,9 +2912,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "passing each tuple (row) from worker to master backend."),
 			NULL
 		},
-		&parallel_tuple_cost,
-		DEFAULT_PARALLEL_TUPLE_COST, 0, DBL_MAX,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(parallel_tuple_cost,	DEFAULT_PARALLEL_TUPLE_COST, 0, DBL_MAX)
 	},
 	{
 		{"parallel_setup_cost", PGC_USERSET, QUERY_TUNING_COST,
@@ -2968,9 +2920,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "starting up worker processes for parallel query."),
 			NULL
 		},
-		&parallel_setup_cost,
-		DEFAULT_PARALLEL_SETUP_COST, 0, DBL_MAX,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(parallel_setup_cost,	DEFAULT_PARALLEL_SETUP_COST, 0, DBL_MAX)
 	},
 
 	{
@@ -2979,9 +2929,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "a cursor's rows that will be retrieved."),
 			NULL
 		},
-		&cursor_tuple_fraction,
-		DEFAULT_CURSOR_TUPLE_FRACTION, 0.0, 1.0,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(cursor_tuple_fraction,	DEFAULT_CURSOR_TUPLE_FRACTION, 0.0, 1.0)
 	},
 
 	{
@@ -2989,19 +2937,14 @@ static struct config_real ConfigureNamesReal[] =
 			gettext_noop("GEQO: selective pressure within the population."),
 			NULL
 		},
-		&Geqo_selection_bias,
-		DEFAULT_GEQO_SELECTION_BIAS,
-		MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(Geqo_selection_bias, DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS)
 	},
 	{
 		{"geqo_seed", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("GEQO: seed for random path selection."),
 			NULL
 		},
-		&Geqo_seed,
-		0.0, 0.0, 1.0,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(Geqo_seed,	0.0, 0.0, 1.0)
 	},
 
 	{
@@ -3009,9 +2952,7 @@ static struct config_real ConfigureNamesReal[] =
 			gettext_noop("Multiple of the average buffer usage to free per round."),
 			NULL
 		},
-		&bgwriter_lru_multiplier,
-		2.0, 0.0, 10.0,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(bgwriter_lru_multiplier,	2.0, 0.0, 10.0)
 	},
 
 	{
@@ -3020,9 +2961,9 @@ static struct config_real ConfigureNamesReal[] =
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&phony_random_seed,
+		NULL,
 		0.0, -1.0, 1.0,
-		check_random_seed, assign_random_seed, show_random_seed
+		check_random_seed, assign_random_seed, show_random_seed, phony_random_seedAddressHook
 	},
 
 	{
@@ -3030,18 +2971,14 @@ static struct config_real ConfigureNamesReal[] =
 			gettext_noop("Number of tuple updates or deletes prior to vacuum as a fraction of reltuples."),
 			NULL
 		},
-		&autovacuum_vac_scale,
-		0.2, 0.0, 100.0,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(autovacuum_vac_scale,	0.2, 0.0, 100.0)
 	},
 	{
 		{"autovacuum_analyze_scale_factor", PGC_SIGHUP, AUTOVACUUM,
 			gettext_noop("Number of tuple inserts, updates, or deletes prior to analyze as a fraction of reltuples."),
 			NULL
 		},
-		&autovacuum_anl_scale,
-		0.1, 0.0, 100.0,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(autovacuum_anl_scale,	0.1, 0.0, 100.0)
 	},
 
 	{
@@ -3049,9 +2986,7 @@ static struct config_real ConfigureNamesReal[] =
 			gettext_noop("Time spent flushing dirty buffers during checkpoint, as fraction of checkpoint interval."),
 			NULL
 		},
-		&CheckPointCompletionTarget,
-		0.5, 0.0, 1.0,
-		NULL, NULL, NULL
+		DECLARE_REAL_GUC(CheckPointCompletionTarget,	0.5, 0.0, 1.0)
 	},
 
 	/* End-of-list marker */
@@ -3068,9 +3003,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets the shell command that will be called to archive a WAL file."),
 			NULL
 		},
-		&XLogArchiveCommand,
+		NULL,
 		"",
-		NULL, NULL, show_archive_command
+		NULL, NULL, show_archive_command, XLogArchiveCommandAddressHook
 	},
 
 	{
@@ -3079,9 +3014,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_IS_NAME | GUC_REPORT
 		},
-		&client_encoding_string,
+		NULL,
 		"SQL_ASCII",
-		check_client_encoding, assign_client_encoding, NULL
+		check_client_encoding, assign_client_encoding, NULL, client_encoding_stringAddressHook
 	},
 
 	{
@@ -3089,9 +3024,7 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Controls information prefixed to each log line."),
 			gettext_noop("If blank, no prefix is used.")
 		},
-		&Log_line_prefix,
-		"%m [%p] ",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(Log_line_prefix,	"%m [%p] ")
 	},
 
 	{
@@ -3099,9 +3032,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets the time zone to use in log messages."),
 			NULL
 		},
-		&log_timezone_string,
+		NULL,
 		"GMT",
-		check_log_timezone, assign_log_timezone, show_log_timezone
+		check_log_timezone, assign_log_timezone, show_log_timezone, &log_timezone_stringAddressHook
 	},
 
 	{
@@ -3111,9 +3044,9 @@ static struct config_string ConfigureNamesString[] =
 						 "date inputs."),
 			GUC_LIST_INPUT | GUC_REPORT
 		},
-		&datestyle_string,
+		NULL,
 		"ISO, MDY",
-		check_datestyle, assign_datestyle, NULL
+		check_datestyle, assign_datestyle, NULL, datestyle_stringAddressHook
 	},
 
 	{
@@ -3122,9 +3055,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("An empty string selects the database's default tablespace."),
 			GUC_IS_NAME
 		},
-		&default_tablespace,
+		NULL,
 		"",
-		check_default_tablespace, NULL, NULL
+		check_default_tablespace, NULL, NULL, default_tablespaceAddressHook
 	},
 
 	{
@@ -3133,9 +3066,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
-		&temp_tablespaces,
+		NULL,
 		"",
-		check_temp_tablespaces, assign_temp_tablespaces, NULL
+		check_temp_tablespaces, assign_temp_tablespaces, NULL, temp_tablespacesAddressHook
 	},
 
 	{
@@ -3147,9 +3080,7 @@ static struct config_string ConfigureNamesString[] =
 						 "the specified file."),
 			GUC_SUPERUSER_ONLY
 		},
-		&Dynamic_library_path,
-		"$libdir",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(Dynamic_library_path,	"$libdir")
 	},
 
 	{
@@ -3158,9 +3089,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&pg_krb_server_keyfile,
-		PG_KRB_SRVTAB,
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(pg_krb_server_keyfile,	PG_KRB_SRVTAB)
 	},
 
 	{
@@ -3168,9 +3097,7 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets the Bonjour service name."),
 			NULL
 		},
-		&bonjour_name,
-		"",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(bonjour_name,	"")
 	},
 
 	/* See main.c about why defaults for LC_foo are not all alike */
@@ -3181,9 +3108,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&locale_collate,
-		"C",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(locale_collate,	"C")
 	},
 
 	{
@@ -3192,9 +3117,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&locale_ctype,
-		"C",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(locale_ctype,	"C")
 	},
 
 	{
@@ -3202,9 +3125,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets the language in which messages are displayed."),
 			NULL
 		},
-		&locale_messages,
+		NULL,
 		"",
-		check_locale_messages, assign_locale_messages, NULL
+		check_locale_messages, assign_locale_messages, NULL, locale_messagesAddressHook
 	},
 
 	{
@@ -3212,9 +3135,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets the locale for formatting monetary amounts."),
 			NULL
 		},
-		&locale_monetary,
+		NULL,
 		"C",
-		check_locale_monetary, assign_locale_monetary, NULL
+		check_locale_monetary, assign_locale_monetary, NULL, locale_monetaryAddressHook
 	},
 
 	{
@@ -3222,9 +3145,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets the locale for formatting numbers."),
 			NULL
 		},
-		&locale_numeric,
+		NULL,
 		"C",
-		check_locale_numeric, assign_locale_numeric, NULL
+		check_locale_numeric, assign_locale_numeric, NULL, locale_numericAddressHook
 	},
 
 	{
@@ -3232,9 +3155,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets the locale for formatting date and time values."),
 			NULL
 		},
-		&locale_time,
+		NULL,
 		"C",
-		check_locale_time, assign_locale_time, NULL
+		check_locale_time, assign_locale_time, NULL, locale_timeAddressHook
 	},
 
 	{
@@ -3243,9 +3166,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_SUPERUSER_ONLY
 		},
-		&session_preload_libraries_string,
-		"",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(session_preload_libraries_string,	"")
 	},
 
 	{
@@ -3254,9 +3175,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_SUPERUSER_ONLY
 		},
-		&shared_preload_libraries_string,
-		"",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(shared_preload_libraries_string,	"")
 	},
 
 	{
@@ -3265,9 +3184,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
-		&local_preload_libraries_string,
-		"",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(local_preload_libraries_string,	"")
 	},
 
 	{
@@ -3276,9 +3193,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
-		&namespace_search_path,
+		NULL,
 		"\"$user\", public",
-		check_search_path, assign_search_path, NULL
+		check_search_path, assign_search_path, NULL, namespace_search_pathAddressHook
 	},
 
 	{
@@ -3288,9 +3205,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&server_encoding_string,
-		"SQL_ASCII",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(server_encoding_string,	"SQL_ASCII")
 	},
 
 	{
@@ -3300,9 +3215,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&server_version_string,
-		PG_VERSION,
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(server_version_string,	PG_VERSION)
 	},
 
 	{
@@ -3312,9 +3225,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_IS_NAME | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_REST
 		},
-		&role_string,
+		NULL,
 		"none",
-		check_role, assign_role, show_role
+		check_role, assign_role, show_role, role_stringAddressHook
 	},
 
 	{
@@ -3324,9 +3237,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_REST
 		},
-		&session_authorization_string,
 		NULL,
-		check_session_authorization, assign_session_authorization, NULL
+		NULL,
+		check_session_authorization, assign_session_authorization, NULL, session_authorization_stringAddressHook
 	},
 
 	{
@@ -3337,9 +3250,9 @@ static struct config_string ConfigureNamesString[] =
 						 "depending on the platform."),
 			GUC_LIST_INPUT
 		},
-		&Log_destination_string,
+	    NULL,
 		"stderr",
-		check_log_destination, assign_log_destination, NULL
+		check_log_destination, assign_log_destination, NULL, Log_destination_stringAddressHook
 	},
 	{
 		{"log_directory", PGC_SIGHUP, LOGGING_WHERE,
@@ -3348,9 +3261,9 @@ static struct config_string ConfigureNamesString[] =
 						 "or as absolute path."),
 			GUC_SUPERUSER_ONLY
 		},
-		&Log_directory,
+		NULL,
 		"log",
-		check_canonical_path, NULL, NULL
+		check_canonical_path, NULL, NULL, Log_directoryAddressHook
 	},
 	{
 		{"log_filename", PGC_SIGHUP, LOGGING_WHERE,
@@ -3358,9 +3271,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&Log_filename,
-		"postgresql-%Y-%m-%d_%H%M%S.log",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(Log_filename,	"postgresql-%Y-%m-%d_%H%M%S.log")
 	},
 
 	{
@@ -3369,9 +3280,9 @@ static struct config_string ConfigureNamesString[] =
 						 "messages in syslog."),
 			NULL
 		},
-		&syslog_ident_str,
+		NULL,
 		"postgres",
-		NULL, assign_syslog_ident, NULL
+		NULL, assign_syslog_ident, NULL, syslog_ident_strAddressHook
 	},
 
 	{
@@ -3380,9 +3291,7 @@ static struct config_string ConfigureNamesString[] =
 						 "PostgreSQL messages in the event log."),
 			NULL
 		},
-		&event_source,
-		DEFAULT_EVENT_SOURCE,
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(event_source,	DEFAULT_EVENT_SOURCE)
 	},
 
 	{
@@ -3391,18 +3300,18 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_REPORT
 		},
-		&timezone_string,
+		NULL,
 		"GMT",
-		check_timezone, assign_timezone, show_timezone
+		check_timezone, assign_timezone, show_timezone, timezone_stringAddressHook
 	},
 	{
 		{"timezone_abbreviations", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Selects a file of time zone abbreviations."),
 			NULL
 		},
-		&timezone_abbreviations_string,
 		NULL,
-		check_timezone_abbreviations, assign_timezone_abbreviations, NULL
+		NULL,
+		check_timezone_abbreviations, assign_timezone_abbreviations, NULL, timezone_abbreviations_stringAddressHook
 	},
 
 	{
@@ -3411,9 +3320,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
-		&XactIsoLevel_string,
+		NULL,
 		"default",
-		check_XactIsoLevel, assign_XactIsoLevel, show_XactIsoLevel
+		check_XactIsoLevel, assign_XactIsoLevel, show_XactIsoLevel, XactIsoLevel_stringAddressHook
 	},
 
 	{
@@ -3422,9 +3331,7 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("The owning user of the socket is always the user "
 						 "that starts the server.")
 		},
-		&Unix_socket_group,
-		"",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(Unix_socket_group,	"")
 	},
 
 	{
@@ -3433,13 +3340,13 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&Unix_socket_directories,
+		DECLARE_STR_GUC(Unix_socket_directories,
 #ifdef HAVE_UNIX_SOCKETS
-		DEFAULT_PGSOCKET_DIR,
+		DEFAULT_PGSOCKET_DIR
 #else
-		"",
+		""
 #endif
-		NULL, NULL, NULL
+		)
 	},
 
 	{
@@ -3448,9 +3355,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_LIST_INPUT
 		},
-		&ListenAddresses,
-		"localhost",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(ListenAddresses,	"localhost")
 	},
 
 	{
@@ -3463,9 +3368,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY | GUC_DISALLOW_IN_AUTO_FILE
 		},
-		&data_directory,
-		NULL,
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(data_directory,	NULL)
 	},
 
 	{
@@ -3474,9 +3377,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_DISALLOW_IN_FILE | GUC_SUPERUSER_ONLY
 		},
-		&ConfigFileName,
-		NULL,
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(ConfigFileName,	NULL)
 	},
 
 	{
@@ -3485,9 +3386,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&HbaFileName,
-		NULL,
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(HbaFileName,	NULL)
 	},
 
 	{
@@ -3496,9 +3395,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&IdentFileName,
-		NULL,
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(IdentFileName,	NULL)
 	},
 
 	{
@@ -3507,9 +3404,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&external_pid_file,
 		NULL,
-		check_canonical_path, NULL, NULL
+		NULL,
+		check_canonical_path, NULL, NULL, external_pid_fileAddressHook
 	},
 
 	{
@@ -3517,9 +3414,7 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Location of the SSL server certificate file."),
 			NULL
 		},
-		&ssl_cert_file,
-		"server.crt",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(ssl_cert_file,	"server.crt")
 	},
 
 	{
@@ -3527,9 +3422,7 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Location of the SSL server private key file."),
 			NULL
 		},
-		&ssl_key_file,
-		"server.key",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(ssl_key_file,	"server.key")
 	},
 
 	{
@@ -3537,9 +3430,7 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Location of the SSL certificate authority file."),
 			NULL
 		},
-		&ssl_ca_file,
-		"",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(ssl_ca_file,	"")
 	},
 
 	{
@@ -3547,9 +3438,7 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Location of the SSL certificate revocation list file."),
 			NULL
 		},
-		&ssl_crl_file,
-		"",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(ssl_crl_file,	"")
 	},
 
 	{
@@ -3558,9 +3447,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&pgstat_temp_directory,
+	    NULL,
 		PG_STAT_TMP_DIR,
-		check_canonical_path, assign_pgstat_temp_directory, NULL
+		check_canonical_path, assign_pgstat_temp_directory, NULL, pgstat_temp_directoryAddressHook
 	},
 
 	{
@@ -3569,9 +3458,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_LIST_INPUT
 		},
-		&SyncRepStandbyNames,
+		NULL,
 		"",
-		check_synchronous_standby_names, assign_synchronous_standby_names, NULL
+		check_synchronous_standby_names, assign_synchronous_standby_names, NULL, SyncRepStandbyNamesAddressHook
 	},
 
 	{
@@ -3579,9 +3468,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Sets default text search configuration."),
 			NULL
 		},
-		&TSCurrentConfig,
+		NULL,
 		"pg_catalog.simple",
-		check_TSCurrentConfig, assign_TSCurrentConfig, NULL
+		check_TSCurrentConfig, assign_TSCurrentConfig, NULL, TSCurrentConfigAddressHook
 	},
 
 	{
@@ -3590,13 +3479,13 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&SSLCipherSuites,
+		DECLARE_STR_GUC(SSLCipherSuites,
 #ifdef USE_SSL
-		"HIGH:MEDIUM:+3DES:!aNULL",
+		"HIGH:MEDIUM:+3DES:!aNULL"
 #else
-		"none",
+		"none"
 #endif
-		NULL, NULL, NULL
+	   )
 	},
 
 	{
@@ -3605,13 +3494,13 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&SSLECDHCurve,
+		DECLARE_STR_GUC(SSLECDHCurve,
 #ifdef USE_SSL
-		"prime256v1",
+		"prime256v1"
 #else
-		"none",
+		"none"
 #endif
-		NULL, NULL, NULL
+		 )
 	},
 
 	{
@@ -3620,9 +3509,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&ssl_dh_params_file,
-		"",
-		NULL, NULL, NULL
+		DECLARE_STR_GUC(ssl_dh_params_file,	"")
 	},
 
 	{
@@ -3631,9 +3518,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE
 		},
-		&application_name,
+		NULL,
 		"",
-		check_application_name, assign_application_name, NULL
+		check_application_name, assign_application_name, NULL, application_nameAddressHook
 	},
 
 	{
@@ -3642,9 +3529,9 @@ static struct config_string ConfigureNamesString[] =
 			NULL,
 			GUC_IS_NAME
 		},
-		&cluster_name,
+		NULL,
 		"",
-		check_cluster_name, NULL, NULL
+		check_cluster_name, NULL, NULL, cluster_nameAddressHook
 	},
 
 	{
@@ -3653,9 +3540,9 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Full-page images will be logged for all data blocks and cross-checked against the results of WAL replay."),
 			GUC_LIST_INPUT | GUC_NOT_IN_SAMPLE
 		},
-		&wal_consistency_checking_string,
+		NULL,
 		"",
-		check_wal_consistency_checking, assign_wal_consistency_checking, NULL
+		check_wal_consistency_checking, assign_wal_consistency_checking, NULL, wal_consistency_checking_stringAddressHook
 	},
 
 	/* End-of-list marker */
@@ -3672,9 +3559,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets whether \"\\'\" is allowed in string literals."),
 			NULL
 		},
-		&backslash_quote,
-		BACKSLASH_QUOTE_SAFE_ENCODING, backslash_quote_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(backslash_quote, BACKSLASH_QUOTE_SAFE_ENCODING, backslash_quote_options)
 	},
 
 	{
@@ -3682,9 +3567,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets the output format for bytea."),
 			NULL
 		},
-		&bytea_output,
-		BYTEA_OUTPUT_HEX, bytea_output_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(bytea_output, BYTEA_OUTPUT_HEX, bytea_output_options)
 	},
 
 	{
@@ -3693,9 +3576,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Each level includes all the levels that follow it. The later"
 						 " the level, the fewer messages are sent.")
 		},
-		&client_min_messages,
-		NOTICE, client_message_level_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(client_min_messages, NOTICE, client_message_level_options)
 	},
 
 	{
@@ -3704,9 +3585,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Table scans will be skipped if their constraints"
 						 " guarantee that no rows match the query.")
 		},
-		&constraint_exclusion,
-		CONSTRAINT_EXCLUSION_PARTITION, constraint_exclusion_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(constraint_exclusion, CONSTRAINT_EXCLUSION_PARTITION, constraint_exclusion_options)
 	},
 
 	{
@@ -3714,9 +3593,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets the transaction isolation level of each new transaction."),
 			NULL
 		},
-		&DefaultXactIsoLevel,
-		XACT_READ_COMMITTED, isolation_level_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(DefaultXactIsoLevel, XACT_READ_COMMITTED, isolation_level_options)
 	},
 
 	{
@@ -3725,9 +3602,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			NULL,
 			GUC_REPORT
 		},
-		&IntervalStyle,
-		INTSTYLE_POSTGRES, intervalstyle_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(IntervalStyle, INTSTYLE_POSTGRES, intervalstyle_options)
 	},
 
 	{
@@ -3735,9 +3610,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets the verbosity of logged messages."),
 			NULL
 		},
-		&Log_error_verbosity,
-		PGERROR_DEFAULT, log_error_verbosity_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(Log_error_verbosity, PGERROR_DEFAULT, log_error_verbosity_options)
 	},
 
 	{
@@ -3746,9 +3619,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Each level includes all the levels that follow it. The later"
 						 " the level, the fewer messages are sent.")
 		},
-		&log_min_messages,
-		WARNING, server_message_level_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(log_min_messages, WARNING, server_message_level_options)
 	},
 
 	{
@@ -3757,9 +3628,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Each level includes all the levels that follow it. The later"
 						 " the level, the fewer messages are sent.")
 		},
-		&log_min_error_statement,
-		ERROR, server_message_level_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(log_min_error_statement, ERROR, server_message_level_options)
 	},
 
 	{
@@ -3767,9 +3636,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets the type of statements logged."),
 			NULL
 		},
-		&log_statement,
-		LOGSTMT_NONE, log_statement_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(log_statement, LOGSTMT_NONE, log_statement_options)
 	},
 
 	{
@@ -3777,14 +3644,14 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets the syslog \"facility\" to be used when syslog enabled."),
 			NULL
 		},
-		&syslog_facility,
+		NULL,
 #ifdef HAVE_SYSLOG
 		LOG_LOCAL0,
 #else
 		0,
 #endif
 		syslog_facility_options,
-		NULL, assign_syslog_facility, NULL
+		NULL, assign_syslog_facility, NULL, syslog_facilityAddressHook
 	},
 
 	{
@@ -3792,9 +3659,9 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets the session's behavior for triggers and rewrite rules."),
 			NULL
 		},
-		&SessionReplicationRole,
+		NULL,
 		SESSION_REPLICATION_ROLE_ORIGIN, session_replication_role_options,
-		NULL, assign_session_replication_role, NULL
+		NULL, assign_session_replication_role, NULL, SessionReplicationRoleAddressHook
 	},
 
 	{
@@ -3802,9 +3669,9 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets the current transaction's synchronization level."),
 			NULL
 		},
-		&synchronous_commit,
+		NULL,
 		SYNCHRONOUS_COMMIT_ON, synchronous_commit_options,
-		NULL, assign_synchronous_commit, NULL
+		NULL, assign_synchronous_commit, NULL, synchronous_commitAddressHook
 	},
 
 	{
@@ -3812,9 +3679,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Allows archiving of WAL files using archive_command."),
 			NULL
 		},
-		&XLogArchiveMode,
-		ARCHIVE_MODE_OFF, archive_mode_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(XLogArchiveMode, ARCHIVE_MODE_OFF, archive_mode_options)
 	},
 
 	{
@@ -3823,14 +3688,11 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Each level includes all the levels that follow it. The later"
 						 " the level, the fewer messages are sent.")
 		},
-		&trace_recovery_messages,
-
 		/*
 		 * client_message_level_options allows too many values, really, but
 		 * it's not worth having a separate options array for this.
 		 */
-		LOG, client_message_level_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(trace_recovery_messages, LOG, client_message_level_options)
 	},
 
 	{
@@ -3838,9 +3700,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Collects function-level statistics on database activity."),
 			NULL
 		},
-		&pgstat_track_functions,
-		TRACK_FUNC_OFF, track_function_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(pgstat_track_functions, TRACK_FUNC_OFF, track_function_options)
 	},
 
 	{
@@ -3848,9 +3708,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Set the level of information written to the WAL."),
 			NULL
 		},
-		&wal_level,
-		WAL_LEVEL_REPLICA, wal_level_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(wal_level,	WAL_LEVEL_REPLICA, wal_level_options)
 	},
 
 	{
@@ -3858,9 +3716,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Selects the dynamic shared memory implementation used."),
 			NULL
 		},
-		&dynamic_shared_memory_type,
-		DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE, dynamic_shared_memory_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(dynamic_shared_memory_type, DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE, dynamic_shared_memory_options)
 	},
 
 	{
@@ -3868,9 +3724,9 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Selects the method used for forcing WAL updates to disk."),
 			NULL
 		},
-		&sync_method,
+	    NULL,
 		DEFAULT_SYNC_METHOD, sync_method_options,
-		NULL, assign_xlog_sync_method, NULL
+		NULL, assign_xlog_sync_method, NULL, sync_methodAddressHook
 	},
 
 	{
@@ -3878,9 +3734,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Sets how binary values are to be encoded in XML."),
 			NULL
 		},
-		&xmlbinary,
-		XMLBINARY_BASE64, xmlbinary_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(xmlbinary, XMLBINARY_BASE64, xmlbinary_options)
 	},
 
 	{
@@ -3889,9 +3743,7 @@ static struct config_enum ConfigureNamesEnum[] =
 						 "operations is to be considered as documents or content fragments."),
 			NULL
 		},
-		&xmloption,
-		XMLOPTION_CONTENT, xmloption_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(xmloption, XMLOPTION_CONTENT, xmloption_options)
 	},
 
 	{
@@ -3899,9 +3751,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Use of huge pages on Linux."),
 			NULL
 		},
-		&huge_pages,
-		HUGE_PAGES_TRY, huge_pages_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(huge_pages, HUGE_PAGES_TRY, huge_pages_options)
 	},
 
 	{
@@ -3909,9 +3759,7 @@ static struct config_enum ConfigureNamesEnum[] =
 			gettext_noop("Forces use of parallel query facilities."),
 			gettext_noop("If possible, run query using a parallel worker and with parallel restrictions.")
 		},
-		&force_parallel_mode,
-		FORCE_PARALLEL_OFF, force_parallel_mode_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(force_parallel_mode, FORCE_PARALLEL_OFF, force_parallel_mode_options)
 	},
 
 	{
@@ -3921,9 +3769,7 @@ static struct config_enum ConfigureNamesEnum[] =
 						 "ALTER USER without writing either ENCRYPTED or UNENCRYPTED, "
 						 "this parameter determines whether the password is to be encrypted.")
 		},
-		&Password_encryption,
-		PASSWORD_TYPE_MD5, password_encryption_options,
-		NULL, NULL, NULL
+		DECLARE_ENUM_GUC(Password_encryption, PASSWORD_TYPE_MD5, password_encryption_options)
 	},
 
 	/* End-of-list marker */
@@ -3951,20 +3797,20 @@ static const char *const map_old_guc_names[] = {
 /*
  * Actual lookup of variables is done through this single, sorted array.
  */
-static struct config_generic **guc_variables;
+static session_local struct config_generic **guc_variables;
 
 /* Current number of variables contained in the vector */
-static int	num_guc_variables;
+static session_local int	num_guc_variables;
 
 /* Vector capacity */
-static int	size_guc_variables;
+static session_local int	size_guc_variables;
 
 
-static bool guc_dirty;			/* true if need to do commit/abort work */
+static session_local bool guc_dirty;			/* true if need to do commit/abort work */
 
-static bool reporting_enabled;	/* true to enable GUC_REPORT */
+static session_local bool reporting_enabled;	/* true to enable GUC_REPORT */
 
-static int	GUCNestLevel = 0;	/* 1 when in main transaction */
+static session_local int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 
 static int	guc_var_compare(const void *a, const void *b);
@@ -4475,7 +4321,6 @@ guc_name_compare(const char *namea, const char *nameb)
 	return 0;
 }
 
-
 /*
  * Initialize GUC options during program startup.
  *
@@ -4602,23 +4447,26 @@ InitializeOneGUCOption(struct config_generic *gconf)
 		case PGC_BOOL:
 			{
 				struct config_bool *conf = (struct config_bool *) gconf;
-				bool		newval = conf->boot_val;
+				bool		newval = IsPostmaster ? conf->boot_val : conf->postmaster_val;
 				void	   *extra = NULL;
-
 				if (!call_bool_check_hook(conf, &newval, &extra,
 										  PGC_S_DEFAULT, LOG))
 					elog(FATAL, "failed to initialize %s to %d",
 						 conf->gen.name, (int) newval);
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
+				if (conf->address_hook)
+					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
+				if (IsPostmaster)
+					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_INT:
 			{
 				struct config_int *conf = (struct config_int *) gconf;
-				int			newval = conf->boot_val;
+				int			newval = IsPostmaster ? conf->boot_val : conf->postmaster_val;
 				void	   *extra = NULL;
 
 				Assert(newval >= conf->min);
@@ -4629,14 +4477,18 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
+				if (conf->address_hook)
+					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
+				if (IsPostmaster)
+					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_REAL:
 			{
 				struct config_real *conf = (struct config_real *) gconf;
-				double		newval = conf->boot_val;
+				double		newval = IsPostmaster ? conf->boot_val : conf->postmaster_val;
 				void	   *extra = NULL;
 
 				Assert(newval >= conf->min);
@@ -4647,7 +4499,11 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
+				if (conf->address_hook)
+					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
+				if (IsPostmaster)
+					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
@@ -4658,10 +4514,21 @@ InitializeOneGUCOption(struct config_generic *gconf)
 				void	   *extra = NULL;
 
 				/* non-NULL boot_val must always get strdup'd */
-				if (conf->boot_val != NULL)
-					newval = guc_strdup(FATAL, conf->boot_val);
+				if (IsPostmaster)
+				{
+					if (conf->boot_val != NULL)
+						newval = guc_strdup(FATAL, conf->boot_val);
+					else
+						newval = NULL;
+				}
 				else
-					newval = NULL;
+				{
+					if (conf->postmaster_val != NULL)
+						newval = guc_strdup(FATAL, conf->postmaster_val);
+					else
+						newval = NULL;
+				}
+
 
 				if (!call_string_check_hook(conf, &newval, &extra,
 											PGC_S_DEFAULT, LOG))
@@ -4669,14 +4536,18 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, newval ? newval : "");
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
+				if (conf->address_hook)
+					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
+				if (IsPostmaster)
+					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_ENUM:
 			{
 				struct config_enum *conf = (struct config_enum *) gconf;
-				int			newval = conf->boot_val;
+				int			newval = IsPostmaster ? conf->boot_val : conf->postmaster_val;
 				void	   *extra = NULL;
 
 				if (!call_enum_check_hook(conf, &newval, &extra,
@@ -4685,7 +4556,11 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
+				if (conf->address_hook)
+					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
+				if (IsPostmaster)
+					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
@@ -6221,6 +6096,8 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
+					if (IsPostmaster)
+						conf->postmaster_val = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6311,6 +6188,8 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
+					if (IsPostmaster)
+						conf->postmaster_val = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6401,6 +6280,8 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
+					if (IsPostmaster)
+						conf->postmaster_val = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6509,6 +6390,8 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					set_string_field(conf, conf->variable, newval);
+					if (IsPostmaster)
+						conf->postmaster_val = *conf->variable;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6604,6 +6487,8 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
+					if (IsPostmaster)
+						conf->postmaster_val = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6715,7 +6600,7 @@ const char *
 GetConfigOption(const char *name, bool missing_ok, bool restrict_superuser)
 {
 	struct config_generic *record;
-	static char buffer[256];
+	static session_local char buffer[256];
 
 	record = find_option(name, false, ERROR);
 	if (record == NULL)
@@ -6771,7 +6656,7 @@ const char *
 GetConfigOptionResetString(const char *name)
 {
 	struct config_generic *record;
-	static char buffer[256];
+	static session_local char buffer[256];
 
 	record = find_option(name, false, ERROR);
 	if (record == NULL)
@@ -10311,7 +10196,7 @@ static const char *
 show_tcp_keepalives_idle(void)
 {
 	/* See comments in assign_tcp_keepalives_idle */
-	static char nbuf[16];
+	static session_local char nbuf[16];
 
 	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivesidle(MyProcPort));
 	return nbuf;
@@ -10328,7 +10213,7 @@ static const char *
 show_tcp_keepalives_interval(void)
 {
 	/* See comments in assign_tcp_keepalives_idle */
-	static char nbuf[16];
+	static session_local char nbuf[16];
 
 	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivesinterval(MyProcPort));
 	return nbuf;
@@ -10345,7 +10230,7 @@ static const char *
 show_tcp_keepalives_count(void)
 {
 	/* See comments in assign_tcp_keepalives_idle */
-	static char nbuf[16];
+	static session_local char nbuf[16];
 
 	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivescount(MyProcPort));
 	return nbuf;
@@ -10498,7 +10383,7 @@ check_cluster_name(char **newval, void **extra, GucSource source)
 static const char *
 show_unix_socket_permissions(void)
 {
-	static char buf[8];
+	static session_local char buf[8];
 
 	snprintf(buf, sizeof(buf), "%04o", Unix_socket_permissions);
 	return buf;
@@ -10507,7 +10392,7 @@ show_unix_socket_permissions(void)
 static const char *
 show_log_file_mode(void)
 {
-	static char buf[8];
+	static session_local char buf[8];
 
 	snprintf(buf, sizeof(buf), "%04o", Log_file_mode);
 	return buf;

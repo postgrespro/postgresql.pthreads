@@ -40,27 +40,27 @@
  * Our own local and global variables
  * ----------
  */
-PLpgSQL_stmt_block *plpgsql_parse_result;
+session_local PLpgSQL_stmt_block *plpgsql_parse_result;
 
-static int	datums_alloc;
-int			plpgsql_nDatums;
-PLpgSQL_datum **plpgsql_Datums;
-static int	datums_last;
+static session_local int	datums_alloc;
+session_local int			plpgsql_nDatums;
+session_local PLpgSQL_datum **plpgsql_Datums;
+static session_local int	datums_last;
 
-char	   *plpgsql_error_funcname;
-bool		plpgsql_DumpExecTree = false;
-bool		plpgsql_check_syntax = false;
+session_local char	   *plpgsql_error_funcname;
+session_local bool		plpgsql_DumpExecTree = false;
+session_local bool		plpgsql_check_syntax = false;
 
-PLpgSQL_function *plpgsql_curr_compile;
+session_local PLpgSQL_function *plpgsql_curr_compile;
 
 /* A context appropriate for short-term allocs during compilation */
-MemoryContext plpgsql_compile_tmp_cxt;
+session_local MemoryContext plpgsql_compile_tmp_cxt;
 
 /* ----------
  * Hash table for compiled functions
  * ----------
  */
-static HTAB *plpgsql_HashTable = NULL;
+static session_local HTAB *plpgsql_HashTable = NULL;
 
 typedef struct plpgsql_hashent
 {

@@ -20,9 +20,9 @@
 #include "storage/relfilenode.h"
 
 /* User-settable GUC parameters */
-extern int	vacuum_defer_cleanup_age;
-extern int	max_standby_archive_delay;
-extern int	max_standby_streaming_delay;
+extern session_local int	vacuum_defer_cleanup_age;
+extern session_local int	max_standby_archive_delay;
+extern session_local int	max_standby_streaming_delay;
 
 extern void InitRecoveryTransactionEnvironment(void);
 extern void ShutdownRecoveryTransactionEnvironment(void);

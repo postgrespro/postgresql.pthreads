@@ -51,29 +51,29 @@ typedef enum
 struct WritebackContext;
 
 /* in globals.c ... this duplicates miscadmin.h */
-extern PGDLLIMPORT int NBuffers;
+extern session_local PGDLLIMPORT int NBuffers;
 
 /* in bufmgr.c */
-extern bool zero_damaged_pages;
-extern int	bgwriter_lru_maxpages;
-extern double bgwriter_lru_multiplier;
-extern bool track_io_timing;
-extern int	target_prefetch_pages;
+extern session_local bool zero_damaged_pages;
+extern session_local int	bgwriter_lru_maxpages;
+extern session_local double bgwriter_lru_multiplier;
+extern session_local bool track_io_timing;
+extern session_local int	target_prefetch_pages;
 
-extern int	checkpoint_flush_after;
-extern int	backend_flush_after;
-extern int	bgwriter_flush_after;
+extern session_local int	checkpoint_flush_after;
+extern session_local int	backend_flush_after;
+extern session_local int	bgwriter_flush_after;
 
 /* in buf_init.c */
 extern PGDLLIMPORT char *BufferBlocks;
 
 /* in guc.c */
-extern int	effective_io_concurrency;
+extern session_local int	effective_io_concurrency;
 
 /* in localbuf.c */
-extern PGDLLIMPORT int NLocBuffer;
-extern PGDLLIMPORT Block *LocalBufferBlockPointers;
-extern PGDLLIMPORT int32 *LocalRefCount;
+extern session_local PGDLLIMPORT int NLocBuffer;
+extern session_local PGDLLIMPORT Block *LocalBufferBlockPointers;
+extern session_local PGDLLIMPORT int32 *LocalRefCount;
 
 /* upper limit for effective_io_concurrency */
 #define MAX_IO_CONCURRENCY 1000

@@ -99,33 +99,33 @@ static void PrintLockQueue(LOCK *lock, const char *info);
  */
 
 /* Workspace for FindLockCycle */
-static PGPROC **visitedProcs;	/* Array of visited procs */
-static int	nVisitedProcs;
+static session_local PGPROC **visitedProcs;	/* Array of visited procs */
+static session_local int	nVisitedProcs;
 
 /* Workspace for TopoSort */
-static PGPROC **topoProcs;		/* Array of not-yet-output procs */
-static int *beforeConstraints;	/* Counts of remaining before-constraints */
-static int *afterConstraints;	/* List head for after-constraints */
+static session_local PGPROC **topoProcs;		/* Array of not-yet-output procs */
+static session_local int *beforeConstraints;	/* Counts of remaining before-constraints */
+static session_local int *afterConstraints;	/* List head for after-constraints */
 
 /* Output area for ExpandConstraints */
-static WAIT_ORDER *waitOrders;	/* Array of proposed queue rearrangements */
-static int	nWaitOrders;
-static PGPROC **waitOrderProcs; /* Space for waitOrders queue contents */
+static session_local WAIT_ORDER *waitOrders;	/* Array of proposed queue rearrangements */
+static session_local int	nWaitOrders;
+static session_local PGPROC **waitOrderProcs; /* Space for waitOrders queue contents */
 
 /* Current list of constraints being considered */
-static EDGE *curConstraints;
-static int	nCurConstraints;
-static int	maxCurConstraints;
+static session_local EDGE *curConstraints;
+static session_local int	nCurConstraints;
+static session_local int	maxCurConstraints;
 
 /* Storage space for results from FindLockCycle */
-static EDGE *possibleConstraints;
-static int	nPossibleConstraints;
-static int	maxPossibleConstraints;
-static DEADLOCK_INFO *deadlockDetails;
-static int	nDeadlockDetails;
+static session_local EDGE *possibleConstraints;
+static session_local int	nPossibleConstraints;
+static session_local int	maxPossibleConstraints;
+static session_local DEADLOCK_INFO *deadlockDetails;
+static session_local int	nDeadlockDetails;
 
 /* PGPROC pointer of any blocking autovacuum worker found */
-static PGPROC *blocking_autovacuum_proc = NULL;
+static session_local PGPROC *blocking_autovacuum_proc = NULL;
 
 
 /*

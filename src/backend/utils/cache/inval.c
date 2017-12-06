@@ -168,11 +168,11 @@ typedef struct TransInvalidationInfo
 	bool		RelcacheInitFileInval;
 } TransInvalidationInfo;
 
-static TransInvalidationInfo *transInvalInfo = NULL;
+static session_local TransInvalidationInfo *transInvalInfo = NULL;
 
-static SharedInvalidationMessage *SharedInvalidMessagesArray;
-static int	numSharedInvalidMessagesArray;
-static int	maxSharedInvalidMessagesArray;
+static session_local SharedInvalidationMessage *SharedInvalidMessagesArray;
+static session_local int	numSharedInvalidMessagesArray;
+static session_local int	maxSharedInvalidMessagesArray;
 
 
 /*
@@ -188,7 +188,7 @@ static int	maxSharedInvalidMessagesArray;
 #define MAX_SYSCACHE_CALLBACKS 64
 #define MAX_RELCACHE_CALLBACKS 10
 
-static struct SYSCACHECALLBACK
+static session_local struct SYSCACHECALLBACK
 {
 	int16		id;				/* cache number */
 	int16		link;			/* next callback index+1 for same cache */
@@ -196,17 +196,17 @@ static struct SYSCACHECALLBACK
 	Datum		arg;
 }			syscache_callback_list[MAX_SYSCACHE_CALLBACKS];
 
-static int16 syscache_callback_links[SysCacheSize];
+static session_local int16 syscache_callback_links[SysCacheSize];
 
-static int	syscache_callback_count = 0;
+static session_local int	syscache_callback_count = 0;
 
-static struct RELCACHECALLBACK
+static session_local struct RELCACHECALLBACK
 {
 	RelcacheCallbackFunction function;
 	Datum		arg;
 }			relcache_callback_list[MAX_RELCACHE_CALLBACKS];
 
-static int	relcache_callback_count = 0;
+static session_local int	relcache_callback_count = 0;
 
 /* ----------------------------------------------------------------
  *				Invalidation list support functions
@@ -698,7 +698,7 @@ AcceptInvalidationMessages(void)
 	 */
 #if defined(CLOBBER_CACHE_ALWAYS)
 	{
-		static bool in_recursion = false;
+		static session_local bool in_recursion = false;
 
 		if (!in_recursion)
 		{

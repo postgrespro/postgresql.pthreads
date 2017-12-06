@@ -42,7 +42,7 @@ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 } PGShmemHeader;
 
 /* GUC variable */
-extern int	huge_pages;
+extern session_local int	huge_pages;
 
 /* Possible values for huge_pages */
 typedef enum
@@ -53,11 +53,11 @@ typedef enum
 }			HugePagesType;
 
 #ifndef WIN32
-extern unsigned long UsedShmemSegID;
+extern session_local unsigned long UsedShmemSegID;
 #else
-extern HANDLE UsedShmemSegID;
+extern session_local HANDLE UsedShmemSegID;
 #endif
-extern void *UsedShmemSegAddr;
+extern session_local void *UsedShmemSegAddr;
 
 #ifdef EXEC_BACKEND
 extern void PGSharedMemoryReAttach(void);

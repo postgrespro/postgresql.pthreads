@@ -17,8 +17,8 @@
 
 #include "executor/instrument.h"
 
-BufferUsage pgBufferUsage;
-static BufferUsage save_pgBufferUsage;
+session_local BufferUsage pgBufferUsage;
+static session_local BufferUsage save_pgBufferUsage;
 
 static void BufferUsageAdd(BufferUsage *dst, const BufferUsage *add);
 static void BufferUsageAccumDiff(BufferUsage *dst,

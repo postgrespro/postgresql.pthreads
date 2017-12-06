@@ -78,8 +78,8 @@
 
 
 /* Static variables representing various special snapshot semantics */
-SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
-SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
+session_local SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
+session_local SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
 
 
 /*

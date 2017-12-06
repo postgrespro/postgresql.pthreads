@@ -64,14 +64,14 @@ static PLyExecutionContext *PLy_push_execution_context(void);
 static void PLy_pop_execution_context(void);
 
 /* static state for Python library conflict detection */
-static int *plpython_version_bitmask_ptr = NULL;
-static int	plpython_version_bitmask = 0;
+static session_local int *plpython_version_bitmask_ptr = NULL;
+static session_local int	plpython_version_bitmask = 0;
 
 /* initialize global variables */
-PyObject   *PLy_interp_globals = NULL;
+session_local PyObject   *PLy_interp_globals = NULL;
 
 /* this doesn't need to be global; use PLy_current_execution_context() */
-static PLyExecutionContext *PLy_execution_contexts = NULL;
+static session_local PLyExecutionContext *PLy_execution_contexts = NULL;
 
 
 void
@@ -110,7 +110,7 @@ _PG_init(void)
 static void
 PLy_initialize(void)
 {
-	static bool inited = false;
+	static session_local bool inited = false;
 
 	/*
 	 * Check for multiple Python libraries before actively doing anything with
@@ -157,7 +157,7 @@ PLy_initialize(void)
 static void
 PLy_init_interp(void)
 {
-	static PyObject *PLy_interp_safe_globals = NULL;
+	static session_local PyObject *PLy_interp_safe_globals = NULL;
 	PyObject   *mainmod;
 
 	mainmod = PyImport_AddModule("__main__");

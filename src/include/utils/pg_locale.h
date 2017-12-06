@@ -36,16 +36,16 @@
 
 
 /* GUC settings */
-extern char *locale_messages;
-extern char *locale_monetary;
-extern char *locale_numeric;
-extern char *locale_time;
+extern session_local char *locale_messages;
+extern session_local char *locale_monetary;
+extern session_local char *locale_numeric;
+extern session_local char *locale_time;
 
 /* lc_time localization cache */
-extern char *localized_abbrev_days[];
-extern char *localized_full_days[];
-extern char *localized_abbrev_months[];
-extern char *localized_full_months[];
+extern session_local char *localized_abbrev_days[];
+extern session_local char *localized_full_days[];
+extern session_local char *localized_abbrev_months[];
+extern session_local char *localized_full_months[];
 
 
 extern bool check_locale_messages(char **newval, void **extra, GucSource source);

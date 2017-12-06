@@ -28,4 +28,4 @@
  * loadable module being loaded into a GCC-built backend.
  */
 
-Node	   *newNodeMacroHolder;
+session_local Node	   *newNodeMacroHolder;

@@ -96,7 +96,7 @@
 #if defined(EEO_USE_COMPUTED_GOTO)
 
 /* to make dispatch_table accessible outside ExecInterpExpr() */
-static const void **dispatch_table = NULL;
+static session_local const void **dispatch_table = NULL;
 
 #define EEO_SWITCH()
 #define EEO_CASE(name)		CASE_##name:

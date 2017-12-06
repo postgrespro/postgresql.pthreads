@@ -74,7 +74,7 @@
 void
 randomize_mem(char *ptr, size_t size)
 {
-	static int	save_ctr = 1;
+	static session_local int	save_ctr = 1;
 	size_t		remaining = size;
 	int			ctr;
 

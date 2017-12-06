@@ -42,9 +42,10 @@
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
+#include "miscadmin.h"
 
 
-const char *progname;
+session_local const char *progname;
 
 
 static void startup_hacks(const char *progname);
@@ -215,9 +216,10 @@ main(int argc, char *argv[])
 	 */
 	pgwin32_signal_initialize();
 #endif
+	IsPostmaster = true;
 
-	if (argc > 1 && strcmp(argv[1], "--boot") == 0)
-		AuxiliaryProcessMain(argc, argv);	/* does not return */
+    if (argc > 1 && strcmp(argv[1], "--boot") == 0)
+		AuxiliaryProcessMain(argc, argv);       /* does not return */
 	else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
 		GucInfoMain();			/* does not return */
 	else if (argc > 1 && strcmp(argv[1], "--single") == 0)

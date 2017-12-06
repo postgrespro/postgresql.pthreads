@@ -105,27 +105,27 @@ static PGXACT *allPgXact;
  */
 static TransactionId *KnownAssignedXids;
 static bool *KnownAssignedXidsValid;
-static TransactionId latestObservedXid = InvalidTransactionId;
+static session_local TransactionId latestObservedXid = InvalidTransactionId;
 
 /*
  * If we're in STANDBY_SNAPSHOT_PENDING state, standbySnapshotPendingXmin is
  * the highest xid that might still be running that we don't have in
  * KnownAssignedXids.
  */
-static TransactionId standbySnapshotPendingXmin;
+static session_local TransactionId standbySnapshotPendingXmin;
 
 #ifdef XIDCACHE_DEBUG
 
 /* counters for XidCache measurement */
-static long xc_by_recent_xmin = 0;
-static long xc_by_known_xact = 0;
-static long xc_by_my_xact = 0;
-static long xc_by_latest_xid = 0;
-static long xc_by_main_xid = 0;
-static long xc_by_child_xid = 0;
-static long xc_by_known_assigned = 0;
-static long xc_no_overflow = 0;
-static long xc_slow_answer = 0;
+static session_local long xc_by_recent_xmin = 0;
+static session_local long xc_by_known_xact = 0;
+static session_local long xc_by_my_xact = 0;
+static session_local long xc_by_latest_xid = 0;
+static session_local long xc_by_main_xid = 0;
+static session_local long xc_by_child_xid = 0;
+static session_local long xc_by_known_assigned = 0;
+static session_local long xc_no_overflow = 0;
+static session_local long xc_slow_answer = 0;
 
 #define xc_by_recent_xmin_inc()		(xc_by_recent_xmin++)
 #define xc_by_known_xact_inc()		(xc_by_known_xact++)
@@ -998,7 +998,7 @@ ProcArrayApplyXidAssignment(TransactionId topxid,
 bool
 TransactionIdIsInProgress(TransactionId xid)
 {
-	static TransactionId *xids = NULL;
+	static session_local TransactionId *xids = NULL;
 	int			nxids = 0;
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId topxid;
@@ -1934,7 +1934,7 @@ RunningTransactions
 GetRunningTransactionData(void)
 {
 	/* result workspace */
-	static RunningTransactionsData CurrentRunningXactsData;
+	static session_local RunningTransactionsData CurrentRunningXactsData;
 
 	ProcArrayStruct *arrayP = procArray;
 	RunningTransactions CurrentRunningXacts = &CurrentRunningXactsData;
@@ -2561,7 +2561,7 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool excludeXmin0,
 VirtualTransactionId *
 GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 {
-	static VirtualTransactionId *vxids;
+	static session_local VirtualTransactionId *vxids;
 	ProcArrayStruct *arrayP = procArray;
 	int			count = 0;
 	int			index;

@@ -71,13 +71,13 @@
 
 
 /* GUC variables */
-int			wal_receiver_status_interval;
-int			wal_receiver_timeout;
-bool		hot_standby_feedback;
+session_local int			wal_receiver_status_interval;
+session_local int			wal_receiver_timeout;
+session_local bool		hot_standby_feedback;
 
 /* libpqwalreceiver connection */
-static WalReceiverConn *wrconn = NULL;
-WalReceiverFunctionsType *WalReceiverFunctions = NULL;
+static session_local WalReceiverConn *wrconn = NULL;
+session_local WalReceiverFunctionsType *WalReceiverFunctions = NULL;
 
 #define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
 
@@ -86,10 +86,10 @@ WalReceiverFunctionsType *WalReceiverFunctions = NULL;
  * but for walreceiver to write the XLOG. recvFileTLI is the TimeLineID
  * corresponding the filename of recvFile.
  */
-static int	recvFile = -1;
-static TimeLineID recvFileTLI = 0;
-static XLogSegNo recvSegNo = 0;
-static uint32 recvOff = 0;
+static session_local int	recvFile = -1;
+static session_local TimeLineID recvFileTLI = 0;
+static session_local XLogSegNo recvSegNo = 0;
+static session_local uint32 recvOff = 0;
 
 /*
  * Flags set by interrupt handlers of walreceiver for later service in the
@@ -108,8 +108,8 @@ static struct
 	XLogRecPtr	Flush;			/* last byte + 1 flushed in the standby */
 }			LogstreamResult;
 
-static StringInfoData reply_message;
-static StringInfoData incoming_message;
+static session_local StringInfoData reply_message;
+static session_local StringInfoData incoming_message;
 
 /*
  * About SIGTERM handling:
@@ -127,7 +127,7 @@ static StringInfoData incoming_message;
  * This is very much like what regular backends do with ImmediateInterruptOK,
  * ProcessInterrupts() etc.
  */
-static volatile bool WalRcvImmediateInterruptOK = false;
+static session_local volatile bool WalRcvImmediateInterruptOK = false;
 
 /* Prototypes for private functions */
 static void ProcessWalRcvInterrupts(void);
@@ -1110,10 +1110,10 @@ XLogWalRcvFlush(bool dying)
 static void
 XLogWalRcvSendReply(bool force, bool requestReply)
 {
-	static XLogRecPtr writePtr = 0;
-	static XLogRecPtr flushPtr = 0;
+	static session_local XLogRecPtr writePtr = 0;
+	static session_local XLogRecPtr flushPtr = 0;
 	XLogRecPtr	applyPtr;
-	static TimestampTz sendTime = 0;
+	static session_local TimestampTz sendTime = 0;
 	TimestampTz now;
 
 	/*
@@ -1185,10 +1185,10 @@ XLogWalRcvSendHSFeedback(bool immed)
 				catalog_xmin_epoch;
 	TransactionId xmin,
 				catalog_xmin;
-	static TimestampTz sendTime = 0;
+	static session_local TimestampTz sendTime = 0;
 
 	/* initially true so we always send at least one feedback message */
-	static bool master_has_standby_xmin = true;
+	static session_local bool master_has_standby_xmin = true;
 
 	/*
 	 * If the user doesn't want status to be reported to the master, be sure

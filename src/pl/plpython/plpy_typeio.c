@@ -572,7 +572,7 @@ PLyFloat_FromFloat8(PLyDatumToOb *arg, Datum d)
 static PyObject *
 PLyDecimal_FromNumeric(PLyDatumToOb *arg, Datum d)
 {
-	static PyObject *decimal_constructor;
+	static session_local PyObject *decimal_constructor;
 	char	   *str;
 	PyObject   *pyvalue;
 

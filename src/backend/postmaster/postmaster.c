@@ -76,6 +76,7 @@
 #include <sys/param.h>
 #include <netdb.h>
 #include <limits.h>
+#include <pthread.h>
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -129,11 +130,14 @@
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
 #include "utils/varlena.h"
+#include "utils/guc.h"
 
-#ifdef EXEC_BACKEND
-#include "storage/spin.h"
-#endif
-
+extern slock_t *ShmemLock;
+extern slock_t *ProcStructLock;
+extern PGPROC *AuxiliaryProcs;
+extern PMSignalData *PMSignalState;
+extern session_local pgsocket pgStatSock;
+extern session_local pg_time_t first_syslogger_file_time;
 
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
@@ -166,7 +170,7 @@
  */
 typedef struct bkend
 {
-	pid_t		pid;			/* process id of backend */
+	pthread_t	pid;			/* process id of backend */
 	int32		cancel_key;		/* cancel key for cancels for this backend */
 	int			child_slot;		/* PMChildSlot for this backend, if any */
 
@@ -187,18 +191,18 @@ static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
 static Backend *ShmemBackendArray;
 #endif
 
-BackgroundWorker *MyBgworkerEntry = NULL;
+session_local BackgroundWorker *MyBgworkerEntry = NULL;
 
 
 
 /* The socket number we are listening for connections on */
-int			PostPortNumber;
+session_local int			PostPortNumber;
 
 /* The directory names for Unix socket(s) */
-char	   *Unix_socket_directories;
+session_local char	   *Unix_socket_directories;
 
 /* The TCP listen address(es) */
-char	   *ListenAddresses;
+session_local char	   *ListenAddresses;
 
 /*
  * ReservedBackends is the number of backends reserved for superuser use.
@@ -209,16 +213,16 @@ char	   *ListenAddresses;
  * can make new connections" --- pre-existing superuser connections don't
  * count against the limit.
  */
-int			ReservedBackends;
+session_local int			ReservedBackends;
 
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	64
-static pgsocket ListenSocket[MAXLISTEN];
+static session_local pgsocket ListenSocket[MAXLISTEN];
 
 /*
  * Set by the -o option
  */
-static char ExtraOptions[MAXPGPATH];
+static session_local char ExtraOptions[MAXPGPATH];
 
 /*
  * These globals control the behavior of the postmaster in case some
@@ -227,25 +231,26 @@ static char ExtraOptions[MAXPGPATH];
  * the postmaster stop (rather than kill) peers and not reinitialize
  * shared data structures.  (Reinit is currently dead code, though.)
  */
-static bool Reinit = true;
-static int	SendStop = false;
+static session_local bool Reinit = true;
+static session_local int	SendStop = false;
 
 /* still more option variables */
-bool		EnableSSL = false;
+session_local bool		EnableSSL = false;
 
-int			PreAuthDelay = 0;
-int			AuthenticationTimeout = 60;
+session_local int			PreAuthDelay = 0;
+session_local int			AuthenticationTimeout = 60;
 
-bool		log_hostname;		/* for ps display and logging */
-bool		Log_connections = false;
-bool		Db_user_namespace = false;
+session_local bool		log_hostname;		/* for ps display and logging */
+session_local bool		Log_connections = false;
+session_local bool		Db_user_namespace = false;
 
-bool		enable_bonjour = false;
-char	   *bonjour_name;
-bool		restart_after_crash = true;
+session_local bool		enable_bonjour = false;
+session_local char	   *bonjour_name;
+session_local bool		restart_after_crash = true;
+session_local int       thread_stack_size;
 
 /* PIDs of special child processes; 0 when not running */
-static pid_t StartupPID = 0,
+static session_local pid_t StartupPID = 0,
 			BgWriterPID = 0,
 			CheckpointerPID = 0,
 			WalWriterPID = 0,
@@ -264,7 +269,7 @@ typedef enum
 	STARTUP_CRASHED
 } StartupStatusEnum;
 
-static StartupStatusEnum StartupStatus = STARTUP_NOT_RUNNING;
+static session_local StartupStatusEnum StartupStatus = STARTUP_NOT_RUNNING;
 
 /* Startup/shutdown state */
 #define			NoShutdown		0
@@ -272,9 +277,9 @@ static StartupStatusEnum StartupStatus = STARTUP_NOT_RUNNING;
 #define			FastShutdown	2
 #define			ImmediateShutdown	3
 
-static int	Shutdown = NoShutdown;
+static session_local int	Shutdown = NoShutdown;
 
-static bool FatalError = false; /* T if recovering from backend crash */
+static session_local bool FatalError = false; /* T if recovering from backend crash */
 
 /*
  * We use a simple state machine to control startup, shutdown, and
@@ -336,34 +341,34 @@ typedef enum
 	PM_NO_CHILDREN				/* all important children have exited */
 } PMState;
 
-static PMState pmState = PM_INIT;
+static session_local PMState pmState = PM_INIT;
 
 /* Start time of SIGKILL timeout during immediate shutdown or child crash */
 /* Zero means timeout is not running */
-static time_t AbortStartTime = 0;
+static session_local time_t AbortStartTime = 0;
 
 /* Length of said timeout */
 #define SIGKILL_CHILDREN_AFTER_SECS		5
 
-static bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
+static session_local bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
 
-bool		ClientAuthInProgress = false;	/* T during new-client
+session_local bool		ClientAuthInProgress = false;	/* T during new-client
 											 * authentication */
 
-bool		redirection_done = false;	/* stderr redirected for syslogger? */
+session_local bool		redirection_done = false;	/* stderr redirected for syslogger? */
 
 /* received START_AUTOVAC_LAUNCHER signal */
-static volatile sig_atomic_t start_autovac_launcher = false;
+static session_local volatile sig_atomic_t start_autovac_launcher = false;
 
 /* the launcher needs to be signalled to communicate some condition */
-static volatile bool avlauncher_needs_signal = false;
+static session_local volatile bool avlauncher_needs_signal = false;
 
 /* received START_WALRECEIVER signal */
-static volatile sig_atomic_t WalReceiverRequested = false;
+static session_local volatile sig_atomic_t WalReceiverRequested = false;
 
 /* set when there's a worker that needs to be started up */
-static volatile bool StartWorkerNeeded = true;
-static volatile bool HaveCrashedWorker = false;
+static session_local volatile bool StartWorkerNeeded = true;
+static session_local volatile bool HaveCrashedWorker = false;
 
 #ifndef HAVE_STRONG_RANDOM
 /*
@@ -371,17 +376,17 @@ static volatile bool HaveCrashedWorker = false;
  * Also, the global MyCancelKey passes the cancel key assigned to a given
  * backend from the postmaster to that backend (via fork).
  */
-static unsigned int random_seed = 0;
-static struct timeval random_start_time;
+static session_local unsigned int random_seed = 0;
+static session_local struct timeval random_start_time;
 #endif
 
 #ifdef USE_SSL
 /* Set when and if SSL has been initialized properly */
-static bool LoadedSSL = false;
+static session_local bool LoadedSSL = false;
 #endif
 
 #ifdef USE_BONJOUR
-static DNSServiceRef bonjour_sdref = NULL;
+static session_local DNSServiceRef bonjour_sdref = NULL;
 #endif
 
 /*
@@ -445,6 +450,51 @@ static void InitPostmasterDeathWatchHandle(void);
 	 (XLogArchivingAlways() &&	\
 	  (pmState == PM_RECOVERY || pmState == PM_HOT_STANDBY)))
 
+/*
+ * Structure contains all variables passed to exec:ed backends
+ */
+typedef struct
+{
+	Port		port;
+	AuxProcType auxProcType;
+	BackgroundWorker* bgwEntry;
+	char		DataDir[MAXPGPATH];
+	pgsocket	ListenSocket[MAXLISTEN];
+	int32		MyCancelKey;
+	int			MyPMChildSlot;
+	unsigned long UsedShmemSegID;
+	void	   *UsedShmemSegAddr;
+	slock_t    *ShmemLock;
+	VariableCache ShmemVariableCache;
+#ifndef HAVE_SPINLOCKS
+	PGSemaphore *SpinlockSemaArray;
+#endif
+	int			NamedLWLockTrancheRequests;
+	NamedLWLockTranche *NamedLWLockTrancheArray;
+	LWLockPadded *MainLWLockArray;
+	slock_t    *ProcStructLock;
+	PROC_HDR   *ProcGlobal;
+	PGPROC	   *AuxiliaryProcs;
+	PGPROC	   *PreparedXactProcs;
+	PMSignalData *PMSignalState;
+	pid_t		PostmasterPid;
+	TimestampTz PgStartTime;
+	TimestampTz PgReloadTime;
+	pg_time_t	first_syslogger_file_time;
+	bool		redirection_done;
+	bool		IsBinaryUpgrade;
+	int			max_safe_fds;
+	int			MaxBackends;
+	int			postmaster_alive_fds[2];
+	int			syslogPipe[2];
+	char		my_exec_path[MAXPGPATH];
+	char		pkglib_path[MAXPGPATH];
+	char		ExtraOptions[MAXPGPATH];
+} ThreadParameters;
+
+static bool save_backend_variables(ThreadParameters *param, Port *port);
+static void restore_backend_variables(ThreadParameters *param, Port *port);
+
 #ifdef EXEC_BACKEND
 
 #ifdef WIN32
@@ -478,66 +528,14 @@ typedef struct
 typedef int InheritableSocket;
 #endif
 
-/*
- * Structure contains all variables passed to exec:ed backends
- */
-typedef struct
-{
-	Port		port;
-	InheritableSocket portsocket;
-	char		DataDir[MAXPGPATH];
-	pgsocket	ListenSocket[MAXLISTEN];
-	int32		MyCancelKey;
-	int			MyPMChildSlot;
-#ifndef WIN32
-	unsigned long UsedShmemSegID;
-#else
-	HANDLE		UsedShmemSegID;
-#endif
-	void	   *UsedShmemSegAddr;
-	slock_t    *ShmemLock;
-	VariableCache ShmemVariableCache;
-	Backend    *ShmemBackendArray;
-#ifndef HAVE_SPINLOCKS
-	PGSemaphore *SpinlockSemaArray;
-#endif
-	int			NamedLWLockTrancheRequests;
-	NamedLWLockTranche *NamedLWLockTrancheArray;
-	LWLockPadded *MainLWLockArray;
-	slock_t    *ProcStructLock;
-	PROC_HDR   *ProcGlobal;
-	PGPROC	   *AuxiliaryProcs;
-	PGPROC	   *PreparedXactProcs;
-	PMSignalData *PMSignalState;
-	InheritableSocket pgStatSock;
-	pid_t		PostmasterPid;
-	TimestampTz PgStartTime;
-	TimestampTz PgReloadTime;
-	pg_time_t	first_syslogger_file_time;
-	bool		redirection_done;
-	bool		IsBinaryUpgrade;
-	int			max_safe_fds;
-	int			MaxBackends;
-#ifdef WIN32
-	HANDLE		PostmasterHandle;
-	HANDLE		initial_signal_pipe;
-	HANDLE		syslogPipe[2];
-#else
-	int			postmaster_alive_fds[2];
-	int			syslogPipe[2];
-#endif
-	char		my_exec_path[MAXPGPATH];
-	char		pkglib_path[MAXPGPATH];
-	char		ExtraOptions[MAXPGPATH];
-} BackendParameters;
 
 static void read_backend_variables(char *id, Port *port);
-static void restore_backend_variables(BackendParameters *param, Port *port);
+static void restore_backend_variables(ThreadParameters *param, Port *port);
 
 #ifndef WIN32
-static bool save_backend_variables(BackendParameters *param, Port *port);
+static bool save_backend_variables(ThreadParameters *param, Port *port);
 #else
-static bool save_backend_variables(BackendParameters *param, Port *port,
+static bool save_backend_variables(ThreadParameters *param, Port *port,
 					   HANDLE childProcess, pid_t childPid);
 #endif
 
@@ -561,10 +559,10 @@ static void ShmemBackendArrayRemove(Backend *bn);
  * File descriptors for pipe used to monitor if postmaster is alive.
  * First is POSTMASTER_FD_WATCH, second is POSTMASTER_FD_OWN.
  */
-int			postmaster_alive_fds[2] = {-1, -1};
+session_local int			postmaster_alive_fds[2] = {-1, -1};
 #else
 /* Process handle of postmaster used for the same purpose on Windows */
-HANDLE		PostmasterHandle;
+session_local HANDLE		PostmasterHandle;
 #endif
 
 /*
@@ -585,6 +583,7 @@ PostmasterMain(int argc, char *argv[])
 	MyStartTime = time(NULL);
 
 	IsPostmasterEnvironment = true;
+	IsPostmaster = true;
 
 	/*
 	 * for security, no dir or file created can be group or other accessible
@@ -1755,13 +1754,14 @@ ServerLoop(void)
 					if (port)
 					{
 						BackendStartup(port);
-
+#if 0
 						/*
 						 * We no longer need the open socket or port structure
 						 * in this process
 						 */
 						StreamClose(port->sock);
 						ConnFree(port);
+#endif
 					}
 				}
 			}
@@ -2377,7 +2377,7 @@ static CAC_state
 canAcceptConnections(void)
 {
 	CAC_state	result = CAC_OK;
-
+	return result;
 	/*
 	 * Can't start backends when in startup/shutdown/inconsistent recovery
 	 * state.
@@ -3912,6 +3912,7 @@ PostmasterStateMachine(void)
 static void
 signal_child(pid_t pid, int signal)
 {
+#if 0
 	if (kill(pid, signal) < 0)
 		elog(DEBUG3, "kill(%ld,%d) failed: %m", (long) pid, signal);
 #ifdef HAVE_SETSID
@@ -3928,6 +3929,7 @@ signal_child(pid_t pid, int signal)
 		default:
 			break;
 	}
+#endif
 #endif
 }
 
@@ -4005,6 +4007,57 @@ TerminateChildren(int signal)
 		signal_child(PgStatPID, signal);
 }
 
+
+static bool create_thread(pthread_t* t, void*(*thread_proc)(void*), Port* port)
+{
+	pthread_attr_t attr;
+	int rc;
+	ThreadParameters* param = (ThreadParameters*)malloc(sizeof(ThreadParameters));
+	save_backend_variables(param, port);
+
+	pthread_attr_init(&attr);
+	pthread_attr_setstacksize(&attr, thread_stack_size);
+	rc = pthread_create(t, &attr, thread_proc, param);
+	if (rc != 0) elog(WARNING, "pthread_create failed with code %d, errno=%d, thread_stack_size=%d", rc, errno, thread_stack_size);
+	pthread_attr_destroy(&attr);
+	return rc == 0;
+}
+
+/**
+ * Common initialized for all threads
+ */
+static void initialize_thread(void* arg, Port* port)
+{
+	ThreadParameters *param = (ThreadParameters*)arg;
+
+	restore_backend_variables(param, port);
+	free(param);
+
+	IsPostmasterEnvironment = true;
+
+	/*
+	 * Fire up essential subsystems: error and memory management
+	 *
+	 * Code after this point is allowed to use elog/ereport, though
+	 * localization of messages may not work right away, and messages won't go
+	 * anywhere but stderr until GUC settings get loaded.
+	 */
+	MemoryContextInit();
+	MemoryContextSwitchTo(TopMemoryContext);
+	PostmasterContext = NULL;
+
+	InitializeGUCOptions();
+
+	/* Detangle from postmaster */
+	InitPostmasterChild();
+
+	/*
+	 * Set reference point for stack-depth checking
+	 */
+	set_stack_base();
+}
+
+
 /*
  * BackendStartup -- start backend process
  *
@@ -4012,11 +4065,24 @@ TerminateChildren(int signal)
  *
  * Note: if you change this code, also consider StartAutovacuumWorker.
  */
+static void* backend_main_proc(void* arg)
+{
+	Port		port;
+
+	initialize_thread(arg, &port);
+
+	/* Perform additional initialization and collect startup packet */
+	BackendInitialize(&port);
+
+	/* And run the backend */
+	BackendRun(&port);
+	return NULL;
+}
+
 static int
 BackendStartup(Port *port)
 {
 	Backend    *bn;				/* for backend cleanup */
-	pid_t		pid;
 
 	/*
 	 * Create backend data structure.  Better before the fork() so we can
@@ -4063,29 +4129,7 @@ BackendStartup(Port *port)
 	/* Hasn't asked to be notified about any bgworkers yet */
 	bn->bgworker_notify = false;
 
-#ifdef EXEC_BACKEND
-	pid = backend_forkexec(port);
-#else							/* !EXEC_BACKEND */
-	pid = fork_process();
-	if (pid == 0)				/* child */
-	{
-		free(bn);
-
-		/* Detangle from postmaster */
-		InitPostmasterChild();
-
-		/* Close the postmaster's sockets */
-		ClosePostmasterPorts(false);
-
-		/* Perform additional initialization and collect startup packet */
-		BackendInitialize(port);
-
-		/* And run the backend */
-		BackendRun(port);
-	}
-#endif							/* EXEC_BACKEND */
-
-	if (pid < 0)
+    if (!create_thread(&bn->pid, backend_main_proc, port))
 	{
 		/* in parent, fork failed */
 		int			save_errno = errno;
@@ -4103,13 +4147,12 @@ BackendStartup(Port *port)
 	/* in parent, successful fork */
 	ereport(DEBUG2,
 			(errmsg_internal("forked new backend, pid=%d socket=%d",
-							 (int) pid, (int) port->sock)));
+							 (int) bn->pid, (int) port->sock)));
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our list
 	 * of backends.
 	 */
-	bn->pid = pid;
 	bn->bkend_type = BACKEND_TYPE_NORMAL;	/* Can change later to WALSND */
 	dlist_push_head(&BackendList, &bn->elem);
 
@@ -4473,10 +4516,10 @@ backend_forkexec(Port *port)
 static pid_t
 internal_forkexec(int argc, char *argv[], Port *port)
 {
-	static unsigned long tmpBackendFileNum = 0;
+	static session_local unsigned long tmpBackendFileNum = 0;
 	pid_t		pid;
 	char		tmpfilename[MAXPGPATH];
-	BackendParameters param;
+	ThreadParameters param;
 	FILE	   *fp;
 
 	if (!save_backend_variables(&param, port))
@@ -4572,7 +4615,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	int			j;
 	char		cmdLine[MAXPGPATH * 2];
 	HANDLE		paramHandle;
-	BackendParameters *param;
+	ThreadParameters *param;
 	SECURITY_ATTRIBUTES sa;
 	char		paramHandleStr[32];
 	win32_deadchild_waitinfo *childinfo;
@@ -4594,7 +4637,7 @@ retry:
 									&sa,
 									PAGE_READWRITE,
 									0,
-									sizeof(BackendParameters),
+									sizeof(ThreadParameters),
 									NULL);
 	if (paramHandle == INVALID_HANDLE_VALUE)
 	{
@@ -4603,7 +4646,7 @@ retry:
 		return -1;
 	}
 
-	param = MapViewOfFile(paramHandle, FILE_MAP_WRITE, 0, 0, sizeof(BackendParameters));
+	param = MapViewOfFile(paramHandle, FILE_MAP_WRITE, 0, 0, sizeof(ThreadParameters));
 	if (!param)
 	{
 		elog(LOG, "could not map backend parameter memory: error code %lu",
@@ -4776,7 +4819,6 @@ SubPostmasterMain(int argc, char *argv[])
 	Port		port;
 
 	/* In EXEC_BACKEND case we will not have inherited these settings */
-	IsPostmasterEnvironment = true;
 	whereToSendOutput = DestNone;
 
 	/* Setup as postmaster child */
@@ -5256,7 +5298,7 @@ RandomCancelKey(int32 *cancel_key)
 	 * We cannot use pg_backend_random() in postmaster, because it stores its
 	 * state in shared memory.
 	 */
-	static unsigned short seed[3];
+	static session_local unsigned short seed[3];
 
 	/*
 	 * Select a random seed at the time of first receiving a request.
@@ -5330,53 +5372,32 @@ CountChildren(int target)
  * Return value of StartChildProcess is subprocess' PID, or 0 if failed
  * to start subprocess.
  */
-static pid_t
-StartChildProcess(AuxProcType type)
+static void* auxiliary_main_proc(void* arg)
 {
-	pid_t		pid;
 	char	   *av[10];
 	int			ac = 0;
 	char		typebuf[32];
 
-	/*
-	 * Set up command-line arguments for subprocess
-	 */
+	initialize_thread(arg, NULL);
+	IsPostmasterEnvironment = true;
+
 	av[ac++] = "postgres";
-
-#ifdef EXEC_BACKEND
-	av[ac++] = "--forkboot";
-	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
-#endif
-
-	snprintf(typebuf, sizeof(typebuf), "-x%d", type);
+	snprintf(typebuf, sizeof(typebuf), "-x%d", MyAuxProcType);
 	av[ac++] = typebuf;
-
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));
 
-#ifdef EXEC_BACKEND
-	pid = postmaster_forkexec(ac, av);
-#else							/* !EXEC_BACKEND */
-	pid = fork_process();
+	AuxiliaryProcessMain(ac, av);
+	return NULL;
+}
 
-	if (pid == 0)				/* child */
-	{
-		InitPostmasterChild();
+static pid_t
+StartChildProcess(AuxProcType type)
+{
+	pthread_t	pid;
 
-		/* Close the postmaster's sockets */
-		ClosePostmasterPorts(false);
-
-		/* Release postmaster's working memory context */
-		MemoryContextSwitchTo(TopMemoryContext);
-		MemoryContextDelete(PostmasterContext);
-		PostmasterContext = NULL;
-
-		AuxiliaryProcessMain(ac, av);
-		ExitPostmaster(0);
-	}
-#endif							/* EXEC_BACKEND */
-
-	if (pid < 0)
+	MyAuxProcType = type;
+	if (!create_thread(&pid, auxiliary_main_proc, NULL))
 	{
 		/* in parent, fork failed */
 		int			save_errno = errno;
@@ -5672,10 +5693,18 @@ bgworker_forkexec(int shmem_slot)
  *
  * This code is heavily based on autovacuum.c, q.v.
  */
+static void* worker_main_proc(void* arg)
+{
+	initialize_thread(arg, NULL);
+	StartBackgroundWorker();
+	return NULL;
+}
+
+
 static bool
 do_start_bgworker(RegisteredBgWorker *rw)
 {
-	pid_t		worker_pid;
+	pthread_t		worker_pid;
 
 	Assert(rw->rw_pid == 0);
 
@@ -5698,65 +5727,31 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			(errmsg("starting background worker process \"%s\"",
 					rw->rw_worker.bgw_name)));
 
-#ifdef EXEC_BACKEND
-	switch ((worker_pid = bgworker_forkexec(rw->rw_shmem_slot)))
-#else
-	switch ((worker_pid = fork_process()))
-#endif
+	MyBgworkerEntry = &rw->rw_worker;
+	if (!create_thread(&worker_pid, worker_main_proc, NULL))
 	{
-		case -1:
-			/* in postmaster, fork failed ... */
-			ereport(LOG,
-					(errmsg("could not fork worker process: %m")));
-			/* undo what assign_backendlist_entry did */
-			ReleasePostmasterChildSlot(rw->rw_child_slot);
-			rw->rw_child_slot = 0;
-			free(rw->rw_backend);
-			rw->rw_backend = NULL;
-			/* mark entry as crashed, so we'll try again later */
-			rw->rw_crashed_at = GetCurrentTimestamp();
-			break;
-
-#ifndef EXEC_BACKEND
-		case 0:
-			/* in postmaster child ... */
-			InitPostmasterChild();
-
-			/* Close the postmaster's sockets */
-			ClosePostmasterPorts(false);
-
-			/*
-			 * Before blowing away PostmasterContext, save this bgworker's
-			 * data where it can find it.
-			 */
-			MyBgworkerEntry = (BackgroundWorker *)
-				MemoryContextAlloc(TopMemoryContext, sizeof(BackgroundWorker));
-			memcpy(MyBgworkerEntry, &rw->rw_worker, sizeof(BackgroundWorker));
-
-			/* Release postmaster's working memory context */
-			MemoryContextSwitchTo(TopMemoryContext);
-			MemoryContextDelete(PostmasterContext);
-			PostmasterContext = NULL;
-
-			StartBackgroundWorker();
-
-			exit(1);			/* should not get here */
-			break;
-#endif
-		default:
-			/* in postmaster, fork successful ... */
-			rw->rw_pid = worker_pid;
-			rw->rw_backend->pid = rw->rw_pid;
-			ReportBackgroundWorkerPID(rw);
-			/* add new worker to lists of backends */
-			dlist_push_head(&BackendList, &rw->rw_backend->elem);
-#ifdef EXEC_BACKEND
-			ShmemBackendArrayAdd(rw->rw_backend);
-#endif
-			return true;
+		/* in postmaster, fork failed ... */
+		ereport(LOG,
+				(errmsg("could not fork worker process: %m")));
+		/* undo what assign_backendlist_entry did */
+		ReleasePostmasterChildSlot(rw->rw_child_slot);
+		rw->rw_child_slot = 0;
+		free(rw->rw_backend);
+		rw->rw_backend = NULL;
+		/* mark entry as crashed, so we'll try again later */
+		rw->rw_crashed_at = GetCurrentTimestamp();
+		return false;
 	}
-
-	return false;
+	else
+	{
+		/* in postmaster, fork successful ... */
+		rw->rw_pid = worker_pid;
+		rw->rw_backend->pid = rw->rw_pid;
+		ReportBackgroundWorkerPID(rw);
+		/* add new worker to lists of backends */
+		dlist_push_head(&BackendList, &rw->rw_backend->elem);
+		return true;
+	}
 }
 
 /*
@@ -5986,43 +5981,16 @@ PostmasterMarkPIDForWorkerNotify(int pid)
 	return false;
 }
 
-#ifdef EXEC_BACKEND
 
-/*
- * The following need to be available to the save/restore_backend_variables
- * functions.  They are marked NON_EXEC_STATIC in their home modules.
- */
-extern slock_t *ShmemLock;
-extern slock_t *ProcStructLock;
-extern PGPROC *AuxiliaryProcs;
-extern PMSignalData *PMSignalState;
-extern pgsocket pgStatSock;
-extern pg_time_t first_syslogger_file_time;
-
-#ifndef WIN32
-#define write_inheritable_socket(dest, src, childpid) ((*(dest) = (src)), true)
-#define read_inheritable_socket(dest, src) (*(dest) = *(src))
-#else
-static bool write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE child);
-static bool write_inheritable_socket(InheritableSocket *dest, SOCKET src,
-						 pid_t childPid);
-static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
-#endif
-
-
-/* Save critical backend variables into the BackendParameters struct */
-#ifndef WIN32
+/* Save critical backend variables into the ThreadParameters struct */
 static bool
-save_backend_variables(BackendParameters *param, Port *port)
-#else
-static bool
-save_backend_variables(BackendParameters *param, Port *port,
-					   HANDLE childProcess, pid_t childPid)
-#endif
+save_backend_variables(ThreadParameters *param, Port *port)
 {
-	memcpy(&param->port, port, sizeof(Port));
-	if (!write_inheritable_socket(&param->portsocket, port->sock, childPid))
-		return false;
+	if (port != NULL)
+		memcpy(&param->port, port, sizeof(Port));
+
+	param->auxProcType = MyAuxProcType;
+	param->bgwEntry = MyBgworkerEntry;
 
 	strlcpy(param->DataDir, DataDir, MAXPGPATH);
 
@@ -6036,7 +6004,6 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	param->ShmemLock = ShmemLock;
 	param->ShmemVariableCache = ShmemVariableCache;
-	param->ShmemBackendArray = ShmemBackendArray;
 
 #ifndef HAVE_SPINLOCKS
 	param->SpinlockSemaArray = SpinlockSemaArray;
@@ -6049,8 +6016,6 @@ save_backend_variables(BackendParameters *param, Port *port,
 	param->AuxiliaryProcs = AuxiliaryProcs;
 	param->PreparedXactProcs = PreparedXactProcs;
 	param->PMSignalState = PMSignalState;
-	if (!write_inheritable_socket(&param->pgStatSock, pgStatSock, childPid))
-		return false;
 
 	param->PostmasterPid = PostmasterPid;
 	param->PgStartTime = PgStartTime;
@@ -6084,6 +6049,89 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	return true;
 }
+
+
+
+/* Restore critical backend variables from the ThreadParameters struct */
+static void
+restore_backend_variables(ThreadParameters *param, Port *port)
+{
+	if (port != NULL)
+		memcpy(port, &param->port, sizeof(Port));
+
+	MyAuxProcType = param->auxProcType;
+	MyBgworkerEntry = param->bgwEntry;
+
+	SetDataDir(param->DataDir);
+
+	memcpy(&ListenSocket, &param->ListenSocket, sizeof(ListenSocket));
+
+	MyCancelKey = param->MyCancelKey;
+	MyPMChildSlot = param->MyPMChildSlot;
+
+	UsedShmemSegID = param->UsedShmemSegID;
+	UsedShmemSegAddr = param->UsedShmemSegAddr;
+
+	ShmemLock = param->ShmemLock;
+	ShmemVariableCache = param->ShmemVariableCache;
+
+#ifndef HAVE_SPINLOCKS
+	SpinlockSemaArray = param->SpinlockSemaArray;
+#endif
+	NamedLWLockTrancheRequests = param->NamedLWLockTrancheRequests;
+	NamedLWLockTrancheArray = param->NamedLWLockTrancheArray;
+	MainLWLockArray = param->MainLWLockArray;
+	ProcStructLock = param->ProcStructLock;
+	ProcGlobal = param->ProcGlobal;
+	AuxiliaryProcs = param->AuxiliaryProcs;
+	PreparedXactProcs = param->PreparedXactProcs;
+	PMSignalState = param->PMSignalState;
+
+	PostmasterPid = param->PostmasterPid;
+	PgStartTime = param->PgStartTime;
+	PgReloadTime = param->PgReloadTime;
+	first_syslogger_file_time = param->first_syslogger_file_time;
+
+	redirection_done = param->redirection_done;
+	IsBinaryUpgrade = param->IsBinaryUpgrade;
+	max_safe_fds = param->max_safe_fds;
+
+	MaxBackends = param->MaxBackends;
+
+#ifdef WIN32
+	PostmasterHandle = param->PostmasterHandle;
+	pgwin32_initial_signal_pipe = param->initial_signal_pipe;
+#else
+	memcpy(&postmaster_alive_fds, &param->postmaster_alive_fds,
+		   sizeof(postmaster_alive_fds));
+#endif
+
+	memcpy(&syslogPipe, &param->syslogPipe, sizeof(syslogPipe));
+
+	strlcpy(my_exec_path, param->my_exec_path, MAXPGPATH);
+
+	strlcpy(pkglib_path, param->pkglib_path, MAXPGPATH);
+
+	strlcpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
+}
+
+
+#ifdef EXEC_BACKEND
+
+/*
+ * The following need to be available to the save/restore_backend_variables
+ * functions.  They are marked NON_EXEC_STATIC in their home modules.
+ */
+
+#ifndef WIN32
+#define write_inheritable_socket(dest, src, childpid) ((*(dest) = (src)), true)
+#define read_inheritable_socket(dest, src) (*(dest) = *(src))
+#else
+static bool write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE child);
+static bool write_inheritable_socket(InheritableSocket *dest, SOCKET src,
+						 pid_t childPid);
+static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
+#endif
 
 
 #ifdef WIN32
@@ -6182,7 +6230,7 @@ read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
 static void
 read_backend_variables(char *id, Port *port)
 {
-	BackendParameters param;
+	ThreadParameters param;
 
 #ifndef WIN32
 	/* Non-win32 implementation reads from file */
@@ -6215,7 +6263,7 @@ read_backend_variables(char *id, Port *port)
 #else
 	/* Win32 version uses mapped file */
 	HANDLE		paramHandle;
-	BackendParameters *paramp;
+	ThreadParameters *paramp;
 
 #ifdef _WIN64
 	paramHandle = (HANDLE) _atoi64(id);
@@ -6230,7 +6278,7 @@ read_backend_variables(char *id, Port *port)
 		exit(1);
 	}
 
-	memcpy(&param, paramp, sizeof(BackendParameters));
+	memcpy(&param, paramp, sizeof(ThreadParameters));
 
 	if (!UnmapViewOfFile(paramp))
 	{
@@ -6249,69 +6297,6 @@ read_backend_variables(char *id, Port *port)
 
 	restore_backend_variables(&param, port);
 }
-
-/* Restore critical backend variables from the BackendParameters struct */
-static void
-restore_backend_variables(BackendParameters *param, Port *port)
-{
-	memcpy(port, &param->port, sizeof(Port));
-	read_inheritable_socket(&port->sock, &param->portsocket);
-
-	SetDataDir(param->DataDir);
-
-	memcpy(&ListenSocket, &param->ListenSocket, sizeof(ListenSocket));
-
-	MyCancelKey = param->MyCancelKey;
-	MyPMChildSlot = param->MyPMChildSlot;
-
-	UsedShmemSegID = param->UsedShmemSegID;
-	UsedShmemSegAddr = param->UsedShmemSegAddr;
-
-	ShmemLock = param->ShmemLock;
-	ShmemVariableCache = param->ShmemVariableCache;
-	ShmemBackendArray = param->ShmemBackendArray;
-
-#ifndef HAVE_SPINLOCKS
-	SpinlockSemaArray = param->SpinlockSemaArray;
-#endif
-	NamedLWLockTrancheRequests = param->NamedLWLockTrancheRequests;
-	NamedLWLockTrancheArray = param->NamedLWLockTrancheArray;
-	MainLWLockArray = param->MainLWLockArray;
-	ProcStructLock = param->ProcStructLock;
-	ProcGlobal = param->ProcGlobal;
-	AuxiliaryProcs = param->AuxiliaryProcs;
-	PreparedXactProcs = param->PreparedXactProcs;
-	PMSignalState = param->PMSignalState;
-	read_inheritable_socket(&pgStatSock, &param->pgStatSock);
-
-	PostmasterPid = param->PostmasterPid;
-	PgStartTime = param->PgStartTime;
-	PgReloadTime = param->PgReloadTime;
-	first_syslogger_file_time = param->first_syslogger_file_time;
-
-	redirection_done = param->redirection_done;
-	IsBinaryUpgrade = param->IsBinaryUpgrade;
-	max_safe_fds = param->max_safe_fds;
-
-	MaxBackends = param->MaxBackends;
-
-#ifdef WIN32
-	PostmasterHandle = param->PostmasterHandle;
-	pgwin32_initial_signal_pipe = param->initial_signal_pipe;
-#else
-	memcpy(&postmaster_alive_fds, &param->postmaster_alive_fds,
-		   sizeof(postmaster_alive_fds));
-#endif
-
-	memcpy(&syslogPipe, &param->syslogPipe, sizeof(syslogPipe));
-
-	strlcpy(my_exec_path, param->my_exec_path, MAXPGPATH);
-
-	strlcpy(pkglib_path, param->pkglib_path, MAXPGPATH);
-
-	strlcpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
-}
-
 
 Size
 ShmemBackendArraySize(void)

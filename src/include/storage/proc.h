@@ -205,8 +205,8 @@ struct PGPROC
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
 
 
-extern PGDLLIMPORT PGPROC *MyProc;
-extern PGDLLIMPORT struct PGXACT *MyPgXact;
+extern session_local PGDLLIMPORT PGPROC *MyProc;
+extern session_local PGDLLIMPORT struct PGXACT *MyPgXact;
 
 /*
  * Prior to PostgreSQL 9.2, the fields below were stored as part of the
@@ -287,11 +287,11 @@ extern PGPROC *PreparedXactProcs;
 #define NUM_AUXILIARY_PROCS		4
 
 /* configurable options */
-extern int	DeadlockTimeout;
-extern int	StatementTimeout;
-extern int	LockTimeout;
-extern int	IdleInTransactionSessionTimeout;
-extern bool log_lock_waits;
+extern session_local int	DeadlockTimeout;
+extern session_local int	StatementTimeout;
+extern session_local int	LockTimeout;
+extern session_local int	IdleInTransactionSessionTimeout;
+extern session_local bool log_lock_waits;
 
 
 /*

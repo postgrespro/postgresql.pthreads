@@ -814,7 +814,7 @@ init_des()
 				j;
 	int32_t		k;
 	int			tableno;
-	static unsigned char perm[64],
+	static session_local unsigned char perm[64],
 				tmp32[32];		/* "static" for speed */
 
 /*	static volatile long init_start = 0; not used */

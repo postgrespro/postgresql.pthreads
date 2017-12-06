@@ -70,16 +70,16 @@
 /*
  *	User-tweakable parameters
  */
-int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
-int			XactIsoLevel;
+session_local int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
+session_local int			XactIsoLevel;
 
-bool		DefaultXactReadOnly = false;
-bool		XactReadOnly;
+session_local bool		DefaultXactReadOnly = false;
+session_local bool		XactReadOnly;
 
-bool		DefaultXactDeferrable = false;
-bool		XactDeferrable;
+session_local bool		DefaultXactDeferrable = false;
+session_local bool		XactDeferrable;
 
-int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
+session_local int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
 
 /*
  * When running as a parallel worker, we place only a single
@@ -104,9 +104,9 @@ int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
  * The XIDs are stored sorted in numerical order (not logical order) to make
  * lookups as fast as possible.
  */
-TransactionId XactTopTransactionId = InvalidTransactionId;
-int			nParallelCurrentXids = 0;
-TransactionId *ParallelCurrentXids;
+session_local TransactionId XactTopTransactionId = InvalidTransactionId;
+session_local int			nParallelCurrentXids = 0;
+session_local TransactionId *ParallelCurrentXids;
 
 /*
  * Miscellaneous flag bits to record events which occur on the top level
@@ -115,7 +115,7 @@ TransactionId *ParallelCurrentXids;
  * globally accessible, so can be set from anywhere in the code that requires
  * recording flags.
  */
-int			MyXactFlags;
+session_local int			MyXactFlags;
 
 /*
  *	transaction states - transaction state from server perspective
@@ -199,7 +199,7 @@ typedef TransactionStateData *TransactionState;
  * block.  It will point to TopTransactionStateData when not in a
  * transaction at all, or when in a top-level transaction.
  */
-static TransactionStateData TopTransactionStateData = {
+static session_local TransactionStateData TopTransactionStateData = {
 	0,							/* transaction id */
 	0,							/* subtransaction id */
 	NULL,						/* savepoint name */
@@ -227,18 +227,20 @@ static TransactionStateData TopTransactionStateData = {
  * unreportedXids holds XIDs of all subtransactions that have not yet been
  * reported in an XLOG_XACT_ASSIGNMENT record.
  */
-static int	nUnreportedXids;
-static TransactionId unreportedXids[PGPROC_MAX_CACHED_SUBXIDS];
+static session_local int	nUnreportedXids;
+static session_local TransactionId unreportedXids[PGPROC_MAX_CACHED_SUBXIDS];
 
-static TransactionState CurrentTransactionState = &TopTransactionStateData;
+static session_local TransactionState CurrentTransactionStatePtr;
+
+#define CurrentTransactionState (CurrentTransactionStatePtr ? CurrentTransactionStatePtr : (CurrentTransactionStatePtr = &TopTransactionStateData))
 
 /*
  * The subtransaction ID and command ID assignment counters are global
  * to a whole transaction, so we do not keep them in the state stack.
  */
-static SubTransactionId currentSubTransactionId;
-static CommandId currentCommandId;
-static bool currentCommandIdUsed;
+static session_local SubTransactionId currentSubTransactionId;
+static session_local CommandId currentCommandId;
+static session_local bool currentCommandIdUsed;
 
 /*
  * xactStartTimestamp is the value of transaction_timestamp().
@@ -247,27 +249,27 @@ static bool currentCommandIdUsed;
  * These do not change as we enter and exit subtransactions, so we don't
  * keep them inside the TransactionState stack.
  */
-static TimestampTz xactStartTimestamp;
-static TimestampTz stmtStartTimestamp;
-static TimestampTz xactStopTimestamp;
+static session_local TimestampTz xactStartTimestamp;
+static session_local TimestampTz stmtStartTimestamp;
+static session_local TimestampTz xactStopTimestamp;
 
 /*
  * GID to be used for preparing the current transaction.  This is also
  * global to a whole transaction, so we don't keep it in the state stack.
  */
-static char *prepareGID;
+static session_local char *prepareGID;
 
 /*
  * Some commands want to force synchronous commit.
  */
-static bool forceSyncCommit = false;
+static session_local bool forceSyncCommit = false;
 
 /*
  * Private context for transaction-abort work --- we reserve space for this
  * at startup to ensure that AbortTransaction and AbortSubTransaction can work
  * when we've run out of memory.
  */
-static MemoryContext TransactionAbortContext = NULL;
+static session_local MemoryContext TransactionAbortContext = NULL;
 
 /*
  * List of add-on start- and end-of-xact callbacks
@@ -279,7 +281,7 @@ typedef struct XactCallbackItem
 	void	   *arg;
 } XactCallbackItem;
 
-static XactCallbackItem *Xact_callbacks = NULL;
+static session_local XactCallbackItem *Xact_callbacks = NULL;
 
 /*
  * List of add-on start- and end-of-subxact callbacks
@@ -291,7 +293,7 @@ typedef struct SubXactCallbackItem
 	void	   *arg;
 } SubXactCallbackItem;
 
-static SubXactCallbackItem *SubXact_callbacks = NULL;
+static session_local SubXactCallbackItem *SubXact_callbacks = NULL;
 
 
 /* local function prototypes */
@@ -461,8 +463,8 @@ MarkCurrentTransactionIdLoggedIfAny(void)
 TransactionId
 GetStableLatestTransactionId(void)
 {
-	static LocalTransactionId lxid = InvalidLocalTransactionId;
-	static TransactionId stablexid = InvalidTransactionId;
+	static session_local LocalTransactionId lxid = InvalidLocalTransactionId;
+	static session_local TransactionId stablexid = InvalidTransactionId;
 
 	if (lxid != MyProc->lxid)
 	{
@@ -1801,7 +1803,7 @@ StartTransaction(void)
 	 * Let's just make sure the state stack is empty
 	 */
 	s = &TopTransactionStateData;
-	CurrentTransactionState = s;
+	CurrentTransactionStatePtr = s;
 
 	Assert(XactTopTransactionId == InvalidTransactionId);
 
@@ -4905,7 +4907,7 @@ PushTransaction(void)
 	s->prevXactReadOnly = XactReadOnly;
 	s->parallelModeLevel = 0;
 
-	CurrentTransactionState = s;
+	CurrentTransactionStatePtr = s;
 
 	/*
 	 * AbortSubTransaction and CleanupSubTransaction have to be able to cope
@@ -4934,7 +4936,7 @@ PopTransaction(void)
 	if (s->parent == NULL)
 		elog(FATAL, "PopTransaction with no parent");
 
-	CurrentTransactionState = s->parent;
+	CurrentTransactionStatePtr = s->parent;
 
 	/* Let's just make sure CurTransactionContext is good */
 	CurTransactionContext = s->parent->curTransactionContext;

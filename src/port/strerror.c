@@ -18,7 +18,7 @@ extern int	sys_nerr;
 const char *
 strerror(int errnum)
 {
-	static char buf[24];
+	static session_local char buf[24];
 
 	if (errnum < 0 || errnum > sys_nerr)
 	{

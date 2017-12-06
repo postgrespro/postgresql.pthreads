@@ -183,9 +183,11 @@ struct config_bool
 	GucBoolCheckHook check_hook;
 	GucBoolAssignHook assign_hook;
 	GucShowHook show_hook;
+	GucBoolAddressHook address_hook;
 	/* variable fields, initialized at runtime: */
 	bool		reset_val;
 	void	   *reset_extra;
+	bool		postmaster_val;
 };
 
 struct config_int
@@ -199,9 +201,11 @@ struct config_int
 	GucIntCheckHook check_hook;
 	GucIntAssignHook assign_hook;
 	GucShowHook show_hook;
+	GucIntAddressHook address_hook;
 	/* variable fields, initialized at runtime: */
 	int			reset_val;
 	void	   *reset_extra;
+	int			postmaster_val;
 };
 
 struct config_real
@@ -215,9 +219,11 @@ struct config_real
 	GucRealCheckHook check_hook;
 	GucRealAssignHook assign_hook;
 	GucShowHook show_hook;
+	GucRealAddressHook address_hook;
 	/* variable fields, initialized at runtime: */
 	double		reset_val;
 	void	   *reset_extra;
+	double		postmaster_val;
 };
 
 struct config_string
@@ -229,9 +235,11 @@ struct config_string
 	GucStringCheckHook check_hook;
 	GucStringAssignHook assign_hook;
 	GucShowHook show_hook;
+	GucStringAddressHook address_hook;
 	/* variable fields, initialized at runtime: */
 	char	   *reset_val;
 	void	   *reset_extra;
+	const char *postmaster_val;
 };
 
 struct config_enum
@@ -244,9 +252,11 @@ struct config_enum
 	GucEnumCheckHook check_hook;
 	GucEnumAssignHook assign_hook;
 	GucShowHook show_hook;
+	GucEnumAddressHook address_hook;
 	/* variable fields, initialized at runtime: */
 	int			reset_val;
 	void	   *reset_extra;
+	int			postmaster_val;
 };
 
 /* constant tables corresponding to enums above and in guc.h */

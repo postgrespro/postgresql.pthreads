@@ -43,19 +43,19 @@ static const struct config_enum_entry variable_conflict_options[] = {
 	{NULL, 0, false}
 };
 
-int			plpgsql_variable_conflict = PLPGSQL_RESOLVE_ERROR;
+session_local int			plpgsql_variable_conflict = PLPGSQL_RESOLVE_ERROR;
 
-bool		plpgsql_print_strict_params = false;
+session_local bool		plpgsql_print_strict_params = false;
 
-bool		plpgsql_check_asserts = true;
+session_local bool		plpgsql_check_asserts = true;
 
-char	   *plpgsql_extra_warnings_string = NULL;
-char	   *plpgsql_extra_errors_string = NULL;
-int			plpgsql_extra_warnings;
-int			plpgsql_extra_errors;
+session_local char	   *plpgsql_extra_warnings_string = NULL;
+session_local char	   *plpgsql_extra_errors_string = NULL;
+session_local int			plpgsql_extra_warnings;
+session_local int			plpgsql_extra_errors;
 
 /* Hook for plugins */
-PLpgSQL_plugin **plpgsql_plugin_ptr = NULL;
+session_local PLpgSQL_plugin **plpgsql_plugin_ptr = NULL;
 
 
 static bool
@@ -143,7 +143,7 @@ void
 _PG_init(void)
 {
 	/* Be sure we do initialization only once (should be redundant now) */
-	static bool inited = false;
+	static session_local bool inited = false;
 
 	if (inited)
 		return;

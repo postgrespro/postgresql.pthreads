@@ -33,7 +33,7 @@ typedef unsigned int pg_wchar;
 static int
 pg_get_utf8_id(void)
 {
-	static int	utf8_id = -1;
+	static session_local int	utf8_id = -1;
 
 	if (utf8_id < 0)
 		utf8_id = pg_char_to_encoding("utf8");

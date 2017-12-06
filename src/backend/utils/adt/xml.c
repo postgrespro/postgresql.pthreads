@@ -93,8 +93,8 @@
 
 
 /* GUC variables */
-int			xmlbinary;
-int			xmloption;
+session_local int			xmlbinary;
+session_local int			xmloption;
 
 #ifdef USE_LIBXML
 
@@ -944,7 +944,7 @@ xml_is_document(xmltype *arg)
 void
 pg_xml_init_library(void)
 {
-	static bool first_time = true;
+	static session_local bool first_time = true;
 
 	if (first_time)
 	{

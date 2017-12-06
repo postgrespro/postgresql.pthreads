@@ -40,7 +40,7 @@
 /*
  * The postmaster's list of registered background workers, in private memory.
  */
-slist_head	BackgroundWorkerList = SLIST_STATIC_INIT(BackgroundWorkerList);
+session_local slist_head	BackgroundWorkerList = SLIST_STATIC_INIT(BackgroundWorkerList);
 
 /*
  * BackgroundWorkerSlots exist in shared memory and can be accessed (via
@@ -561,7 +561,7 @@ ResetBackgroundWorkerCrashTimes(void)
 BackgroundWorker *
 BackgroundWorkerEntry(int slotno)
 {
-	static BackgroundWorker myEntry;
+	static session_local BackgroundWorker myEntry;
 	BackgroundWorkerSlot *slot;
 
 	Assert(slotno < BackgroundWorkerData->total_slots);
@@ -855,7 +855,7 @@ void
 RegisterBackgroundWorker(BackgroundWorker *worker)
 {
 	RegisteredBgWorker *rw;
-	static int	numworkers = 0;
+	static session_local int	numworkers = 0;
 
 	if (!IsUnderPostmaster)
 		ereport(DEBUG1,
@@ -1253,7 +1253,7 @@ GetBackgroundWorkerTypeByPid(pid_t pid)
 {
 	int			slotno;
 	bool		found = false;
-	static char	result[BGW_MAXLEN];
+	static session_local char	result[BGW_MAXLEN];
 
 	LWLockAcquire(BackgroundWorkerLock, LW_SHARED);
 

@@ -3011,7 +3011,7 @@ PQoidStatus(const PGresult *res)
 	 * This must be enough to hold the result. Don't laugh, this is better
 	 * than what this function used to do.
 	 */
-	static char buf[24];
+	static session_local char buf[24];
 
 	size_t		len;
 

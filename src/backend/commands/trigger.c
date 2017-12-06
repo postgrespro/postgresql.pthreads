@@ -62,10 +62,10 @@
 
 
 /* GUC variables */
-int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
+session_local int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 
 /* How many levels deep into trigger execution are we? */
-static int	MyTriggerDepth = 0;
+static session_local int	MyTriggerDepth = 0;
 
 /*
  * Note that similar macros also exist in executor/execMain.c.  There does not
@@ -1018,7 +1018,7 @@ typedef struct
 static void
 ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 {
-	static List *info_list = NIL;
+	static session_local List *info_list = NIL;
 
 	static const char *const funcdescr[3] = {
 		gettext_noop("Found referenced table's UPDATE trigger."),
@@ -3599,7 +3599,7 @@ struct AfterTriggersTableData
 	Tuplestorestate *new_tuplestore;	/* "new" transition table, if any */
 };
 
-static AfterTriggersData afterTriggers;
+static session_local AfterTriggersData afterTriggers;
 
 static void AfterTriggerExecute(AfterTriggerEvent event,
 					Relation rel, TriggerDesc *trigdesc,

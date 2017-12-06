@@ -37,7 +37,7 @@
 static const char *
 num_word(Cash value)
 {
-	static char buf[128];
+	static session_local char buf[128];
 	static const char *small[] = {
 		"zero", "one", "two", "three", "four", "five", "six", "seven",
 		"eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",

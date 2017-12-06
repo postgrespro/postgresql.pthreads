@@ -64,8 +64,8 @@
 
 
 /* Globally visible state variables */
-bool		creating_extension = false;
-Oid			CurrentExtensionObject = InvalidOid;
+session_local bool		creating_extension = false;
+session_local Oid			CurrentExtensionObject = InvalidOid;
 
 /*
  * Internal data structure to hold the results of parsing a control file

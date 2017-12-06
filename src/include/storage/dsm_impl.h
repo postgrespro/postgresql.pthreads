@@ -40,7 +40,7 @@
 #endif
 
 /* GUC. */
-extern int	dynamic_shared_memory_type;
+extern session_local int	dynamic_shared_memory_type;
 
 /*
  * Directory for on-disk state.

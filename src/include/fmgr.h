@@ -672,7 +672,7 @@ extern bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid);
 /*
  * Routines in dfmgr.c
  */
-extern char *Dynamic_library_path;
+extern session_local char *Dynamic_library_path;
 
 extern PGFunction load_external_function(const char *filename, const char *funcname,
 					   bool signalNotFound, void **filehandle);
@@ -724,8 +724,8 @@ typedef bool (*needs_fmgr_hook_type) (Oid fn_oid);
 typedef void (*fmgr_hook_type) (FmgrHookEventType event,
 								FmgrInfo *flinfo, Datum *arg);
 
-extern PGDLLIMPORT needs_fmgr_hook_type needs_fmgr_hook;
-extern PGDLLIMPORT fmgr_hook_type fmgr_hook;
+extern session_local PGDLLIMPORT needs_fmgr_hook_type needs_fmgr_hook;
+extern session_local PGDLLIMPORT fmgr_hook_type fmgr_hook;
 
 #define FmgrHookIsNeeded(fn_oid)							\
 	(!needs_fmgr_hook ? false : (*needs_fmgr_hook)(fn_oid))

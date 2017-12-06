@@ -1112,24 +1112,24 @@ typedef struct PgStat_FunctionCallUsage
  * GUC parameters
  * ----------
  */
-extern bool pgstat_track_activities;
-extern bool pgstat_track_counts;
-extern int	pgstat_track_functions;
-extern PGDLLIMPORT int pgstat_track_activity_query_size;
-extern char *pgstat_stat_directory;
-extern char *pgstat_stat_tmpname;
-extern char *pgstat_stat_filename;
+extern session_local bool pgstat_track_activities;
+extern session_local bool pgstat_track_counts;
+extern session_local int	pgstat_track_functions;
+extern session_local PGDLLIMPORT int pgstat_track_activity_query_size;
+extern session_local char *pgstat_stat_directory;
+extern session_local char *pgstat_stat_tmpname;
+extern session_local char *pgstat_stat_filename;
 
 /*
  * BgWriter statistics counters are updated directly by bgwriter and bufmgr
  */
-extern PgStat_MsgBgWriter BgWriterStats;
+extern session_local PgStat_MsgBgWriter BgWriterStats;
 
 /*
  * Updated by pgstat_count_buffer_*_time macros
  */
-extern PgStat_Counter pgStatBlockReadTime;
-extern PgStat_Counter pgStatBlockWriteTime;
+extern session_local PgStat_Counter pgStatBlockReadTime;
+extern session_local PgStat_Counter pgStatBlockWriteTime;
 
 /* ----------
  * Functions called from postmaster

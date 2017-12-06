@@ -820,7 +820,7 @@ do_start(void)
 
 	pm_pid = start_postmaster();
 
-	if (do_wait)
+	if (0/*do_wait*/)
 	{
 		print_msg(_("waiting for server to start..."));
 

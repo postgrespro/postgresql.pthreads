@@ -69,7 +69,7 @@ typedef struct EventTriggerQueryState
 	struct EventTriggerQueryState *previous;
 } EventTriggerQueryState;
 
-static EventTriggerQueryState *currentEventTriggerState = NULL;
+static session_local EventTriggerQueryState *currentEventTriggerState = NULL;
 
 typedef struct
 {

@@ -84,13 +84,13 @@ typedef struct SeqTableData
 
 typedef SeqTableData *SeqTable;
 
-static HTAB *seqhashtab = NULL; /* hash table for SeqTable items */
+static session_local HTAB *seqhashtab = NULL; /* hash table for SeqTable items */
 
 /*
  * last_used_seq is updated by nextval() to point to the last used
  * sequence.
  */
-static SeqTableData *last_used_seq = NULL;
+static session_local SeqTableData *last_used_seq = NULL;
 
 static void fill_seq_with_data(Relation rel, HeapTuple tuple);
 static Relation lock_and_open_sequence(SeqTable seq);

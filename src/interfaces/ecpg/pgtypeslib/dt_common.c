@@ -490,9 +490,9 @@ static datetkn deltatktbl[] = {
 static const unsigned int szdatetktbl = lengthof(datetktbl);
 static const unsigned int szdeltatktbl = lengthof(deltatktbl);
 
-static datetkn *datecache[MAXDATEFIELDS] = {NULL};
+static session_local datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
-static datetkn *deltacache[MAXDATEFIELDS] = {NULL};
+static session_local datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 
 char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 

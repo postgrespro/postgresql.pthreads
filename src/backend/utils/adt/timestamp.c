@@ -46,10 +46,10 @@
 #define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
 
 /* Set at postmaster start */
-TimestampTz PgStartTime;
+session_local TimestampTz PgStartTime;
 
 /* Set at configuration reload */
-TimestampTz PgReloadTime;
+session_local TimestampTz PgReloadTime;
 
 typedef struct
 {
@@ -1709,7 +1709,7 @@ timestamptz_to_time_t(TimestampTz t)
 const char *
 timestamptz_to_str(TimestampTz t)
 {
-	static char buf[MAXDATELEN + 1];
+	static session_local char buf[MAXDATELEN + 1];
 	int			tz;
 	struct pg_tm tt,
 			   *tm = &tt;

@@ -107,7 +107,7 @@ static void add_json(Datum val, bool is_null, StringInfo result,
 static text *catenate_stringinfo_string(StringInfo buffer, const char *addon);
 
 /* the null action object used for pure validation */
-static JsonSemAction nullSemAction =
+static session_local JsonSemAction nullSemAction =
 {
 	NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL

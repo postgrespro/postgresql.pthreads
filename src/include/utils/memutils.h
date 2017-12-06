@@ -52,16 +52,16 @@
  * Only TopMemoryContext and ErrorContext are initialized by
  * MemoryContextInit() itself.
  */
-extern PGDLLIMPORT MemoryContext TopMemoryContext;
-extern PGDLLIMPORT MemoryContext ErrorContext;
-extern PGDLLIMPORT MemoryContext PostmasterContext;
-extern PGDLLIMPORT MemoryContext CacheMemoryContext;
-extern PGDLLIMPORT MemoryContext MessageContext;
-extern PGDLLIMPORT MemoryContext TopTransactionContext;
-extern PGDLLIMPORT MemoryContext CurTransactionContext;
+extern session_local PGDLLIMPORT MemoryContext TopMemoryContext;
+extern session_local PGDLLIMPORT MemoryContext ErrorContext;
+extern session_local PGDLLIMPORT MemoryContext PostmasterContext;
+extern session_local PGDLLIMPORT MemoryContext CacheMemoryContext;
+extern session_local PGDLLIMPORT MemoryContext MessageContext;
+extern session_local PGDLLIMPORT MemoryContext TopTransactionContext;
+extern session_local PGDLLIMPORT MemoryContext CurTransactionContext;
 
 /* This is a transient link to the active portal's memory context: */
-extern PGDLLIMPORT MemoryContext PortalContext;
+extern session_local PGDLLIMPORT MemoryContext PortalContext;
 
 /* Backwards compatibility macro */
 #define MemoryContextResetAndDeleteChildren(ctx) MemoryContextReset(ctx)

@@ -59,7 +59,7 @@ typedef struct AttStatsSlot
 
 /* Hook for plugins to get control in get_attavgwidth() */
 typedef int32 (*get_attavgwidth_hook_type) (Oid relid, AttrNumber attnum);
-extern PGDLLIMPORT get_attavgwidth_hook_type get_attavgwidth_hook;
+extern session_local PGDLLIMPORT get_attavgwidth_hook_type get_attavgwidth_hook;
 
 extern bool op_in_opfamily(Oid opno, Oid opfamily);
 extern int	get_op_opfamily_strategy(Oid opno, Oid opfamily);

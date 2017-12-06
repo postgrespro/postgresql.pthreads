@@ -24,10 +24,10 @@
  */
 #ifndef HAVE_GETOPT_H
 
-extern char *optarg;
-extern int	optind;
-extern int	opterr;
-extern int	optopt;
+extern session_local char *optarg;
+extern session_local int	optind;
+extern session_local int	opterr;
+extern session_local int	optopt;
 
 #endif							/* HAVE_GETOPT_H */
 
@@ -36,7 +36,7 @@ extern int	optopt;
  * Cygwin, however, doesn't like this either.
  */
 #if defined(HAVE_INT_OPTRESET) && !defined(__CYGWIN__)
-extern int	optreset;
+extern session_local int	optreset;
 #endif
 
 #ifndef HAVE_GETOPT

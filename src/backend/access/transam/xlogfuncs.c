@@ -40,8 +40,8 @@
 /*
  * Store label file and tablespace map during non-exclusive backups.
  */
-static StringInfo label_file;
-static StringInfo tblspc_map_file;
+static session_local StringInfo label_file;
+static session_local StringInfo tblspc_map_file;
 
 /*
  * Called when the backend exits with a running non-exclusive base backup,

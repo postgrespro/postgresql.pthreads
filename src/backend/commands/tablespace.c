@@ -85,8 +85,8 @@
 
 
 /* GUC variables */
-char	   *default_tablespace = NULL;
-char	   *temp_tablespaces = NULL;
+session_local char	   *default_tablespace = NULL;
+session_local char	   *temp_tablespaces = NULL;
 
 
 static void create_tablespace_directories(const char *location,

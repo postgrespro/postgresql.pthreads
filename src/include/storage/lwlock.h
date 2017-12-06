@@ -87,7 +87,7 @@ typedef union LWLockMinimallyPadded
 	char		pad[LWLOCK_MINIMAL_SIZE];
 } LWLockMinimallyPadded;
 
-extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
+extern session_local PGDLLIMPORT LWLockPadded *MainLWLockArray;
 extern char *MainLWLockNames[];
 
 /* struct for storing named tranche information */
@@ -97,8 +97,8 @@ typedef struct NamedLWLockTranche
 	char	   *trancheName;
 } NamedLWLockTranche;
 
-extern PGDLLIMPORT NamedLWLockTranche *NamedLWLockTrancheArray;
-extern PGDLLIMPORT int NamedLWLockTrancheRequests;
+extern session_local PGDLLIMPORT NamedLWLockTranche *NamedLWLockTrancheArray;
+extern session_local PGDLLIMPORT int NamedLWLockTrancheRequests;
 
 /* Names for fixed lwlocks */
 #include "storage/lwlocknames.h"
@@ -140,7 +140,7 @@ typedef enum LWLockMode
 
 
 #ifdef LOCK_DEBUG
-extern bool Trace_lwlocks;
+extern session_local bool Trace_lwlocks;
 #endif
 
 extern bool LWLockAcquire(LWLock *lock, LWLockMode mode);

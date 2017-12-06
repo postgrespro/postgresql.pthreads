@@ -96,8 +96,8 @@ typedef struct RelMapFile
  * local map file are stored here.  These can be reloaded from disk
  * immediately whenever we receive an update sinval message.
  */
-static RelMapFile shared_map;
-static RelMapFile local_map;
+static session_local RelMapFile shared_map;
+static session_local RelMapFile local_map;
 
 /*
  * We use the same RelMapFile data structure to track uncommitted local
@@ -112,10 +112,10 @@ static RelMapFile local_map;
  * lets map updates act similarly to updates of pg_class rows, ie, they
  * become visible only at the next CommandCounterIncrement boundary.
  */
-static RelMapFile active_shared_updates;
-static RelMapFile active_local_updates;
-static RelMapFile pending_shared_updates;
-static RelMapFile pending_local_updates;
+static session_local RelMapFile active_shared_updates;
+static session_local RelMapFile active_local_updates;
+static session_local RelMapFile pending_shared_updates;
+static session_local RelMapFile pending_local_updates;
 
 
 /* non-export function prototypes */

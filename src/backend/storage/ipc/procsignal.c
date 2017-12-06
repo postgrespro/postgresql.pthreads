@@ -61,7 +61,7 @@ typedef struct
 #define NumProcSignalSlots	(MaxBackends + NUM_AUXPROCTYPES)
 
 static ProcSignalSlot *ProcSignalSlots = NULL;
-static volatile ProcSignalSlot *MyProcSignalSlot = NULL;
+static session_local volatile ProcSignalSlot *MyProcSignalSlot = NULL;
 
 static bool CheckProcSignal(ProcSignalReason reason);
 static void CleanupProcSignalState(int status, Datum arg);

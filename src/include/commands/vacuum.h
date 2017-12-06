@@ -148,11 +148,11 @@ typedef struct VacuumParams
 } VacuumParams;
 
 /* GUC parameters */
-extern PGDLLIMPORT int default_statistics_target;	/* PGDLLIMPORT for PostGIS */
-extern int	vacuum_freeze_min_age;
-extern int	vacuum_freeze_table_age;
-extern int	vacuum_multixact_freeze_min_age;
-extern int	vacuum_multixact_freeze_table_age;
+extern session_local PGDLLIMPORT int default_statistics_target;	/* PGDLLIMPORT for PostGIS */
+extern session_local int	vacuum_freeze_min_age;
+extern session_local int	vacuum_freeze_table_age;
+extern session_local int	vacuum_multixact_freeze_min_age;
+extern session_local int	vacuum_multixact_freeze_table_age;
 
 
 /* in commands/vacuum.c */

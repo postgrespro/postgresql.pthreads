@@ -160,7 +160,7 @@ pguuid_complain(uuid_rc_t rc)
 static uuid_t *
 get_cached_uuid_t(int which)
 {
-	static uuid_t *cached_uuid[2] = {NULL, NULL};
+	static session_local uuid_t *cached_uuid[2] = {NULL, NULL};
 
 	if (cached_uuid[which] == NULL)
 	{

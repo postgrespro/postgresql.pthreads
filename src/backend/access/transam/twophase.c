@@ -114,7 +114,7 @@
 #define TWOPHASE_DIR "pg_twophase"
 
 /* GUC variable, can't be changed after startup */
-int			max_prepared_xacts = 0;
+session_local int			max_prepared_xacts = 0;
 
 /*
  * This struct describes one global transaction that is in prepared state
@@ -200,9 +200,9 @@ static TwoPhaseStateData *TwoPhaseState;
  * TwoPhaseStateLock, though obviously the pointer itself doesn't need to be
  * (since it's just local memory).
  */
-static GlobalTransaction MyLockedGxact = NULL;
+static session_local GlobalTransaction MyLockedGxact = NULL;
 
-static bool twophaseExitRegistered = false;
+static session_local bool twophaseExitRegistered = false;
 
 static void RecordTransactionCommitPrepared(TransactionId xid,
 								int nchildren,
@@ -809,8 +809,8 @@ TwoPhaseGetGXact(TransactionId xid)
 	GlobalTransaction result = NULL;
 	int			i;
 
-	static TransactionId cached_xid = InvalidTransactionId;
-	static GlobalTransaction cached_gxact = NULL;
+	static session_local TransactionId cached_xid = InvalidTransactionId;
+	static session_local GlobalTransaction cached_gxact = NULL;
 
 	/*
 	 * During a recovery, COMMIT PREPARED, or ABORT PREPARED, we'll be called
@@ -941,7 +941,7 @@ typedef struct StateFileChunk
 	struct StateFileChunk *next;
 } StateFileChunk;
 
-static struct xllist
+static session_local struct xllist
 {
 	StateFileChunk *head;		/* first data block in the chain */
 	StateFileChunk *tail;		/* last block in chain */

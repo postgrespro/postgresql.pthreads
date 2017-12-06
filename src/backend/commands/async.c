@@ -293,7 +293,7 @@ static SlruCtlData AsyncCtlData;
  * (ie, have committed a LISTEN on).  It is a simple list of channel names,
  * allocated in TopMemoryContext.
  */
-static List *listenChannels = NIL;	/* list of C strings */
+static session_local List *listenChannels = NIL;	/* list of C strings */
 
 /*
  * State for pending LISTEN/UNLISTEN actions consists of an ordered list of
@@ -318,9 +318,9 @@ typedef struct
 	char		channel[FLEXIBLE_ARRAY_MEMBER]; /* nul-terminated string */
 } ListenAction;
 
-static List *pendingActions = NIL;	/* list of ListenAction */
+static session_local List *pendingActions = NIL;	/* list of ListenAction */
 
-static List *upperPendingActions = NIL; /* list of upper-xact lists */
+static session_local List *upperPendingActions = NIL; /* list of upper-xact lists */
 
 /*
  * State for outbound notifies consists of a list of all channels+payloads
@@ -344,9 +344,9 @@ typedef struct Notification
 	char	   *payload;		/* payload string (can be empty) */
 } Notification;
 
-static List *pendingNotifies = NIL; /* list of Notifications */
+static session_local List *pendingNotifies = NIL; /* list of Notifications */
 
-static List *upperPendingNotifies = NIL;	/* list of upper-xact lists */
+static session_local List *upperPendingNotifies = NIL;	/* list of upper-xact lists */
 
 /*
  * Inbound notifications are initially processed by HandleNotifyInterrupt(),
@@ -355,19 +355,19 @@ static List *upperPendingNotifies = NIL;	/* list of upper-xact lists */
  * latch. ProcessNotifyInterrupt() will then be called whenever it's safe to
  * actually deal with the interrupt.
  */
-volatile sig_atomic_t notifyInterruptPending = false;
+session_local volatile sig_atomic_t notifyInterruptPending = false;
 
 /* True if we've registered an on_shmem_exit cleanup */
-static bool unlistenExitRegistered = false;
+static session_local bool unlistenExitRegistered = false;
 
 /* True if we're currently registered as a listener in asyncQueueControl */
-static bool amRegisteredListener = false;
+static session_local bool amRegisteredListener = false;
 
 /* has this backend sent notifications in the current transaction? */
-static bool backendHasSentNotifications = false;
+static session_local bool backendHasSentNotifications = false;
 
 /* GUC parameter */
-bool		Trace_notify = false;
+session_local bool		Trace_notify = false;
 
 /* local function prototypes */
 static bool asyncQueuePagePrecedes(int p, int q);

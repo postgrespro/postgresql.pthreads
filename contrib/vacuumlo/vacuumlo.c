@@ -67,8 +67,8 @@ vacuumlo(const char *database, const struct _param *param)
 	int			i;
 	bool		new_pass;
 	bool		success = true;
-	static bool have_password = false;
-	static char password[100];
+	static session_local bool have_password = false;
+	static session_local char password[100];
 
 	/* Note: password can be carried over from a previous call */
 	if (param->pg_prompt == TRI_YES && !have_password)

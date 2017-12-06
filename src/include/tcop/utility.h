@@ -29,7 +29,7 @@ typedef void (*ProcessUtility_hook_type) (PlannedStmt *pstmt,
 										  ParamListInfo params,
 										  QueryEnvironment *queryEnv,
 										  DestReceiver *dest, char *completionTag);
-extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
+extern session_local PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
 
 extern void ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 			   ProcessUtilityContext context, ParamListInfo params,

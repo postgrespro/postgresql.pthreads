@@ -6,9 +6,9 @@
 #define PLPY_ELOG_H
 
 /* global exception classes */
-extern PyObject *PLy_exc_error;
-extern PyObject *PLy_exc_fatal;
-extern PyObject *PLy_exc_spi_error;
+extern session_local PyObject *PLy_exc_error;
+extern session_local PyObject *PLy_exc_fatal;
+extern session_local PyObject *PLy_exc_spi_error;
 
 extern void PLy_elog(int elevel, const char *fmt,...) pg_attribute_printf(2, 3);
 

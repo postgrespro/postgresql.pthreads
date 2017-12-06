@@ -16,14 +16,14 @@
 
 #include "libpq/libpq-be.h"
 
-extern char *pg_krb_server_keyfile;
-extern bool pg_krb_caseins_users;
-extern char *pg_krb_realm;
+extern session_local char *pg_krb_server_keyfile;
+extern session_local bool pg_krb_caseins_users;
+extern session_local char *pg_krb_realm;
 
 extern void ClientAuthentication(Port *port);
 
 /* Hook for plugins to get control in ClientAuthentication() */
 typedef void (*ClientAuthentication_hook_type) (Port *, int);
-extern PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
+extern session_local PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
 
 #endif							/* AUTH_H */

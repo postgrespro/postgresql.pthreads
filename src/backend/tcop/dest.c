@@ -88,7 +88,7 @@ static DestReceiver spi_printtupDR = {
 };
 
 /* Globally available receiver for DestNone */
-DestReceiver *None_Receiver = &donothingDR;
+session_local DestReceiver *None_Receiver = &donothingDR;
 
 
 /* ----------------

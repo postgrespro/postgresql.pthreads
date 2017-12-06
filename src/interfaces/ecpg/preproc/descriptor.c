@@ -325,14 +325,12 @@ output_set_descr(char *desc_name, char *index)
 struct variable *
 descriptor_variable(const char *name, int input)
 {
-	static char descriptor_names[2][MAX_DESCRIPTOR_NAMELEN];
-	static struct ECPGtype descriptor_type = {ECPGt_descriptor, NULL, NULL, NULL, {NULL}, 0};
-	static struct variable varspace[2] = {
-		{descriptor_names[0], &descriptor_type, 0, NULL},
-		{descriptor_names[1], &descriptor_type, 0, NULL}
-	};
-
+	static session_local char descriptor_names[2][MAX_DESCRIPTOR_NAMELEN];
+	static session_local struct ECPGtype descriptor_type = {ECPGt_descriptor, NULL, NULL, NULL, {NULL}, 0};
+	static struct variable varspace[2];
 	strlcpy(descriptor_names[input], name, sizeof(descriptor_names[input]));
+	varspace[input].name = descriptor_names[input];
+	varspace[input].type = &descriptor_type;
 	return &varspace[input];
 }
 

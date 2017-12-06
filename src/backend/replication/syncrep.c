@@ -87,15 +87,15 @@
 #include "utils/ps_status.h"
 
 /* User-settable parameters for sync rep */
-char	   *SyncRepStandbyNames;
+session_local char	   *SyncRepStandbyNames;
 
 #define SyncStandbysDefined() \
 	(SyncRepStandbyNames != NULL && SyncRepStandbyNames[0] != '\0')
 
-static bool announce_next_takeover = true;
+static session_local bool announce_next_takeover = true;
 
-SyncRepConfigData *SyncRepConfig = NULL;
-static int	SyncRepWaitMode = SYNC_REP_NO_WAIT;
+session_local SyncRepConfigData *SyncRepConfig = NULL;
+static session_local int	SyncRepWaitMode = SYNC_REP_NO_WAIT;
 
 static void SyncRepQueueInsert(int mode);
 static void SyncRepCancelWait(void);

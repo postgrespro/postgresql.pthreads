@@ -85,7 +85,7 @@
  * We thread the structs manually instead of using List cells so that we can
  * guarantee to save a CachedPlanSource without error.
  */
-static CachedPlanSource *first_saved_plan = NULL;
+static session_local CachedPlanSource *first_saved_plan = NULL;
 
 static void ReleaseGenericPlan(CachedPlanSource *plansource);
 static List *RevalidateCachedQuery(CachedPlanSource *plansource,

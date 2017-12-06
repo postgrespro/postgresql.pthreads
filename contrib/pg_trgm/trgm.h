@@ -118,8 +118,8 @@ typedef char *BITVECP;
 
 typedef struct TrgmPackedGraph TrgmPackedGraph;
 
-extern double similarity_threshold;
-extern double word_similarity_threshold;
+extern session_local double similarity_threshold;
+extern session_local double word_similarity_threshold;
 
 extern uint32 trgm2int(trgm *ptr);
 extern void compact_trigram(trgm *tptr, char *str, int bytelen);

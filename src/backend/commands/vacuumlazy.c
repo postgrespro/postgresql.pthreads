@@ -133,13 +133,13 @@ typedef struct LVRelStats
 
 
 /* A few variables that don't seem worth passing around as parameters */
-static int	elevel = -1;
+static session_local int	elevel = -1;
 
-static TransactionId OldestXmin;
-static TransactionId FreezeLimit;
-static MultiXactId MultiXactCutoff;
+static session_local TransactionId OldestXmin;
+static session_local TransactionId FreezeLimit;
+static session_local MultiXactId MultiXactCutoff;
 
-static BufferAccessStrategy vac_strategy;
+static session_local BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */

@@ -60,32 +60,32 @@
  * GUC parameters.  Logging_collector cannot be changed after postmaster
  * start, but the rest can change at SIGHUP.
  */
-bool		Logging_collector = false;
-int			Log_RotationAge = HOURS_PER_DAY * MINS_PER_HOUR;
-int			Log_RotationSize = 10 * 1024;
-char	   *Log_directory = NULL;
-char	   *Log_filename = NULL;
-bool		Log_truncate_on_rotation = false;
-int			Log_file_mode = S_IRUSR | S_IWUSR;
+session_local bool		Logging_collector = false;
+session_local int			Log_RotationAge = HOURS_PER_DAY * MINS_PER_HOUR;
+session_local int			Log_RotationSize = 10 * 1024;
+session_local char	   *Log_directory = NULL;
+session_local char	   *Log_filename = NULL;
+session_local bool		Log_truncate_on_rotation = false;
+session_local int			Log_file_mode = S_IRUSR | S_IWUSR;
 
 /*
  * Globally visible state (used by elog.c)
  */
-bool		am_syslogger = false;
+session_local bool		am_syslogger = false;
 
-extern bool redirection_done;
+extern session_local bool redirection_done;
 
 /*
  * Private state
  */
-static pg_time_t next_rotation_time;
-static bool pipe_eof_seen = false;
-static bool rotation_disabled = false;
-static FILE *syslogFile = NULL;
-static FILE *csvlogFile = NULL;
-NON_EXEC_STATIC pg_time_t first_syslogger_file_time = 0;
-static char *last_file_name = NULL;
-static char *last_csv_file_name = NULL;
+static session_local pg_time_t next_rotation_time;
+static session_local bool pipe_eof_seen = false;
+static session_local bool rotation_disabled = false;
+static session_local FILE *syslogFile = NULL;
+static session_local FILE *csvlogFile = NULL;
+session_local pg_time_t first_syslogger_file_time = 0;
+static session_local char *last_file_name = NULL;
+static session_local char *last_csv_file_name = NULL;
 
 /*
  * Buffers for saving partial messages from different backends.
@@ -105,25 +105,25 @@ typedef struct
 } save_buffer;
 
 #define NBUFFER_LISTS 256
-static List *buffer_lists[NBUFFER_LISTS];
+static session_local List *buffer_lists[NBUFFER_LISTS];
 
 /* These must be exported for EXEC_BACKEND case ... annoying */
 #ifndef WIN32
-int			syslogPipe[2] = {-1, -1};
+session_local int			syslogPipe[2] = {-1, -1};
 #else
-HANDLE		syslogPipe[2] = {0, 0};
+session_local HANDLE		syslogPipe[2] = {0, 0};
 #endif
 
 #ifdef WIN32
-static HANDLE threadHandle = 0;
-static CRITICAL_SECTION sysloggerSection;
+static session_local HANDLE threadHandle = 0;
+static session_local CRITICAL_SECTION sysloggerSection;
 #endif
 
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t rotation_requested = false;
+static session_local volatile sig_atomic_t got_SIGHUP = false;
+static session_local volatile sig_atomic_t rotation_requested = false;
 
 
 /* Local subroutines */

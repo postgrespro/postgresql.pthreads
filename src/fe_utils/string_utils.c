@@ -40,7 +40,7 @@ PQExpBuffer (*getLocalPQExpBuffer) (void) = defaultGetLocalPQExpBuffer;
 static PQExpBuffer
 defaultGetLocalPQExpBuffer(void)
 {
-	static PQExpBuffer id_return = NULL;
+	static session_local PQExpBuffer id_return = NULL;
 
 	if (id_return)				/* first time through? */
 	{

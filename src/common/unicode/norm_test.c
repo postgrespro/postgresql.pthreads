@@ -23,7 +23,7 @@ static char *
 print_wchar_str(const pg_wchar *s)
 {
 #define BUF_DIGITS 50
-	static char buf[BUF_DIGITS * 2 + 1];
+	static session_local char buf[BUF_DIGITS * 2 + 1];
 	int			i;
 
 	i = 0;

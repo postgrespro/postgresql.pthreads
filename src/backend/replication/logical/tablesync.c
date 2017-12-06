@@ -109,9 +109,9 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
-static bool table_states_valid = false;
+static session_local bool table_states_valid = false;
 
-StringInfo	copybuf = NULL;
+session_local StringInfo	copybuf = NULL;
 
 /*
  * Exit routine for synchronization worker.
@@ -340,8 +340,8 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 		Oid			relid;
 		TimestampTz last_start_time;
 	};
-	static List *table_states = NIL;
-	static HTAB *last_start_times = NULL;
+	static session_local List *table_states = NIL;
+	static session_local HTAB *last_start_times = NULL;
 	ListCell   *lc;
 	bool		started_tx = false;
 

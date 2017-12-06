@@ -73,10 +73,10 @@
 
 
 /* The main type cache hashtable searched by lookup_type_cache */
-static HTAB *TypeCacheHash = NULL;
+static session_local HTAB *TypeCacheHash = NULL;
 
 /* List of type cache entries for domain types */
-static TypeCacheEntry *firstDomainTypeEntry = NULL;
+static session_local TypeCacheEntry *firstDomainTypeEntry = NULL;
 
 /* Private flag bits in the TypeCacheEntry.flags field */
 #define TCFLAGS_CHECKED_BTREE_OPCLASS		0x000001
@@ -259,11 +259,11 @@ static const dshash_parameters srtr_typmod_table_params = {
 	LWTRANCHE_SESSION_TYPMOD_TABLE
 };
 
-static HTAB *RecordCacheHash = NULL;
+static session_local HTAB *RecordCacheHash = NULL;
 
-static TupleDesc *RecordCacheArray = NULL;
-static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
-static int32 NextRecordTypmod = 0;	/* number of entries used */
+static session_local TupleDesc *RecordCacheArray = NULL;
+static session_local int32 RecordCacheArrayLen = 0;	/* allocated length of array */
+static session_local int32 NextRecordTypmod = 0;	/* number of entries used */
 
 static void load_typcache_tupdesc(TypeCacheEntry *typentry);
 static void load_rangetype_info(TypeCacheEntry *typentry);

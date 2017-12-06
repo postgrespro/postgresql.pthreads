@@ -118,11 +118,11 @@
 /*
  * Configuration options
  */
-int			Unix_socket_permissions;
-char	   *Unix_socket_group;
+session_local int			Unix_socket_permissions;
+session_local char	   *Unix_socket_group;
 
 /* Where the Unix socket files are (list of palloc'd strings) */
-static List *sock_paths = NIL;
+static session_local List *sock_paths = NIL;
 
 /*
  * Buffers for low-level I/O.
@@ -134,21 +134,21 @@ static List *sock_paths = NIL;
 #define PQ_SEND_BUFFER_SIZE 8192
 #define PQ_RECV_BUFFER_SIZE 8192
 
-static char *PqSendBuffer;
-static int	PqSendBufferSize;	/* Size send buffer */
-static int	PqSendPointer;		/* Next index to store a byte in PqSendBuffer */
-static int	PqSendStart;		/* Next index to send a byte in PqSendBuffer */
+static session_local char *PqSendBuffer;
+static session_local int	PqSendBufferSize;	/* Size send buffer */
+static session_local int	PqSendPointer;		/* Next index to store a byte in PqSendBuffer */
+static session_local int	PqSendStart;		/* Next index to send a byte in PqSendBuffer */
 
-static char PqRecvBuffer[PQ_RECV_BUFFER_SIZE];
-static int	PqRecvPointer;		/* Next index to read a byte from PqRecvBuffer */
-static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
+static session_local char PqRecvBuffer[PQ_RECV_BUFFER_SIZE];
+static session_local int	PqRecvPointer;		/* Next index to read a byte from PqRecvBuffer */
+static session_local int	PqRecvLength;		/* End of data available in PqRecvBuffer */
 
 /*
  * Message status
  */
-static bool PqCommBusy;			/* busy sending data to the client */
-static bool PqCommReadingMsg;	/* in the middle of reading a message */
-static bool DoingCopyOut;		/* in old-protocol COPY OUT processing */
+static session_local bool PqCommBusy;			/* busy sending data to the client */
+static session_local bool PqCommReadingMsg;	/* in the middle of reading a message */
+static session_local bool DoingCopyOut;		/* in old-protocol COPY OUT processing */
 
 
 /* Internal functions */
@@ -181,9 +181,9 @@ static PQcommMethods PqCommSocketMethods = {
 	socket_endcopyout
 };
 
-PQcommMethods *PqCommMethods = &PqCommSocketMethods;
+session_local PQcommMethods *PqCommMethods = &PqCommSocketMethods;
 
-WaitEventSet *FeBeWaitSet;
+session_local WaitEventSet *FeBeWaitSet;
 
 
 /* --------------------------------
@@ -1421,7 +1421,7 @@ socket_flush(void)
 static int
 internal_flush(void)
 {
-	static int	last_reported_send_errno = 0;
+	static session_local int	last_reported_send_errno = 0;
 
 	char	   *bufptr = PqSendBuffer + PqSendStart;
 	char	   *bufend = PqSendBuffer + PqSendPointer;
