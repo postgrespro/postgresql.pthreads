@@ -17,8 +17,8 @@
 #include "replication/syncrep.h"
 
 /* Result of parsing is returned in one of these two variables */
-SyncRepConfigData *syncrep_parse_result;
-char	   *syncrep_parse_error_msg;
+session_local SyncRepConfigData *syncrep_parse_result;
+session_local char	   *syncrep_parse_error_msg;
 
 static SyncRepConfigData *create_syncrep_config(const char *num_sync,
 					List *members, uint8 syncrep_method);
