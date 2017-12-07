@@ -63,7 +63,7 @@
 #define YYMALLOC palloc
 #define YYFREE   pfree
 
-static MemoryContext per_line_ctx = NULL;
+static session_local MemoryContext per_line_ctx = NULL;
 
 static void
 do_start(void)
@@ -93,7 +93,7 @@ do_end(void)
 }
 
 
-static int num_columns_read = 0;
+static session_local int num_columns_read = 0;
 
 %}
 

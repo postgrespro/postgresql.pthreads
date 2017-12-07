@@ -51,7 +51,7 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 }
 
 
-static int	yyline = 1;			/* line number for error reporting */
+static session_local int	yyline = 1;			/* line number for error reporting */
 
 %}
 

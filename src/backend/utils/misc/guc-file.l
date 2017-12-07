@@ -42,9 +42,9 @@ enum
 	GUC_ERROR = 100
 };
 
-static unsigned int ConfigFileLineno;
-static const char *GUC_flex_fatal_errmsg;
-static sigjmp_buf *GUC_flex_fatal_jmp;
+static session_local unsigned int ConfigFileLineno;
+static session_local const char *GUC_flex_fatal_errmsg;
+static session_local sigjmp_buf *GUC_flex_fatal_jmp;
 
 static void FreeConfigVariable(ConfigVariable *item);
 

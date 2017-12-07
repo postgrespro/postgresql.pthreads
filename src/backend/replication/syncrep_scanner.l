@@ -28,9 +28,9 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 }
 
 /* Handles to the buffer that the lexer uses internally */
-static YY_BUFFER_STATE scanbufhandle;
+static session_local YY_BUFFER_STATE scanbufhandle;
 
-static StringInfoData xdbuf;
+static session_local StringInfoData xdbuf;
 
 /* LCOV_EXCL_START */
 
