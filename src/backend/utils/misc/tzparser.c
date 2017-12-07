@@ -102,11 +102,12 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 	char	   *offset_endptr;
 	char	   *remain;
 	char	   *is_dst;
+	char* saveptr = NULL;
 
 	tzentry->lineno = lineno;
 	tzentry->filename = filename;
 
-	abbrev = strtok(line, WHITESPACE);
+	abbrev = strtok_r(line, WHITESPACE, &saveptr);
 	if (!abbrev)
 	{
 		GUC_check_errmsg("missing time zone abbreviation in time zone file \"%s\", line %d",
@@ -115,7 +116,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 	}
 	tzentry->abbrev = pstrdup(abbrev);
 
-	offset = strtok(NULL, WHITESPACE);
+	offset = strtok_r(NULL, WHITESPACE, &saveptr);
 	if (!offset)
 	{
 		GUC_check_errmsg("missing time zone offset in time zone file \"%s\", line %d",
@@ -135,11 +136,11 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 			return false;
 		}
 
-		is_dst = strtok(NULL, WHITESPACE);
+		is_dst = strtok_r(NULL, WHITESPACE, &saveptr);
 		if (is_dst && pg_strcasecmp(is_dst, "D") == 0)
 		{
 			tzentry->is_dst = true;
-			remain = strtok(NULL, WHITESPACE);
+			remain = strtok_r(NULL, WHITESPACE, &saveptr);
 		}
 		else
 		{
@@ -158,7 +159,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 		tzentry->zone = pstrdup(offset);
 		tzentry->offset = 0;
 		tzentry->is_dst = false;
-		remain = strtok(NULL, WHITESPACE);
+		remain = strtok_r(NULL, WHITESPACE, &saveptr);
 	}
 
 	if (!remain)				/* no more non-whitespace chars */
@@ -284,6 +285,7 @@ ParseTzFile(const char *filename, int depth,
 	tzEntry		tzentry;
 	int			lineno = 0;
 	bool		override = false;
+	char* saveptr = NULL;
 	const char *p;
 
 	/*
@@ -393,7 +395,7 @@ ParseTzFile(const char *filename, int depth,
 			/* pstrdup so we can use filename in result data structure */
 			char	   *includeFile = pstrdup(line + strlen("@INCLUDE"));
 
-			includeFile = strtok(includeFile, WHITESPACE);
+			includeFile = strtok_r(includeFile, WHITESPACE, &saveptr);
 			if (!includeFile || !*includeFile)
 			{
 				GUC_check_errmsg("@INCLUDE without file name in time zone file \"%s\", line %d",
