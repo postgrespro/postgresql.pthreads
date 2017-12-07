@@ -162,7 +162,7 @@ session_local int			max_safe_fds = 32;	/* default if not changed */
 #define VFD_CLOSED (-1)
 
 #define FileIsValid(file) \
-	((file) > 0 && (file) < (int) SizeVfdCache && VfdCache[file]->fileName != NULL)
+	((file) > 0 && (file) < (int) SizeVfdCache)
 
 #define FileIsNotOpen(file) (VfdCache[file]->fd == VFD_CLOSED)
 
