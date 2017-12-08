@@ -67,8 +67,8 @@ typedef struct BlockInfoRecord
 typedef struct AutoPrewarmSharedState
 {
 	LWLock		lock;			/* mutual exclusion */
-	pid_t		bgworker_pid;	/* for main bgworker */
-	pid_t		pid_using_dumpfile; /* for autoprewarm or block dump */
+	pthread_t		bgworker_pid;	/* for main bgworker */
+	pthread_t		pid_using_dumpfile; /* for autoprewarm or block dump */
 
 	/* Following items are for communication with per-database worker */
 	dsm_handle	block_info_handle;
@@ -568,7 +568,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 	BufferDesc *bufHdr;
 	FILE	   *file;
 	char		transient_dump_file_path[MAXPGPATH];
-	pid_t		pid;
+	pthread_t		pid;
 
 	LWLockAcquire(&apw_state->lock, LW_EXCLUSIVE);
 	pid = apw_state->pid_using_dumpfile;
@@ -702,7 +702,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 Datum
 autoprewarm_start_worker(PG_FUNCTION_ARGS)
 {
-	pid_t		pid;
+	pthread_t		pid;
 
 	if (!autoprewarm)
 		ereport(ERROR,
@@ -793,7 +793,7 @@ apw_start_master_worker(void)
 	BackgroundWorker worker;
 	BackgroundWorkerHandle *handle;
 	BgwHandleStatus status;
-	pid_t		pid;
+	pthread_t 		pid;
 
 	MemSet(&worker, 0, sizeof(BackgroundWorker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS;

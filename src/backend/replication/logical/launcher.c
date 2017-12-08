@@ -65,7 +65,7 @@ session_local LogicalRepWorker *MyLogicalRepWorker = NULL;
 typedef struct LogicalRepCtxStruct
 {
 	/* Supervisor process. */
-	pid_t		launcher_pid;
+	pthread_t		launcher_pid;
 
 	/* Background workers. */
 	LogicalRepWorker workers[FLEXIBLE_ARRAY_MEMBER];
@@ -176,7 +176,7 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 
 	for (;;)
 	{
-		pid_t		pid;
+		pthread_t		pid;
 
 		CHECK_FOR_INTERRUPTS();
 

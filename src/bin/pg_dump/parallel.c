@@ -108,7 +108,7 @@ struct ParallelSlot
 	uintptr_t	hThread;
 	unsigned int threadId;
 #else
-	pid_t		pid;
+	pthread_t		pid;
 #endif
 };
 
@@ -429,10 +429,10 @@ ShutdownWorkersHard(ParallelState *pstate)
 	/* On non-Windows, send SIGTERM to each worker process. */
 	for (i = 0; i < pstate->numWorkers; i++)
 	{
-		pid_t		pid = pstate->parallelSlot[i].pid;
+		pthread_t		pid = pstate->parallelSlot[i].pid;
 
 		if (pid != 0)
-			kill(pid, SIGTERM);
+			pthread_kill(pid, SIGTERM);
 	}
 #else
 
@@ -469,17 +469,15 @@ WaitForTerminatingWorkers(ParallelState *pstate)
 
 #ifndef WIN32
 		/* On non-Windows, use wait() to wait for next worker to end */
-		int			status;
-		pid_t		pid = wait(&status);
+		void*		status;
 
 		/* Find dead worker's slot, and clear the PID field */
 		for (j = 0; j < pstate->numWorkers; j++)
 		{
 			slot = &(pstate->parallelSlot[j]);
-			if (slot->pid == pid)
+			if (pthread_join(slot->pid, &status) == 0)
 			{
 				slot->pid = 0;
-				break;
 			}
 		}
 #else							/* WIN32 */
@@ -583,10 +581,10 @@ sigTermHandler(SIGNAL_ARGS)
 	{
 		for (i = 0; i < signal_info.pstate->numWorkers; i++)
 		{
-			pid_t		pid = signal_info.pstate->parallelSlot[i].pid;
+			pthread_t		pid = signal_info.pstate->parallelSlot[i].pid;
 
 			if (pid != 0)
-				kill(pid, SIGTERM);
+				pthread_kill(pid, SIGTERM);
 		}
 	}
 
@@ -961,7 +959,7 @@ ParallelBackupStart(ArchiveHandle *AH)
 		WorkerInfo *wi;
 		uintptr_t	handle;
 #else
-		pid_t		pid;
+		pthread_t		pid;
 #endif
 		ParallelSlot *slot = &(pstate->parallelSlot[i]);
 		int			pipeMW[2],

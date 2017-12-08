@@ -139,7 +139,7 @@
 typedef struct ProcState
 {
 	/* procPid is zero in an inactive ProcState array entry. */
-	pid_t		procPid;		/* PID of backend, for signaling */
+	pthread_t		procPid;		/* PID of backend, for signaling */
 	PGPROC	   *proc;			/* PGPROC of backend */
 	/* nextMsgNum is meaningless if procPid == 0 or resetState is true. */
 	int			nextMsgNum;		/* next message number to read */
@@ -732,7 +732,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	 */
 	if (needSig)
 	{
-		pid_t		his_pid = needSig->procPid;
+		pthread_t		his_pid = needSig->procPid;
 		BackendId	his_backendId = (needSig - &segP->procState[0]) + 1;
 
 		needSig->signaled = true;

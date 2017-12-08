@@ -377,7 +377,7 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	BackgroundWorker worker;
 	BackgroundWorkerHandle *handle;
 	BgwHandleStatus status;
-	pid_t		pid;
+	pthread_t		pid;
 
 	memset(&worker, 0, sizeof(worker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS |

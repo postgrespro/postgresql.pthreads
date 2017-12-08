@@ -33,7 +33,7 @@
 #endif
 
 /* PID can be negative for standalone backend */
-typedef long pgpid_t;
+typedef pthread_t pgpid_t;
 
 
 typedef enum
@@ -105,7 +105,7 @@ static DWORD pgctl_start_type = SERVICE_AUTO_START;
 static SERVICE_STATUS status;
 static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
 static HANDLE shutdownHandles[2];
-static pid_t postmasterPID = -1;
+static pthread_t postmasterPID = -1;
 
 #define shutdownEvent	  shutdownHandles[0]
 #define postmasterProcess shutdownHandles[1]
@@ -153,7 +153,7 @@ static pgpid_t start_postmaster(void);
 static void read_post_opts(void);
 
 static WaitPMResult wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint);
-static bool postmaster_is_alive(pid_t pid);
+static bool postmaster_is_alive(pthread_t pid);
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 static void unlimit_core_size(void);
@@ -246,7 +246,7 @@ static pgpid_t
 get_pgpid(bool is_status_request)
 {
 	FILE	   *pidf;
-	long		pid;
+	long long		pid;
 	struct stat statbuf;
 
 	if (stat(pg_data, &statbuf) != 0)
@@ -286,7 +286,7 @@ get_pgpid(bool is_status_request)
 			exit(1);
 		}
 	}
-	if (fscanf(pidf, "%ld", &pid) != 1)
+	if (fscanf(pidf, "%lld", &pid) != 1)
 	{
 		/* Is the file empty? */
 		if (ftell(pidf) == 0 && feof(pidf))
@@ -880,7 +880,7 @@ do_stop(void)
 		exit(1);
 	}
 
-	if (kill((pid_t) pid, sig) != 0)
+	if (pthread_kill((pthread_t) pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
 					 strerror(errno));
@@ -964,7 +964,7 @@ do_restart(void)
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		if (postmaster_is_alive((pid_t) pid))
+		if (postmaster_is_alive(pid))
 		{
 			write_stderr(_("%s: cannot restart server; "
 						   "single-user server is running (PID: %ld)\n"),
@@ -974,9 +974,9 @@ do_restart(void)
 		}
 	}
 
-	if (postmaster_is_alive((pid_t) pid))
+	if (postmaster_is_alive(pid))
 	{
-		if (kill((pid_t) pid, sig) != 0)
+		if (pthread_kill(pid, sig) != 0)
 		{
 			write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
 						 strerror(errno));
@@ -1059,7 +1059,7 @@ do_reload(void)
 		exit(1);
 	}
 
-	if (kill((pid_t) pid, sig) != 0)
+	if (pthread_kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send reload signal (PID: %ld): %s\n"),
 					 progname, pid, strerror(errno));
@@ -1126,7 +1126,7 @@ do_promote(void)
 	}
 
 	sig = SIGUSR1;
-	if (kill((pid_t) pid, sig) != 0)
+	if (pthread_kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send promote signal (PID: %ld): %s\n"),
 					 progname, pid, strerror(errno));
@@ -1175,7 +1175,7 @@ do_promote(void)
  */
 
 static bool
-postmaster_is_alive(pid_t pid)
+postmaster_is_alive(pthread_t pid)
 {
 	/*
 	 * Test to see if the process is still there.  Note that we do not
@@ -1193,7 +1193,7 @@ postmaster_is_alive(pid_t pid)
 	if (pid == getppid())
 		return false;
 #endif
-	if (kill(pid, 0) == 0)
+	if (pthread_kill(pid, 0) == 0)
 		return true;
 	return false;
 }
@@ -1211,7 +1211,7 @@ do_status(void)
 		if (pid < 0)
 		{
 			pid = -pid;
-			if (postmaster_is_alive((pid_t) pid))
+			if (postmaster_is_alive(pid))
 			{
 				printf(_("%s: single-user server is running (PID: %ld)\n"),
 					   progname, pid);
@@ -1221,7 +1221,7 @@ do_status(void)
 		else
 			/* must be a postmaster */
 		{
-			if (postmaster_is_alive((pid_t) pid))
+			if (postmaster_is_alive(pid))
 			{
 				char	  **optlines;
 				char	  **curr_line;
@@ -1258,7 +1258,7 @@ do_status(void)
 static void
 do_kill(pgpid_t pid)
 {
-	if (kill((pid_t) pid, sig) != 0)
+	if (pthread_kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send signal %d (PID: %ld): %s\n"),
 					 progname, sig, pid, strerror(errno));
@@ -1490,7 +1490,7 @@ pgwin32_ServiceHandler(DWORD request)
 		case SERVICE_CONTROL_PAUSE:
 			/* Win32 config reloading */
 			status.dwWaitHint = 5000;
-			kill(postmasterPID, SIGHUP);
+			pthread_kill(postmasterPID, SIGHUP);
 			return;
 
 			/* FIXME: These could be used to replace other signals etc */
@@ -1566,7 +1566,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 				 */
 				int			maxShutdownCheckPoint = status.dwCheckPoint + 12;
 
-				kill(postmasterPID, SIGINT);
+				pthread_kill(postmasterPID, SIGINT);
 
 				/*
 				 * Increment the checkpoint and try again. Abort after 12

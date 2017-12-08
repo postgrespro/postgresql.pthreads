@@ -70,7 +70,6 @@
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>		/* for getrlimit */
 #endif
-#include <pthread.h>
 
 #include "miscadmin.h"
 #include "access/xact.h"
@@ -129,7 +128,7 @@
  * This GUC parameter lets the DBA limit max_safe_fds to something less than
  * what the postmaster's initial probe suggests will work.
  */
-session_local int			max_files_per_process = 1000;
+int session_local			max_files_per_process = 1000;
 
 /*
  * Maximum number of file descriptors to open for either VFD entries or
@@ -142,7 +141,7 @@ session_local int			max_files_per_process = 1000;
  * Note: the value of max_files_per_process is taken into account while
  * setting this variable, and so need not be tested separately.
  */
-session_local int			max_safe_fds = 32;	/* default if not changed */
+int			max_safe_fds = 32;	/* default if not changed */
 
 
 /* Debugging.... */
@@ -162,9 +161,9 @@ session_local int			max_safe_fds = 32;	/* default if not changed */
 #define VFD_CLOSED (-1)
 
 #define FileIsValid(file) \
-	((file) > 0 && (file) < (int) SizeVfdCache)
+	((file) > 0 && (file) < (int) SizeVfdCache && VfdCache[file].fileName != NULL)
 
-#define FileIsNotOpen(file) (VfdCache[file]->fd == VFD_CLOSED)
+#define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
 
 /*
  * Note: a VFD's seekPos is normally always valid, but if for some reason
@@ -200,13 +199,13 @@ typedef struct vfd
  * needed.  'File' values are indexes into this array.
  * Note that VfdCache[0] is not a usable VFD, just a list header.
  */
-static Vfd **VfdCache;
-static Size SizeVfdCache = 0;
+static session_local Vfd *VfdCache;
+static session_local Size SizeVfdCache = 0;
 
 /*
  * Number of file descriptors known to be in use by VFD entries.
  */
-static int	nfile = 0;
+static session_local int	nfile = 0;
 
 /*
  * Flag to tell whether it's worth scanning VfdCache looking for temp files
@@ -246,13 +245,10 @@ typedef struct
 	}			desc;
 } AllocateDesc;
 
-static 	pg_atomic_uint32 totalAllocatedDescs;
-
 static session_local int	numAllocatedDescs = 0;
 static session_local int	maxAllocatedDescs = 0;
 static session_local AllocateDesc *allocatedDescs = NULL;
 
-static pthread_mutex_t fdMutex = PTHREAD_MUTEX_INITIALIZER;
 /*
  * Number of temporary files opened during the current session;
  * this is used in generation of tempfile names.
@@ -266,13 +262,6 @@ static session_local long tempFileCounter = 0;
 static session_local Oid *tempTableSpaces = NULL;
 static session_local int	numTempTableSpaces = -1;
 static session_local int	nextTempTableSpace = 0;
-
-
-#define PTHREAD_CHECK(syscall) \
-	do if ((syscall) != 0) \
-	    ereport(FATAL, (errcode_for_file_access(), \
-           errmsg(#syscall " failed: %m"))); \
-	while (0)
 
 
 /*--------------------
@@ -310,14 +299,13 @@ static session_local int	nextTempTableSpace = 0;
 static void Delete(File file);
 static void LruDelete(File file);
 static void Insert(File file);
-static int	LruOpenFile(File file);
+static int	LruInsert(File file);
 static bool ReleaseLruFile(void);
 static void ReleaseLruFiles(void);
 static File AllocateVfd(void);
 static void FreeVfd(File file);
 
-static Vfd*	FilePin(File file);
-static void FileUnpin(File file);
+static int	FileAccess(File file);
 static File OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError);
 static bool reserveAllocatedDesc(void);
 static int	FreeDesc(AllocateDesc *desc);
@@ -466,7 +454,7 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 #if !defined(WIN32) && defined(MS_ASYNC)
 	{
 		void	   *p;
-		static session_local int	pagesize = 0;
+		static int	pagesize = 0;
 
 		/*
 		 * On several OSs msync(MS_ASYNC) on a mmap'ed file triggers
@@ -780,31 +768,19 @@ durable_link_or_rename(const char *oldfile, const char *newfile, int elevel)
 void
 InitFileAccess(void)
 {
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
-	if (SizeVfdCache == 0)
-	{
-		int i;
-		pg_atomic_init_u32(&totalAllocatedDescs, 0);
+	Assert(SizeVfdCache == 0);	/* call me only once */
 
-		/* initialize cache header entry */
-		SizeVfdCache = 1024;
-		VfdCache = (Vfd**)malloc(sizeof(Vfd*)*SizeVfdCache);
-		if (VfdCache == NULL)
-			ereport(FATAL,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-		for (i = 0; i < SizeVfdCache; i++)
-		{
-			VfdCache[i] = (Vfd*)malloc(sizeof(Vfd));
-			if (VfdCache[i] == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("out of memory")));
-			MemSet((char *)VfdCache[i], 0, sizeof(Vfd));
-			VfdCache[i]->fd = VFD_CLOSED;
-		}
-	}
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
+	/* initialize cache header entry */
+	VfdCache = (Vfd *) malloc(sizeof(Vfd));
+	if (VfdCache == NULL)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
+	MemSet((char *) &(VfdCache[0]), 0, sizeof(Vfd));
+	VfdCache->fd = VFD_CLOSED;
+
+	SizeVfdCache = 1;
 
 	/* register proc-exit hook to ensure temp files are dropped at exit */
 	on_proc_exit(AtProcExit_Files, 0);
@@ -1003,15 +979,15 @@ tryAgain:
 static void
 _dump_lru(void)
 {
-	int			mru = VfdCache[0]->lruLessRecently;
-	Vfd		   *vfdP = VfdCache[mru];
+	int			mru = VfdCache[0].lruLessRecently;
+	Vfd		   *vfdP = &VfdCache[mru];
 	char		buf[2048];
 
 	snprintf(buf, sizeof(buf), "LRU: MOST %d ", mru);
 	while (mru != 0)
 	{
 		mru = vfdP->lruLessRecently;
-		vfdP = VfdCache[mru];
+		vfdP = &VfdCache[mru];
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%d ", mru);
 	}
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "LEAST");
@@ -1027,13 +1003,13 @@ Delete(File file)
 	Assert(file != 0);
 
 	DO_DB(elog(LOG, "Delete %d (%s)",
-			   file, VfdCache[file]->fileName));
+			   file, VfdCache[file].fileName));
 	DO_DB(_dump_lru());
 
-	vfdP = VfdCache[file];
+	vfdP = &VfdCache[file];
 
-	VfdCache[vfdP->lruLessRecently]->lruMoreRecently = vfdP->lruMoreRecently;
-	VfdCache[vfdP->lruMoreRecently]->lruLessRecently = vfdP->lruLessRecently;
+	VfdCache[vfdP->lruLessRecently].lruMoreRecently = vfdP->lruMoreRecently;
+	VfdCache[vfdP->lruMoreRecently].lruLessRecently = vfdP->lruLessRecently;
 
 	DO_DB(_dump_lru());
 }
@@ -1046,9 +1022,9 @@ LruDelete(File file)
 	Assert(file != 0);
 
 	DO_DB(elog(LOG, "LruDelete %d (%s)",
-			   file, VfdCache[file]->fileName));
+			   file, VfdCache[file].fileName));
 
-	vfdP = VfdCache[file];
+	vfdP = &VfdCache[file];
 
 	/*
 	 * Normally we should know the seek position, but if for some reason we
@@ -1087,31 +1063,31 @@ Insert(File file)
 	Assert(file != 0);
 
 	DO_DB(elog(LOG, "Insert %d (%s)",
-			   file, VfdCache[file]->fileName));
+			   file, VfdCache[file].fileName));
 	DO_DB(_dump_lru());
 
-	vfdP = VfdCache[file];
+	vfdP = &VfdCache[file];
 
 	vfdP->lruMoreRecently = 0;
-	vfdP->lruLessRecently = VfdCache[0]->lruLessRecently;
-	VfdCache[0]->lruLessRecently = file;
-	VfdCache[vfdP->lruLessRecently]->lruMoreRecently = file;
+	vfdP->lruLessRecently = VfdCache[0].lruLessRecently;
+	VfdCache[0].lruLessRecently = file;
+	VfdCache[vfdP->lruLessRecently].lruMoreRecently = file;
 
 	DO_DB(_dump_lru());
 }
 
 /* returns 0 on success, -1 on re-open failure (with errno set) */
 static int
-LruOpenFile(File file)
+LruInsert(File file)
 {
 	Vfd		   *vfdP;
 
 	Assert(file != 0);
 
 	DO_DB(elog(LOG, "LruInsert %d (%s)",
-			   file, VfdCache[file]->fileName));
+			   file, VfdCache[file].fileName));
 
-	vfdP = VfdCache[file];
+	vfdP = &VfdCache[file];
 
 	if (FileIsNotOpen(file))
 	{
@@ -1163,6 +1139,12 @@ LruOpenFile(File file)
 		}
 	}
 
+	/*
+	 * put it at the head of the Lru ring
+	 */
+
+	Insert(file);
+
 	return 0;
 }
 
@@ -1172,9 +1154,6 @@ LruOpenFile(File file)
 static bool
 ReleaseLruFile(void)
 {
-	bool freed = false;
-
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
 	DO_DB(elog(LOG, "ReleaseLruFile. Opened %d", nfile));
 
 	if (nfile > 0)
@@ -1183,12 +1162,11 @@ ReleaseLruFile(void)
 		 * There are opened files and so there should be at least one used vfd
 		 * in the ring.
 		 */
-		Assert(VfdCache[0]->lruMoreRecently != 0);
-		LruDelete(VfdCache[0]->lruMoreRecently);
-		freed = true;			/* freed a file */
+		Assert(VfdCache[0].lruMoreRecently != 0);
+		LruDelete(VfdCache[0].lruMoreRecently);
+		return true;			/* freed a file */
 	}
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
-	return freed;				/* no files available to free */
+	return false;				/* no files available to free */
 }
 
 /*
@@ -1198,32 +1176,11 @@ ReleaseLruFile(void)
 static void
 ReleaseLruFiles(void)
 {
-	uint32 nAllocated = pg_atomic_read_u32(&totalAllocatedDescs);
-	while (nfile + nAllocated >= max_safe_fds && nfile > 0)
+	while (nfile + numAllocatedDescs >= max_safe_fds)
 	{
-		Assert(VfdCache[0]->lruMoreRecently != 0);
-		LruDelete(VfdCache[0]->lruMoreRecently);
+		if (!ReleaseLruFile())
+			break;
 	}
-}
-
-static void
-LimitOpenFileDescriptors(void)
-{
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
-	ReleaseLruFiles();
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
-}
-
-
-static Vfd*
-GetVfd(File	file)
-{
-	Vfd* vfd;
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
-	Assert(FileIsValid(file));
-	vfd = VfdCache[file];
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
-	return vfd;
 }
 
 static File
@@ -1232,13 +1189,11 @@ AllocateVfd(void)
 	Index		i;
 	File		file;
 
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
-
 	DO_DB(elog(LOG, "AllocateVfd. Size %zu", SizeVfdCache));
 
-	Assert(SizeVfdCache > 0);	/* InitFilePin not called? */
+	Assert(SizeVfdCache > 0);	/* InitFileAccess not called? */
 
-	if (VfdCache[0]->nextFree == 0)
+	if (VfdCache[0].nextFree == 0)
 	{
 		/*
 		 * The free list is empty so it is time to increase the size of the
@@ -1246,7 +1201,7 @@ AllocateVfd(void)
 		 * there's not much point in starting *real* small.
 		 */
 		Size		newCacheSize = SizeVfdCache * 2;
-		Vfd		  **newVfdCache;
+		Vfd		   *newVfdCache;
 
 		if (newCacheSize < 32)
 			newCacheSize = 32;
@@ -1254,7 +1209,7 @@ AllocateVfd(void)
 		/*
 		 * Be careful not to clobber VfdCache ptr if realloc fails.
 		 */
-		newVfdCache = (Vfd**) realloc(VfdCache, sizeof(Vfd*) * newCacheSize);
+		newVfdCache = (Vfd *) realloc(VfdCache, sizeof(Vfd) * newCacheSize);
 		if (newVfdCache == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -1266,17 +1221,12 @@ AllocateVfd(void)
 		 */
 		for (i = SizeVfdCache; i < newCacheSize; i++)
 		{
-			VfdCache[i] = (Vfd*)malloc(sizeof(Vfd));
-			if (VfdCache[i] == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("out of memory")));
-			MemSet((char *)VfdCache[i], 0, sizeof(Vfd));
-			VfdCache[i]->nextFree = i + 1;
-			VfdCache[i]->fd = VFD_CLOSED;
+			MemSet((char *) &(VfdCache[i]), 0, sizeof(Vfd));
+			VfdCache[i].nextFree = i + 1;
+			VfdCache[i].fd = VFD_CLOSED;
 		}
-		VfdCache[newCacheSize - 1]->nextFree = 0;
-		VfdCache[0]->nextFree = SizeVfdCache;
+		VfdCache[newCacheSize - 1].nextFree = 0;
+		VfdCache[0].nextFree = SizeVfdCache;
 
 		/*
 		 * Record the new size
@@ -1284,12 +1234,9 @@ AllocateVfd(void)
 		SizeVfdCache = newCacheSize;
 	}
 
-	file = VfdCache[0]->nextFree;
-	nfile += 1;
+	file = VfdCache[0].nextFree;
 
-	VfdCache[0]->nextFree = VfdCache[file]->nextFree;
-
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
+	VfdCache[0].nextFree = VfdCache[file].nextFree;
 
 	return file;
 }
@@ -1297,15 +1244,11 @@ AllocateVfd(void)
 static void
 FreeVfd(File file)
 {
-	Vfd		   *vfdP;
-
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
+	Vfd		   *vfdP = &VfdCache[file];
 
 	DO_DB(elog(LOG, "FreeVfd: %d (%s)",
 			   file, vfdP->fileName ? vfdP->fileName : ""));
 
-	vfdP = VfdCache[file];
-	Assert(vfdP->fd = VFD_CLOSED);
 	if (vfdP->fileName != NULL)
 	{
 		free(vfdP->fileName);
@@ -1313,25 +1256,18 @@ FreeVfd(File file)
 	}
 	vfdP->fdstate = 0x0;
 
-	vfdP->nextFree = VfdCache[0]->nextFree;
-	VfdCache[0]->nextFree = file;
-
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
+	vfdP->nextFree = VfdCache[0].nextFree;
+	VfdCache[0].nextFree = file;
 }
 
 /* returns 0 on success, -1 on re-open failure (with errno set) */
-static Vfd*
-FilePin(File file)
+static int
+FileAccess(File file)
 {
-	Vfd* vfdP;
+	int			returnValue;
 
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
-
-	Assert(FileIsValid(file));
-	vfdP = VfdCache[file];
-
-	DO_DB(elog(LOG, "FilePin %d (%s)",
-			   file, vfdP->fileName));
+	DO_DB(elog(LOG, "FileAccess %d (%s)",
+			   file, VfdCache[file].fileName));
 
 	/*
 	 * Is the file open?  If not, open it and put it at the head of the LRU
@@ -1340,26 +1276,22 @@ FilePin(File file)
 
 	if (FileIsNotOpen(file))
 	{
-		/* Open file, but do not include it in LRU list */
-		if (LruOpenFile(file) < 0)
-			vfdP = NULL;
+		returnValue = LruInsert(file);
+		if (returnValue != 0)
+			return returnValue;
 	}
-	else
+	else if (VfdCache[0].lruLessRecently != file)
 	{
-		/* Pin file by excluding it from LRU list */
+		/*
+		 * We now know that the file is open and that it is not the last one
+		 * accessed, so we need to move it to the head of the Lru ring.
+		 */
+
 		Delete(file);
+		Insert(file);
 	}
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
 
-	return vfdP;
-}
-
-static void
-FileUnpin(File file)
-{
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
-	Insert(file); /* Insert at end of LRU chain */
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
+	return 0;
 }
 
 /*
@@ -1369,11 +1301,9 @@ FileUnpin(File file)
 void
 FileInvalidate(File file)
 {
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
 	Assert(FileIsValid(file));
 	if (!FileIsNotOpen(file))
 		LruDelete(file);
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
 }
 #endif
 
@@ -1400,12 +1330,11 @@ PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 	char	   *fnamecopy;
 	File		file;
 	Vfd		   *vfdP;
-	int         fd;
-   
+
 	DO_DB(elog(LOG, "PathNameOpenFilePerm: %s %x %o",
 			   fileName, fileFlags, fileMode));
 
-    /*
+	/*
 	 * We need a malloc'd copy of the file name; fail cleanly if no room.
 	 */
 	fnamecopy = strdup(fileName);
@@ -1414,22 +1343,29 @@ PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 
-	fd = BasicOpenFilePerm(fileName, fileFlags, fileMode);
-	if (fd < 0)
-	{
-		free(fnamecopy);
-		return -1;
-	}
-
 	file = AllocateVfd();
-	vfdP = GetVfd(file);
+	vfdP = &VfdCache[file];
 
 	/* Close excess kernel FDs. */
-	LimitOpenFileDescriptors();
+	ReleaseLruFiles();
 
-	DO_DB(elog(LOG, "PathNameOpenFile: success %d", fd));
+	vfdP->fd = BasicOpenFilePerm(fileName, fileFlags, fileMode);
 
-	vfdP->fd = fd;
+	if (vfdP->fd < 0)
+	{
+		int			save_errno = errno;
+
+		FreeVfd(file);
+		free(fnamecopy);
+		errno = save_errno;
+		return -1;
+	}
+	++nfile;
+	DO_DB(elog(LOG, "PathNameOpenFile: success %d",
+			   vfdP->fd));
+
+	Insert(file);
+
 	vfdP->fileName = fnamecopy;
 	/* Saved flags are adjusted to be OK for re-opening file */
 	vfdP->fileFlags = fileFlags & ~(O_CREAT | O_TRUNC | O_EXCL);
@@ -1438,8 +1374,6 @@ PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 	vfdP->fileSize = 0;
 	vfdP->fdstate = 0x0;
 	vfdP->resowner = NULL;
-
-	FileUnpin(file);
 
 	return file;
 }
@@ -1462,7 +1396,7 @@ File
 OpenTemporaryFile(bool interXact)
 {
 	File		file = 0;
-	Vfd        *vfd;
+
 	/*
 	 * Make sure the current resource owner has space for this File before we
 	 * open it, if we'll be registering it below.
@@ -1497,16 +1431,16 @@ OpenTemporaryFile(bool interXact)
 											 MyDatabaseTableSpace :
 											 DEFAULTTABLESPACE_OID,
 											 true);
-	vfd = GetVfd(file);
+
 	/* Mark it for deletion at close */
-	vfd->fdstate |= FD_TEMPORARY;
+	VfdCache[file].fdstate |= FD_TEMPORARY;
 
 	/* Register it with the current resource owner */
 	if (!interXact)
 	{
-		vfd->fdstate |= FD_XACT_TEMPORARY;
+		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
 
-		vfd->resowner = CurrentResourceOwner;
+		VfdCache[file].resowner = CurrentResourceOwner;
 		ResourceOwnerRememberFile(CurrentResourceOwner, file);
 
 		/* ensure cleanup happens at eoxact */
@@ -1587,22 +1521,27 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
 void
 FileClose(File file)
 {
-	Vfd *vfdP = FilePin(file);
+	Vfd		   *vfdP;
 
-	if (!vfdP)
-		return;
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FileClose: %d (%s)",
-			   file, vfdP->fileName));
+			   file, VfdCache[file].fileName));
 
-	/* close the file */
-	if (close(vfdP->fd))
-		elog(LOG, "could not close file \"%s\": %m", vfdP->fileName);
+	vfdP = &VfdCache[file];
 
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
-	--nfile;
-	vfdP->fd = VFD_CLOSED;
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
+	if (!FileIsNotOpen(file))
+	{
+		/* close the file */
+		if (close(vfdP->fd))
+			elog(LOG, "could not close file \"%s\": %m", vfdP->fileName);
+
+		--nfile;
+		vfdP->fd = VFD_CLOSED;
+
+		/* remove the file from the lru ring */
+		Delete(file);
+	}
 
 	/*
 	 * Delete the file if it was temporary, and make a log entry if wanted
@@ -1680,24 +1619,26 @@ int
 FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info)
 {
 #if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_WILLNEED)
-	Vfd* vfdP = FilePin(file);
-	int returnCode;
+	int			returnCode;
 
-	if (!vfdP)
-		return -1;
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FilePrefetch: %d (%s) " INT64_FORMAT " %d",
-			   file, vfdP->fileName,
+			   file, VfdCache[file].fileName,
 			   (int64) offset, amount));
 
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
+
 	pgstat_report_wait_start(wait_event_info);
-	returnCode = posix_fadvise(vfdP->fd, offset, amount,
+	returnCode = posix_fadvise(VfdCache[file].fd, offset, amount,
 							   POSIX_FADV_WILLNEED);
 	pgstat_report_wait_end();
-	FileUnpin(file);
 
 	return returnCode;
 #else
+	Assert(FileIsValid(file));
 	return 0;
 #endif
 }
@@ -1705,7 +1646,13 @@ FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info)
 void
 FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
 {
-	Vfd* vfdP;
+	int			returnCode;
+
+	Assert(FileIsValid(file));
+
+	DO_DB(elog(LOG, "FileWriteback: %d (%s) " INT64_FORMAT " " INT64_FORMAT,
+			   file, VfdCache[file].fileName,
+			   (int64) offset, (int64) nbytes));
 
 	/*
 	 * Caution: do not call pg_flush_data with nbytes = 0, it could trash the
@@ -1714,35 +1661,33 @@ FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
 	if (nbytes <= 0)
 		return;
 
-	vfdP = FilePin(file);
-	if (!vfdP)
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
 		return;
 
-	DO_DB(elog(LOG, "FileWriteback: %d (%s) " INT64_FORMAT " " INT64_FORMAT,
-			   file, vfdP->fileName,
-			   (int64) offset, (int64) nbytes));
-
 	pgstat_report_wait_start(wait_event_info);
-	pg_flush_data(vfdP->fd, offset, nbytes);
-
-	FileUnpin(file);
-
+	pg_flush_data(VfdCache[file].fd, offset, nbytes);
 	pgstat_report_wait_end();
 }
 
 int
 FileRead(File file, char *buffer, int amount, uint32 wait_event_info)
 {
-	int  returnCode;
-	Vfd *vfdP = FilePin(file);
+	int			returnCode;
+	Vfd		   *vfdP;
 
-	if (!vfdP)
-		return -1;
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FileRead: %d (%s) " INT64_FORMAT " %d %p",
-			   file, vfdP->fileName,
-			   (int64) vfdP->seekPos,
+			   file, VfdCache[file].fileName,
+			   (int64) VfdCache[file].seekPos,
 			   amount, buffer));
+
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
+
+	vfdP = &VfdCache[file];
 
 retry:
 	pgstat_report_wait_start(wait_event_info);
@@ -1785,7 +1730,6 @@ retry:
 		/* Trouble, so assume we don't know the file position anymore */
 		vfdP->seekPos = FileUnknownPos;
 	}
-	FileUnpin(file);
 
 	return returnCode;
 }
@@ -1793,16 +1737,21 @@ retry:
 int
 FileWrite(File file, char *buffer, int amount, uint32 wait_event_info)
 {
-	int  returnCode;
-	Vfd	*vfdP = FilePin(file);
+	int			returnCode;
+	Vfd		   *vfdP;
 
-	if (!vfdP)
-		return -1;
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FileWrite: %d (%s) " INT64_FORMAT " %d %p",
-			   file, vfdP->fileName,
-			   (int64) vfdP->seekPos,
+			   file, VfdCache[file].fileName,
+			   (int64) VfdCache[file].seekPos,
 			   amount, buffer));
+
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
+
+	vfdP = &VfdCache[file];
 
 	/*
 	 * If enforcing temp_file_limit and it's a temp file, check to see if the
@@ -1902,7 +1851,6 @@ retry:
 		/* Trouble, so assume we don't know the file position anymore */
 		vfdP->seekPos = FileUnknownPos;
 	}
-	FileUnpin(file);
 
 	return returnCode;
 }
@@ -1910,19 +1858,20 @@ retry:
 int
 FileSync(File file, uint32 wait_event_info)
 {
-	Vfd* vfdP = FilePin(file);
-	int returnCode;
-	
-	if (!vfdP)
-		return -1;
+	int			returnCode;
+
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FileSync: %d (%s)",
-			   file, vfdP->fileName));
+			   file, VfdCache[file].fileName));
+
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
 
 	pgstat_report_wait_start(wait_event_info);
-	returnCode = pg_fsync(vfdP->fd);
+	returnCode = pg_fsync(VfdCache[file].fd);
 	pgstat_report_wait_end();
-	FileUnpin(file);
 
 	return returnCode;
 }
@@ -1930,45 +1879,74 @@ FileSync(File file, uint32 wait_event_info)
 off_t
 FileSeek(File file, off_t offset, int whence)
 {
-	Vfd		   *vfdP = FilePin(file);
+	Vfd		   *vfdP;
 
-	if (!vfdP)
-		return (off_t) -1;
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FileSeek: %d (%s) " INT64_FORMAT " " INT64_FORMAT " %d",
-			   file, vfdP->fileName,
-			   (int64) vfdP->seekPos,
+			   file, VfdCache[file].fileName,
+			   (int64) VfdCache[file].seekPos,
 			   (int64) offset, whence));
 
-	switch (whence)
+	vfdP = &VfdCache[file];
+
+	if (FileIsNotOpen(file))
 	{
-	  case SEEK_SET:
-		if (offset < 0)
+		switch (whence)
 		{
-			errno = EINVAL;
-			FileUnpin(file);
-			return (off_t) -1;
+			case SEEK_SET:
+				if (offset < 0)
+				{
+					errno = EINVAL;
+					return (off_t) -1;
+				}
+				vfdP->seekPos = offset;
+				break;
+			case SEEK_CUR:
+				if (FilePosIsUnknown(vfdP->seekPos) ||
+					vfdP->seekPos + offset < 0)
+				{
+					errno = EINVAL;
+					return (off_t) -1;
+				}
+				vfdP->seekPos += offset;
+				break;
+			case SEEK_END:
+				if (FileAccess(file) < 0)
+					return (off_t) -1;
+				vfdP->seekPos = lseek(vfdP->fd, offset, whence);
+				break;
+			default:
+				elog(ERROR, "invalid whence: %d", whence);
+				break;
 		}
-		if (vfdP->seekPos != offset)
-		{
-			vfdP->seekPos = lseek(vfdP->fd, offset, whence);
-			if (vfdP->seekPos != offset) {
-				elog(WARNING, "lseek(%d, %lld, SEEK_SET) failed with result %lld, errno=%d: %m", vfdP->fd, (long long)offset, (long long)vfdP->seekPos, errno);
-			}
-		}
-		break;
-	  case SEEK_CUR:
-		if (offset != 0 || FilePosIsUnknown(vfdP->seekPos))
-			vfdP->seekPos = lseek(vfdP->fd, offset, whence);
-		break;
-	  case SEEK_END:
-		vfdP->seekPos = lseek(vfdP->fd, offset, whence);
-		break;
-	  default:
-		elog(ERROR, "invalid whence: %d", whence);
-		break;
 	}
-	FileUnpin(file);
+	else
+	{
+		switch (whence)
+		{
+			case SEEK_SET:
+				if (offset < 0)
+				{
+					errno = EINVAL;
+					return (off_t) -1;
+				}
+				if (vfdP->seekPos != offset)
+					vfdP->seekPos = lseek(vfdP->fd, offset, whence);
+				break;
+			case SEEK_CUR:
+				if (offset != 0 || FilePosIsUnknown(vfdP->seekPos))
+					vfdP->seekPos = lseek(vfdP->fd, offset, whence);
+				break;
+			case SEEK_END:
+				vfdP->seekPos = lseek(vfdP->fd, offset, whence);
+				break;
+			default:
+				elog(ERROR, "invalid whence: %d", whence);
+				break;
+		}
+	}
+
 	return vfdP->seekPos;
 }
 
@@ -1979,10 +1957,10 @@ FileSeek(File file, off_t offset, int whence)
 off_t
 FileTell(File file)
 {
-	Vfd* vfdP = GetVfd(file);
+	Assert(FileIsValid(file));
 	DO_DB(elog(LOG, "FileTell %d (%s)",
-			   file, vfdP->fileName));
-	return vfdP->seekPos;
+			   file, VfdCache[file].fileName));
+	return VfdCache[file].seekPos;
 }
 #endif
 
@@ -1990,26 +1968,27 @@ int
 FileTruncate(File file, off_t offset, uint32 wait_event_info)
 {
 	int			returnCode;
-	Vfd* vfdP = FilePin(file);
 
-	if (!vfdP)
-		return -1;
+	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FileTruncate %d (%s)",
-			   file, vfdP->fileName));
+			   file, VfdCache[file].fileName));
+
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
 
 	pgstat_report_wait_start(wait_event_info);
-	returnCode = ftruncate(vfdP->fd, offset);
+	returnCode = ftruncate(VfdCache[file].fd, offset);
 	pgstat_report_wait_end();
 
-	if (returnCode == 0 && vfdP->fileSize > offset)
+	if (returnCode == 0 && VfdCache[file].fileSize > offset)
 	{
 		/* adjust our state for truncation of a temp file */
-		Assert(vfdP->fdstate & FD_TEMPORARY);
-		temporary_files_size -= vfdP->fileSize - offset;
-		vfdP->fileSize = offset;
+		Assert(VfdCache[file].fdstate & FD_TEMPORARY);
+		temporary_files_size -= VfdCache[file].fileSize - offset;
+		VfdCache[file].fileSize = offset;
 	}
-	FileUnpin(file);
 
 	return returnCode;
 }
@@ -2023,8 +2002,9 @@ FileTruncate(File file, off_t offset, uint32 wait_event_info)
 char *
 FilePathName(File file)
 {
-	Vfd* vfdP = GetVfd(file);
-	return vfdP->fileName;
+	Assert(FileIsValid(file));
+
+	return VfdCache[file].fileName;
 }
 
 /*
@@ -2038,8 +2018,8 @@ FilePathName(File file)
 int
 FileGetRawDesc(File file)
 {
-	Vfd* vfdP = GetVfd(file);
-	return vfdP->fd;
+	Assert(FileIsValid(file));
+	return VfdCache[file].fd;
 }
 
 /*
@@ -2048,8 +2028,8 @@ FileGetRawDesc(File file)
 int
 FileGetRawFlags(File file)
 {
-	Vfd* vfdP = GetVfd(file);
-	return vfdP->fileFlags;
+	Assert(FileIsValid(file));
+	return VfdCache[file].fileFlags;
 }
 
 /*
@@ -2058,8 +2038,8 @@ FileGetRawFlags(File file)
 mode_t
 FileGetRawMode(File file)
 {
-	Vfd* vfdP = GetVfd(file);
-	return vfdP->fileMode;
+	Assert(FileIsValid(file));
+	return VfdCache[file].fileMode;
 }
 
 /*
@@ -2155,7 +2135,7 @@ AllocateFile(const char *name, const char *mode)
 						maxAllocatedDescs, name)));
 
 	/* Close excess kernel FDs. */
-	LimitOpenFileDescriptors();
+	ReleaseLruFiles();
 
 TryAgain:
 	if ((file = fopen(name, mode)) != NULL)
@@ -2166,7 +2146,6 @@ TryAgain:
 		desc->desc.file = file;
 		desc->create_subid = GetCurrentSubTransactionId();
 		numAllocatedDescs++;
-		pg_atomic_fetch_add_u32(&totalAllocatedDescs, 1);
 		return desc->desc.file;
 	}
 
@@ -2215,7 +2194,7 @@ OpenTransientFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 						maxAllocatedDescs, fileName)));
 
 	/* Close excess kernel FDs. */
-	LimitOpenFileDescriptors();
+	ReleaseLruFiles();
 
 	fd = BasicOpenFilePerm(fileName, fileFlags, fileMode);
 
@@ -2227,7 +2206,6 @@ OpenTransientFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 		desc->desc.fd = fd;
 		desc->create_subid = GetCurrentSubTransactionId();
 		numAllocatedDescs++;
-		pg_atomic_fetch_add_u32(&totalAllocatedDescs, 1);
 
 		return fd;
 	}
@@ -2256,7 +2234,7 @@ OpenPipeStream(const char *command, const char *mode)
 						maxAllocatedDescs, command)));
 
 	/* Close excess kernel FDs. */
-	LimitOpenFileDescriptors();
+	ReleaseLruFiles();
 
 TryAgain:
 	fflush(stdout);
@@ -2270,7 +2248,6 @@ TryAgain:
 		desc->desc.file = file;
 		desc->create_subid = GetCurrentSubTransactionId();
 		numAllocatedDescs++;
-		pg_atomic_fetch_add_u32(&totalAllocatedDescs, 1);
 		return desc->desc.file;
 	}
 
@@ -2324,7 +2301,6 @@ FreeDesc(AllocateDesc *desc)
 	/* Compact storage in the allocatedDescs array */
 	numAllocatedDescs--;
 	*desc = allocatedDescs[numAllocatedDescs];
-	pg_atomic_fetch_sub_u32(&totalAllocatedDescs, 1);
 
 	return result;
 }
@@ -2409,7 +2385,7 @@ AllocateDir(const char *dirname)
 						maxAllocatedDescs, dirname)));
 
 	/* Close excess kernel FDs. */
-	LimitOpenFileDescriptors();
+	ReleaseLruFiles();
 
 TryAgain:
 	if ((dir = opendir(dirname)) != NULL)
@@ -2420,7 +2396,6 @@ TryAgain:
 		desc->desc.dir = dir;
 		desc->create_subid = GetCurrentSubTransactionId();
 		numAllocatedDescs++;
-		pg_atomic_fetch_add_u32(&totalAllocatedDescs, 1);
 		return desc->desc.dir;
 	}
 
@@ -2563,7 +2538,6 @@ closeAllVfds(void)
 {
 	Index		i;
 
-	PTHREAD_CHECK(pthread_mutex_lock(&fdMutex));
 	if (SizeVfdCache > 0)
 	{
 		Assert(FileIsNotOpen(0));	/* Make sure ring not corrupted */
@@ -2573,7 +2547,6 @@ closeAllVfds(void)
 				LruDelete(i);
 		}
 	}
-	PTHREAD_CHECK(pthread_mutex_unlock(&fdMutex));
 }
 
 
@@ -2710,8 +2683,8 @@ AtProcExit_Files(int code, Datum arg)
 static void
 CleanupTempFiles(bool isProcExit)
 {
-	#if 0 /* TODO: no way to detect self rtansaction files with pthreads */
 	Index		i;
+
 	/*
 	 * Careful here: at proc_exit we need extra cleanup, not just
 	 * xact_temporary files.
@@ -2743,9 +2716,9 @@ CleanupTempFiles(bool isProcExit)
 				}
 			}
 		}
+
 		have_xact_temporary_files = false;
 	}
-	#endif
 
 	/* Clean up "allocated" stdio files, dirs and fds. */
 	while (numAllocatedDescs > 0)

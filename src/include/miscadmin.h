@@ -144,7 +144,7 @@ do { \
 /*
  * from utils/init/globals.c
  */
-extern session_local PGDLLIMPORT pid_t PostmasterPid;
+extern session_local PGDLLIMPORT pthread_t PostmasterPid;
 extern session_local PGDLLIMPORT bool IsPostmaster;
 extern session_local PGDLLIMPORT bool IsPostmasterEnvironment;
 extern session_local PGDLLIMPORT bool IsUnderPostmaster;
@@ -161,7 +161,7 @@ extern session_local int	MaxConnections;
 extern session_local int	max_worker_processes;
 extern session_local int	max_parallel_workers;
 
-extern session_local PGDLLIMPORT int MyProcPid;
+extern session_local PGDLLIMPORT pthread_t MyProcPid;
 extern session_local PGDLLIMPORT pg_time_t MyStartTime;
 extern session_local PGDLLIMPORT struct Port *MyProcPort;
 extern session_local PGDLLIMPORT struct Latch *MyLatch;

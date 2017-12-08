@@ -283,7 +283,7 @@ typedef struct AutoVacuumWorkItem
 typedef struct
 {
 	sig_atomic_t av_signal[AutoVacNumSignals];
-	pid_t		av_launcherpid;
+	pthread_t		av_launcherpid;
 	dlist_head	av_freeWorkers;
 	dlist_head	av_runningWorkers;
 	WorkerInfo	av_startingWorker;
@@ -306,8 +306,8 @@ static session_local WorkerInfo MyWorkerInfo = NULL;
 session_local int			AutovacuumLauncherPid = 0;
 
 #ifdef EXEC_BACKEND
-static session_local pid_t avlauncher_forkexec(void);
-static session_local pid_t avworker_forkexec(void);
+static session_local pthread_t avlauncher_forkexec(void);
+static session_local pthread_t avworker_forkexec(void);
 #endif
 NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]) pg_attribute_noreturn();
 NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) pg_attribute_noreturn();
@@ -361,7 +361,7 @@ static void autovac_refresh_stats(void);
  *
  * Format up the arglist, then fork and exec.
  */
-static pid_t
+static pthread_t
 avlauncher_forkexec(void)
 {
 	char	   *av[10];
@@ -394,7 +394,7 @@ AutovacuumLauncherIAm(void)
 int
 StartAutoVacLauncher(void)
 {
-	pid_t		AutoVacPID;
+	pthread_t		AutoVacPID;
 
 #ifdef EXEC_BACKEND
 	switch ((AutoVacPID = avlauncher_forkexec()))
@@ -1442,7 +1442,7 @@ avl_sigterm_handler(SIGNAL_ARGS)
  *
  * Format up the arglist, then fork and exec.
  */
-static pid_t
+static pthread_t
 avworker_forkexec(void)
 {
 	char	   *av[10];
@@ -1476,7 +1476,7 @@ AutovacuumWorkerIAm(void)
 int
 StartAutoVacWorker(void)
 {
-	pid_t		worker_pid;
+	pthread_t		worker_pid;
 
 #ifdef EXEC_BACKEND
 	switch ((worker_pid = avworker_forkexec()))
@@ -1650,7 +1650,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 		/* wake up the launcher */
 		if (AutoVacuumShmem->av_launcherpid != 0)
-			kill(AutoVacuumShmem->av_launcherpid, SIGUSR2);
+			pthread_kill(AutoVacuumShmem->av_launcherpid, SIGUSR2);
 	}
 	else
 	{

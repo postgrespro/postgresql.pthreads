@@ -638,7 +638,7 @@ void
 Async_Listen(const char *channel)
 {
 	if (Trace_notify)
-		elog(DEBUG1, "Async_Listen(%s,%d)", channel, MyProcPid);
+		elog(DEBUG1, "Async_Listen(%s,%ld)", channel, MyProcPid);
 
 	queue_listen(LISTEN_LISTEN, channel);
 }
@@ -652,7 +652,7 @@ void
 Async_Unlisten(const char *channel)
 {
 	if (Trace_notify)
-		elog(DEBUG1, "Async_Unlisten(%s,%d)", channel, MyProcPid);
+		elog(DEBUG1, "Async_Unlisten(%s,%ld)", channel, MyProcPid);
 
 	/* If we couldn't possibly be listening, no need to queue anything */
 	if (pendingActions == NIL && !unlistenExitRegistered)
@@ -670,7 +670,7 @@ void
 Async_UnlistenAll(void)
 {
 	if (Trace_notify)
-		elog(DEBUG1, "Async_UnlistenAll(%d)", MyProcPid);
+		elog(DEBUG1, "Async_UnlistenAll(%ld)", MyProcPid);
 
 	/* If we couldn't possibly be listening, no need to queue anything */
 	if (pendingActions == NIL && !unlistenExitRegistered)
@@ -932,7 +932,7 @@ Exec_ListenPreCommit(void)
 		return;
 
 	if (Trace_notify)
-		elog(DEBUG1, "Exec_ListenPreCommit(%d)", MyProcPid);
+		elog(DEBUG1, "Exec_ListenPreCommit(%ld)", MyProcPid);
 
 	/*
 	 * Before registering, make sure we will unlisten before dying. (Note:
@@ -1039,7 +1039,7 @@ Exec_UnlistenCommit(const char *channel)
 	ListCell   *prev;
 
 	if (Trace_notify)
-		elog(DEBUG1, "Exec_UnlistenCommit(%s,%d)", channel, MyProcPid);
+		elog(DEBUG1, "Exec_UnlistenCommit(%s,%ld)", channel, MyProcPid);
 
 	prev = NULL;
 	foreach(q, listenChannels)
@@ -1070,7 +1070,7 @@ static void
 Exec_UnlistenAllCommit(void)
 {
 	if (Trace_notify)
-		elog(DEBUG1, "Exec_UnlistenAllCommit(%d)", MyProcPid);
+		elog(DEBUG1, "Exec_UnlistenAllCommit(%ld)", MyProcPid);
 
 	list_free_deep(listenChannels);
 	listenChannels = NIL;

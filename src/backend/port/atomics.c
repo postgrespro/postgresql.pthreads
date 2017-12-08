@@ -36,7 +36,7 @@ pg_spinlock_barrier(void)
 	 * systems old enough to require fallback barrier support will include an
 	 * appropriate barrier while checking the existence of the postmaster pid.
 	 */
-	(void) kill(PostmasterPid, 0);
+	(void) pthread_kill(PostmasterPid, 0);
 }
 #endif
 

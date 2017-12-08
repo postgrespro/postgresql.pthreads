@@ -163,7 +163,7 @@ void
 ShutdownWalRcv(void)
 {
 	WalRcvData *walrcv = WalRcv;
-	pid_t		walrcvpid = 0;
+	pthread_t		walrcvpid = 0;
 
 	/*
 	 * Request walreceiver to stop. Walreceiver will switch to WALRCV_STOPPED

@@ -2633,12 +2633,12 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
  *
  * Returns pid of the process signaled, or 0 if not found.
  */
-pid_t
+pthread_t
 CancelVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
-	pid_t		pid = 0;
+	pthread_t		pid = 0;
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
@@ -2801,7 +2801,7 @@ CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
-	pid_t		pid = 0;
+	pthread_t		pid = 0;
 
 	/* tell all backends to die */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);

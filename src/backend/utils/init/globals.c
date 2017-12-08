@@ -36,11 +36,11 @@ volatile session_local uint32 InterruptHoldoffCount = 0;
 volatile session_local uint32 QueryCancelHoldoffCount = 0;
 volatile session_local uint32 CritSectionCount = 0;
 
-session_local int			MyProcPid;
+session_local pthread_t	MyProcPid;
 session_local pg_time_t	MyStartTime;
 session_local struct Port *MyProcPort;
 session_local int32		MyCancelKey;
-session_local int			MyPMChildSlot;
+session_local int		MyPMChildSlot;
 
 /*
  * MyLatch points to the latch that should be used for signal handling by the
@@ -84,7 +84,7 @@ session_local Oid			MyDatabaseTableSpace = InvalidOid;
  */
 session_local char	   *DatabasePath = NULL;
 
-session_local pid_t		PostmasterPid = 0;
+session_local pthread_t	PostmasterPid = 0;
 
 /*
  * IsPostmasterEnvironment is true in a postmaster process and any postmaster

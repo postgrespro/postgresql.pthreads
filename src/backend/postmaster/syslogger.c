@@ -128,7 +128,7 @@ static session_local volatile sig_atomic_t rotation_requested = false;
 
 /* Local subroutines */
 #ifdef EXEC_BACKEND
-static pid_t syslogger_forkexec(void);
+static pthread_t syslogger_forkexec(void);
 static void syslogger_parseArgs(int argc, char *argv[]);
 #endif
 NON_EXEC_STATIC void SysLoggerMain(int argc, char *argv[]) pg_attribute_noreturn();
@@ -519,7 +519,7 @@ SysLoggerMain(int argc, char *argv[])
 int
 SysLogger_Start(void)
 {
-	pid_t		sysloggerPid;
+	pthread_t		sysloggerPid;
 	char	   *filename;
 
 	if (!Logging_collector)
@@ -692,7 +692,7 @@ SysLogger_Start(void)
  *
  * Format up the arglist for, then fork and exec, a syslogger process
  */
-static pid_t
+static pthread_t 
 syslogger_forkexec(void)
 {
 	char	   *av[10];

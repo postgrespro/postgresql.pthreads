@@ -119,7 +119,7 @@ static session_local int	selfpipe_readfd = -1;
 static session_local int	selfpipe_writefd = -1;
 
 /* Process owning the self-pipe --- needed for checking purposes */
-static session_local int	selfpipe_owner_pid = 0;
+static session_local pthread_t	selfpipe_owner_pid = 0;
 
 /* Private function prototypes */
 static void sendSelfPipeByte(void);
@@ -414,7 +414,7 @@ void
 SetLatch(volatile Latch *latch)
 {
 #ifndef WIN32
-	pid_t		owner_pid;
+	pthread_t		owner_pid;
 #else
 	HANDLE		handle;
 #endif
@@ -465,7 +465,7 @@ SetLatch(volatile Latch *latch)
 			sendSelfPipeByte();
 	}
 	else
-		kill(owner_pid, SIGUSR1);
+		pthread_kill(owner_pid, SIGUSR1);
 #else
 
 	/*

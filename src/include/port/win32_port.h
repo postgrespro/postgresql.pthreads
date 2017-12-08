@@ -244,7 +244,7 @@ typedef int gid_t;
 typedef long key_t;
 
 #ifdef _MSC_VER
-typedef int pid_t;
+typedef HANDLE pthread_t;
 #endif
 
 /*
@@ -429,7 +429,7 @@ extern session_local HANDLE pgwin32_initial_signal_pipe;
 #define PG_SIGNAL_COUNT 32
 
 void		pgwin32_signal_initialize(void);
-HANDLE		pgwin32_create_signal_listener(pid_t pid);
+HANDLE		pgwin32_create_signal_listener(pthread_t pid);
 void		pgwin32_dispatch_queued_signals(void);
 void		pg_queue_signal(int signum);
 

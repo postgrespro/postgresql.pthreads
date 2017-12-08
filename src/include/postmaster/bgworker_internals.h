@@ -34,7 +34,7 @@ typedef struct RegisteredBgWorker
 {
 	BackgroundWorker rw_worker; /* its registry entry */
 	struct bkend *rw_backend;	/* its BackendList entry, or NULL */
-	pid_t		rw_pid;			/* 0 if not running */
+	pthread_t		rw_pid;			/* 0 if not running */
 	int			rw_child_slot;
 	TimestampTz rw_crashed_at;	/* if not 0, time it last crashed */
 	int			rw_shmem_slot;
@@ -50,7 +50,7 @@ extern void BackgroundWorkerStateChange(void);
 extern void ForgetBackgroundWorker(slist_mutable_iter *cur);
 extern void ReportBackgroundWorkerPID(RegisteredBgWorker *);
 extern void ReportBackgroundWorkerExit(slist_mutable_iter *cur);
-extern void BackgroundWorkerStopNotifications(pid_t pid);
+extern void BackgroundWorkerStopNotifications(pthread_t pid);
 extern void ResetBackgroundWorkerCrashTimes(void);
 
 /* Function to start a background worker, called from postmaster.c */

@@ -1038,7 +1038,7 @@ static bool
 shm_mq_counterparty_gone(volatile shm_mq *mq, BackgroundWorkerHandle *handle)
 {
 	bool		detached;
-	pid_t		pid;
+	pthread_t		pid;
 
 	/* Acquire the lock just long enough to check the pointer. */
 	SpinLockAcquire(&mq->mq_mutex);
@@ -1090,7 +1090,7 @@ shm_mq_wait_internal(volatile shm_mq *mq, PGPROC *volatile *ptr,
 	for (;;)
 	{
 		BgwHandleStatus status;
-		pid_t		pid;
+		pthread_t		pid;
 		bool		detached;
 
 		/* Acquire the lock just long enough to check the pointer. */

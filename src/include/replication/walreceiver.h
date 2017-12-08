@@ -59,7 +59,7 @@ typedef struct
 	 * start time (actually, the time at which it was requested to be
 	 * started).
 	 */
-	pid_t		pid;
+	pthread_t	pid;
 	WalRcvState walRcvState;
 	pg_time_t	startTime;
 

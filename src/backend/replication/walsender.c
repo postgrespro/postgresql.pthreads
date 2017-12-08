@@ -3037,7 +3037,7 @@ WalSndInitStopping(void)
 	for (i = 0; i < max_wal_senders; i++)
 	{
 		WalSnd	   *walsnd = &WalSndCtl->walsnds[i];
-		pid_t		pid;
+		pthread_t	pid;
 
 		SpinLockAcquire(&walsnd->mutex);
 		pid = walsnd->pid;

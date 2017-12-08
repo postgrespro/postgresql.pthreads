@@ -304,7 +304,7 @@ check_worker_status(worker_state *wstate)
 	for (n = 0; n < wstate->nworkers; ++n)
 	{
 		BgwHandleStatus status;
-		pid_t		pid;
+		pthread_t 		pid;
 
 		status = GetBackgroundWorkerPid(wstate->handle[n], &pid);
 		if (status == BGWH_STOPPED || status == BGWH_POSTMASTER_DIED)

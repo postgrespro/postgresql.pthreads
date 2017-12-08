@@ -49,7 +49,7 @@
  */
 typedef struct
 {
-	pid_t		pss_pid;
+	pthread_t		pss_pid;
 	sig_atomic_t pss_signalFlags[NUM_PROCSIGNALS];
 } ProcSignalSlot;
 
@@ -177,7 +177,7 @@ CleanupProcSignalState(int status, Datum arg)
  * Not to be confused with ProcSendSignal
  */
 int
-SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
+SendProcSignal(pthread_t pid, ProcSignalReason reason, BackendId backendId)
 {
 	volatile ProcSignalSlot *slot;
 
@@ -198,7 +198,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 			/* Atomically set the proper flag */
 			slot->pss_signalFlags[reason] = true;
 			/* Send signal */
-			return kill(pid, SIGUSR1);
+			return pthread_kill(pid, SIGUSR1);
 		}
 	}
 	else
@@ -222,7 +222,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 				/* Atomically set the proper flag */
 				slot->pss_signalFlags[reason] = true;
 				/* Send signal */
-				return kill(pid, SIGUSR1);
+				return pthread_kill(pid, SIGUSR1);
 			}
 		}
 	}

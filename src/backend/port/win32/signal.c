@@ -178,7 +178,7 @@ pqsignal(int signum, pqsigfunc handler)
 
 /* Create the signal listener pipe for specified PID */
 HANDLE
-pgwin32_create_signal_listener(pid_t pid)
+pgwin32_create_signal_listener(pthread_t pid)
 {
 	char		pipename[128];
 	HANDLE		pipe;

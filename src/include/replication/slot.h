@@ -96,7 +96,7 @@ typedef struct ReplicationSlot
 	bool		in_use;
 
 	/* Who is streaming out changes for this slot? 0 in unused slots. */
-	pid_t		active_pid;
+	pthread_t	active_pid;
 
 	/* any outstanding modifications? */
 	bool		just_dirtied;

@@ -251,7 +251,7 @@ typedef enum
 } eLogType;
 
 
-typedef long pgpid_t;
+typedef pthread_t pgpid_t;
 
 
 /*

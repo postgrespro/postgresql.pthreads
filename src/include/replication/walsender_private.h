@@ -39,7 +39,7 @@ typedef enum WalSndState
  */
 typedef struct WalSnd
 {
-	pid_t		pid;			/* this walsender's PID, or 0 if not active */
+	pthread_t	pid;			/* this walsender's PID, or 0 if not active */
 
 	WalSndState state;			/* this walsender's state */
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */

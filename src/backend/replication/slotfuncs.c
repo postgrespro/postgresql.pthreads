@@ -233,7 +233,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		TransactionId catalog_xmin;
 		XLogRecPtr	restart_lsn;
 		XLogRecPtr	confirmed_flush_lsn;
-		pid_t		active_pid;
+		pthread_t	active_pid;
 		Oid			database;
 		NameData	slot_name;
 		NameData	plugin;

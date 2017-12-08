@@ -281,7 +281,7 @@ static session_local instr_time total_func_time;
  * ----------
  */
 #ifdef EXEC_BACKEND
-static pid_t pgstat_forkexec(void);
+static pthread_t pgstat_forkexec(void);
 #endif
 
 NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]) pg_attribute_noreturn();
@@ -695,7 +695,7 @@ pgstat_reset_all(void)
  *
  * Format up the arglist for, then fork and exec, statistics collector process
  */
-static pid_t
+static pthread_t
 pgstat_forkexec(void)
 {
 	char	   *av[10];
@@ -727,7 +727,7 @@ int
 pgstat_start(void)
 {
 	time_t		curtime;
-	pid_t		pgStatPid;
+	pthread_t		pgStatPid;
 
 	/*
 	 * Check that the socket is there, else pgstat_init failed and we can do

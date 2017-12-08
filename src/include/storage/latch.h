@@ -111,7 +111,7 @@ typedef struct Latch
 {
 	sig_atomic_t is_set;
 	bool		is_shared;
-	int			owner_pid;
+	pthread_t	owner_pid;
 #ifdef WIN32
 	HANDLE		event;
 #endif

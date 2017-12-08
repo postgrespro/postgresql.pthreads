@@ -81,7 +81,7 @@ typedef struct FixedParallelState
 	int			sec_context;
 	bool		is_superuser;
 	PGPROC	   *parallel_master_pgproc;
-	pid_t		parallel_master_pid;
+	pthread_t	parallel_master_pid;
 	BackendId	parallel_master_backend_id;
 
 	/* Mutex protects remaining fields. */

@@ -78,7 +78,7 @@ typedef struct BackgroundWorkerSlot
 {
 	bool		in_use;
 	bool		terminate;
-	pid_t		pid;			/* InvalidPid = not started yet; 0 = dead */
+	pthread_t		pid;			/* InvalidPid = not started yet; 0 = dead */
 	uint64		generation;		/* incremented when slot is recycled */
 	BackgroundWorker worker;
 } BackgroundWorkerSlot;
@@ -288,7 +288,7 @@ BackgroundWorkerStateChange(void)
 			{
 				rw->rw_terminate = true;
 				if (rw->rw_pid != 0)
-					kill(rw->rw_pid, SIGTERM);
+					pthread_kill(rw->rw_pid, SIGTERM);
 				else
 				{
 					/* Report never-started, now-terminated worker as dead. */
@@ -321,7 +321,7 @@ BackgroundWorkerStateChange(void)
 			slot->pid = 0;
 			slot->in_use = false;
 			if (notify_pid != 0)
-				kill(notify_pid, SIGUSR1);
+				pthread_kill(notify_pid, SIGUSR1);
 
 			continue;
 		}
@@ -446,7 +446,7 @@ ReportBackgroundWorkerPID(RegisteredBgWorker *rw)
 	slot->pid = rw->rw_pid;
 
 	if (rw->rw_worker.bgw_notify_pid != 0)
-		kill(rw->rw_worker.bgw_notify_pid, SIGUSR1);
+		pthread_kill(rw->rw_worker.bgw_notify_pid, SIGUSR1);
 }
 
 /*
@@ -481,7 +481,7 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
 		ForgetBackgroundWorker(cur);
 
 	if (notify_pid != 0)
-		kill(notify_pid, SIGUSR1);
+		pthread_kill(notify_pid, SIGUSR1);
 }
 
 /*
@@ -490,7 +490,7 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
  * This function should only be called from the postmaster.
  */
 void
-BackgroundWorkerStopNotifications(pid_t pid)
+BackgroundWorkerStopNotifications(pthread_t pid)
 {
 	slist_iter	siter;
 
@@ -1044,10 +1044,10 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
  * good (if it exited with code 0 or if it is configured not to restart).
  */
 BgwHandleStatus
-GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
+GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pthread_t *pidp)
 {
 	BackgroundWorkerSlot *slot;
-	pid_t		pid;
+	pthread_t		pid;
 
 	Assert(handle->slot < max_worker_processes);
 	slot = &BackgroundWorkerData->slot[handle->slot];
@@ -1093,14 +1093,14 @@ GetBackgroundWorkerPid(BackgroundWorkerHandle *handle, pid_t *pidp)
  * take place.
  */
 BgwHandleStatus
-WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pidp)
+WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pthread_t *pidp)
 {
 	BgwHandleStatus status;
 	int			rc;
 
 	for (;;)
 	{
-		pid_t		pid;
+		pthread_t		pid;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -1142,7 +1142,7 @@ WaitForBackgroundWorkerShutdown(BackgroundWorkerHandle *handle)
 
 	for (;;)
 	{
-		pid_t		pid;
+		pthread_t		pid;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -1249,7 +1249,7 @@ LookupBackgroundWorkerFunction(const char *libraryname, const char *funcname)
  * doesn't have to worry about the background worker locking protocol.
  */
 const char *
-GetBackgroundWorkerTypeByPid(pid_t pid)
+GetBackgroundWorkerTypeByPid(pthread_t pid)
 {
 	int			slotno;
 	bool		found = false;

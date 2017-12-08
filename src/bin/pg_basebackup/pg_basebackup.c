@@ -115,7 +115,7 @@ static int	bgpipe[2] = {-1, -1};
 #endif
 
 /* Handle to child process */
-static pid_t bgchild = -1;
+static pthread_t bgchild = -1;
 static bool in_log_streamer = false;
 
 /* End position for xlog streaming, empty string if unknown yet */

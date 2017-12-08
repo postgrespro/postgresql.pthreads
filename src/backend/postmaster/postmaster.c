@@ -250,7 +250,7 @@ session_local bool		restart_after_crash = true;
 session_local int       thread_stack_size;
 
 /* PIDs of special child processes; 0 when not running */
-static session_local pid_t StartupPID = 0,
+static session_local pthread_t StartupPID = 0,
 			BgWriterPID = 0,
 			CheckpointerPID = 0,
 			WalWriterPID = 0,
@@ -424,7 +424,7 @@ static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 static CAC_state canAcceptConnections(void);
 static bool RandomCancelKey(int32 *cancel_key);
-static void signal_child(pid_t pid, int signal);
+static void signal_child(pthread_t pid, int signal);
 static bool SignalSomeChildren(int signal, int targets);
 static void TerminateChildren(int signal);
 
@@ -434,7 +434,7 @@ static int	CountChildren(int target);
 static bool assign_backendlist_entry(RegisteredBgWorker *rw);
 static void maybe_start_bgworkers(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
-static pid_t StartChildProcess(AuxProcType type);
+static pthread_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
 static void MaybeStartWalReceiver(void);
 static void InitPostmasterDeathWatchHandle(void);
@@ -477,7 +477,7 @@ typedef struct
 	PGPROC	   *AuxiliaryProcs;
 	PGPROC	   *PreparedXactProcs;
 	PMSignalData *PMSignalState;
-	pid_t		PostmasterPid;
+	pthread_t		PostmasterPid;
 	TimestampTz PgStartTime;
 	TimestampTz PgReloadTime;
 	pg_time_t	first_syslogger_file_time;
@@ -500,7 +500,7 @@ static void restore_backend_variables(ThreadParameters *param, Port *port);
 #ifdef WIN32
 #define WNOHANG 0				/* ignored, so any integer value will do */
 
-static pid_t waitpid(pid_t pid, int *exitstatus, int options);
+static pthread_t waitpid(pthread_t pid, int *exitstatus, int options);
 static void WINAPI pgwin32_deadchild_callback(PVOID lpParameter, BOOLEAN TimerOrWaitFired);
 
 static HANDLE win32ChildQueue;
@@ -513,8 +513,8 @@ typedef struct
 } win32_deadchild_waitinfo;
 #endif							/* WIN32 */
 
-static pid_t backend_forkexec(Port *port);
-static pid_t internal_forkexec(int argc, char *argv[], Port *port);
+static pthread_t backend_forkexec(Port *port);
+static pthread_t internal_forkexec(int argc, char *argv[], Port *port);
 
 /* Type for a socket that can be inherited to a client process */
 #ifdef WIN32
@@ -536,7 +536,7 @@ static void restore_backend_variables(ThreadParameters *param, Port *port);
 static bool save_backend_variables(ThreadParameters *param, Port *port);
 #else
 static bool save_backend_variables(ThreadParameters *param, Port *port,
-					   HANDLE childProcess, pid_t childPid);
+					   HANDLE childProcess, pthread_t childPid);
 #endif
 
 static void ShmemBackendArrayAdd(Backend *bn);
@@ -578,7 +578,7 @@ PostmasterMain(int argc, char *argv[])
 	int			i;
 	char	   *output_config_variable = NULL;
 
-	MyProcPid = PostmasterPid = getpid();
+	MyProcPid = PostmasterPid = pthread_self();
 
 	MyStartTime = time(NULL);
 
@@ -1822,7 +1822,7 @@ ServerLoop(void)
 		{
 			avlauncher_needs_signal = false;
 			if (AutoVacPID != 0)
-				kill(AutoVacPID, SIGUSR2);
+				pthread_kill(AutoVacPID, SIGUSR2);
 		}
 
 		/* If we need to start a WAL receiver, try to do that now */
@@ -1886,7 +1886,7 @@ ServerLoop(void)
 			{
 				ereport(LOG,
 						(errmsg("performing immediate shutdown because data directory lock file is invalid")));
-				kill(MyProcPid, SIGQUIT);
+				pthread_kill(MyProcPid, SIGQUIT);
 			}
 			last_lockfile_recheck_time = now;
 		}
@@ -3910,10 +3910,9 @@ PostmasterStateMachine(void)
  * child twice will not cause any problems.
  */
 static void
-signal_child(pid_t pid, int signal)
+signal_child(pthread_t pid, int signal)
 {
-#if 0
-	if (kill(pid, signal) < 0)
+	if (pthread_kill(pid, signal) < 0)
 		elog(DEBUG3, "kill(%ld,%d) failed: %m", (long) pid, signal);
 #ifdef HAVE_SETSID
 	switch (signal)
@@ -3929,7 +3928,6 @@ signal_child(pid_t pid, int signal)
 		default:
 			break;
 	}
-#endif
 #endif
 }
 
@@ -4470,7 +4468,7 @@ BackendRun(Port *port)
  * All uses of this routine will dispatch to SubPostmasterMain in the
  * child process.
  */
-pid_t
+pthread_t
 postmaster_forkexec(int argc, char *argv[])
 {
 	Port		port;
@@ -4489,7 +4487,7 @@ postmaster_forkexec(int argc, char *argv[])
  *
  * returns the pid of the fork/exec'd process, or -1 on failure
  */
-static pid_t
+static pthread_t
 backend_forkexec(Port *port)
 {
 	char	   *av[4];
@@ -4513,11 +4511,11 @@ backend_forkexec(Port *port)
  * - writes out backend variables to the parameter file
  * - fork():s, and then exec():s the child process
  */
-static pid_t
+static pthread_t
 internal_forkexec(int argc, char *argv[], Port *port)
 {
 	static session_local unsigned long tmpBackendFileNum = 0;
-	pid_t		pid;
+	pthread_t		pid;
 	char		tmpfilename[MAXPGPATH];
 	ThreadParameters param;
 	FILE	   *fp;
@@ -4605,7 +4603,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
  * - resumes execution of the new process once the backend parameter
  *	 file is complete.
  */
-static pid_t
+static pthread_t
 internal_forkexec(int argc, char *argv[], Port *port)
 {
 	int			retry_count = 0;
@@ -5391,7 +5389,7 @@ static void* auxiliary_main_proc(void* arg)
 	return NULL;
 }
 
-static pid_t
+static pthread_t
 StartChildProcess(AuxProcType type)
 {
 	pthread_t	pid;
@@ -5664,7 +5662,7 @@ BackgroundWorkerUnblockSignals(void)
 }
 
 #ifdef EXEC_BACKEND
-static pid_t
+static pthread_t
 bgworker_forkexec(int shmem_slot)
 {
 	char	   *av[10];
@@ -6129,7 +6127,7 @@ restore_backend_variables(ThreadParameters *param, Port *port)
 #else
 static bool write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE child);
 static bool write_inheritable_socket(InheritableSocket *dest, SOCKET src,
-						 pid_t childPid);
+						 pthread_t childPid);
 static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
 #endif
 
@@ -6170,7 +6168,7 @@ write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE childProcess)
  * straight socket inheritance.
  */
 static bool
-write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
+write_inheritable_socket(InheritableSocket *dest, SOCKET src, pthread_t childpid)
 {
 	dest->origsocket = src;
 	if (src != 0 && src != PGINVALID_SOCKET)
@@ -6342,8 +6340,8 @@ ShmemBackendArrayRemove(Backend *bn)
  * Subset implementation of waitpid() for Windows.  We assume pid is -1
  * (that is, check all child processes) and options is WNOHANG (don't wait).
  */
-static pid_t
-waitpid(pid_t pid, int *exitstatus, int options)
+static pthread_t
+waitpid(pthread_t pid, int *exitstatus, int options)
 {
 	DWORD		dwd;
 	ULONG_PTR	key;

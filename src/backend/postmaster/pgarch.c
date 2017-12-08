@@ -82,7 +82,7 @@ static session_local volatile sig_atomic_t ready_to_stop = false;
  * ----------
  */
 #ifdef EXEC_BACKEND
-static pid_t pgarch_forkexec(void);
+static pthread_t pgarch_forkexec(void);
 #endif
 
 NON_EXEC_STATIC void PgArchiverMain(int argc, char *argv[]) pg_attribute_noreturn();
@@ -117,7 +117,7 @@ int
 pgarch_start(void)
 {
 	time_t		curtime;
-	pid_t		pgArchPid;
+	pthread_t		pgArchPid;
 
 	/*
 	 * Do nothing if no archiver needed
@@ -185,7 +185,7 @@ pgarch_start(void)
  *
  * Format up the arglist for, then fork and exec, archive process
  */
-static pid_t
+static pthread_t
 pgarch_forkexec(void)
 {
 	char	   *av[10];

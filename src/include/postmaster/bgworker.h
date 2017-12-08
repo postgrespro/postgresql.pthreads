@@ -96,7 +96,7 @@ typedef struct BackgroundWorker
 	char		bgw_function_name[BGW_MAXLEN];
 	Datum		bgw_main_arg;
 	char		bgw_extra[BGW_EXTRALEN];
-	pid_t		bgw_notify_pid; /* SIGUSR1 this backend on start/stop */
+	pthread_t		bgw_notify_pid; /* SIGUSR1 this backend on start/stop */
 } BackgroundWorker;
 
 typedef enum BgwHandleStatus
@@ -119,11 +119,11 @@ extern bool RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
 
 /* Query the status of a bgworker */
 extern BgwHandleStatus GetBackgroundWorkerPid(BackgroundWorkerHandle *handle,
-					   pid_t *pidp);
-extern BgwHandleStatus WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pid_t *pid);
+					   pthread_t *pidp);
+extern BgwHandleStatus WaitForBackgroundWorkerStartup(BackgroundWorkerHandle *handle, pthread_t *pid);
 extern BgwHandleStatus
 			WaitForBackgroundWorkerShutdown(BackgroundWorkerHandle *);
-extern const char *GetBackgroundWorkerTypeByPid(pid_t pid);
+extern const char *GetBackgroundWorkerTypeByPid(pthread_t pid);
 
 /* Terminate a bgworker */
 extern void TerminateBackgroundWorker(BackgroundWorkerHandle *handle);

@@ -615,15 +615,16 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 		 * continue.
 		 */
 		hdr = (PGShmemHeader *) memAddress;
+#if 0
 		if (hdr->creatorPID != getpid())
 		{
-			if (kill(hdr->creatorPID, 0) == 0 || errno != ESRCH)
+			if (pthread_kill(hdr->creatorPID, 0) == 0 || errno != ESRCH)
 			{
 				shmdt(memAddress);
 				continue;		/* segment belongs to a live process */
 			}
 		}
-
+#endif
 		/*
 		 * The segment appears to be from a dead Postgres process, or from a
 		 * previous cycle of life in this same process.  Zap it, if possible,

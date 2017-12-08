@@ -234,7 +234,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 			/* Is it time to kill it? */
 			if (WaitExceedsMaxStandbyDelay())
 			{
-				pid_t		pid;
+				pthread_t		pid;
 
 				/*
 				 * Now find out who to throw out of the balloon.

@@ -29,6 +29,7 @@
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
+#include <pthread.h>
 
 #include "access/htup_details.h"
 #include "catalog/pg_authid.h"
@@ -177,7 +178,7 @@ InitPostmasterChild(void)
 {
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
-	MyProcPid = getpid();		/* reset MyProcPid */
+	MyProcPid = pthread_self();		/* reset MyProcPid */
 
 	MyStartTime = time(NULL);	/* set our start time in case we call elog */
 
@@ -223,7 +224,7 @@ InitStandaloneProcess(const char *argv0)
 {
 	Assert(!IsPostmasterEnvironment);
 
-	MyProcPid = getpid();		/* reset MyProcPid */
+	MyProcPid = pthread_self();		/* reset MyProcPid */
 
 	MyStartTime = time(NULL);	/* set our start time in case we call elog */
 
@@ -777,8 +778,8 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	int			ntries;
 	int			len;
 	int			encoded_pid;
-	pid_t		other_pid;
-	pid_t		my_pid,
+	pthread_t		other_pid;
+	pthread_t		my_pid,
 				my_p_pid,
 				my_gp_pid;
 	const char *envvar;
@@ -881,7 +882,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		encoded_pid = atoi(buffer);
 
 		/* if pid < 0, the pid is for postgres, not postmaster */
-		other_pid = (pid_t) (encoded_pid < 0 ? -encoded_pid : encoded_pid);
+		other_pid = (pthread_t) (encoded_pid < 0 ? -encoded_pid : encoded_pid);
 
 		if (other_pid <= 0)
 			elog(FATAL, "bogus data in lock file \"%s\": \"%s\"",

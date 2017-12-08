@@ -131,7 +131,7 @@ static session_local dlist_head dsm_segment_list = DLIST_STATIC_INIT(dsm_segment
  * life cycle.  For simplicity, it doesn't have a dsm_segment object either.
  */
 static session_local dsm_handle dsm_control_handle;
-static session_local dsm_control_header *dsm_control;
+static dsm_control_header *dsm_control;
 static session_local Size dsm_control_mapped_size = 0;
 static session_local void *dsm_control_impl_private = NULL;
 

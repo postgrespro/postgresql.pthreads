@@ -116,7 +116,7 @@ typedef struct
 
 typedef struct
 {
-	pid_t		checkpointer_pid;	/* PID (0 if not started) */
+	pthread_t		checkpointer_pid;	/* PID (0 if not started) */
 
 	slock_t		ckpt_lck;		/* protects all the ckpt_* fields */
 
@@ -1027,7 +1027,7 @@ RequestCheckpoint(int flags)
 				break;
 			}
 		}
-		else if (kill(CheckpointerShmem->checkpointer_pid, SIGINT) != 0)
+		else if (pthread_kill(CheckpointerShmem->checkpointer_pid, SIGINT) != 0)
 		{
 			if (ntries >= 20)	/* max wait 2.0 sec */
 			{

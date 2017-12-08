@@ -77,7 +77,7 @@ static void IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum,
 					   int value);
 static void IpcSemaphoreKill(IpcSemaphoreId semId);
 static int	IpcSemaphoreGetValue(IpcSemaphoreId semId, int semNum);
-static pid_t IpcSemaphoreGetLastPID(IpcSemaphoreId semId, int semNum);
+static pthread_t IpcSemaphoreGetLastPID(IpcSemaphoreId semId, int semNum);
 static IpcSemaphoreId IpcSemaphoreCreate(int numSems);
 static void ReleaseSemaphores(int status, Datum arg);
 
@@ -187,7 +187,7 @@ IpcSemaphoreGetValue(IpcSemaphoreId semId, int semNum)
 }
 
 /* Get the PID of the last process to do semop() on the semaphore */
-static pid_t
+static pthread_t
 IpcSemaphoreGetLastPID(IpcSemaphoreId semId, int semNum)
 {
 	union semun dummy;			/* for Solaris */
@@ -217,7 +217,7 @@ IpcSemaphoreCreate(int numSems)
 	/* Loop till we find a free IPC key */
 	for (nextSemaKey++;; nextSemaKey++)
 	{
-		pid_t		creatorPID;
+		pthread_t		creatorPID;
 
 		/* Try to create new semaphore set */
 		semId = InternalIpcSemaphoreCreate(nextSemaKey, numSems + 1);
@@ -238,12 +238,13 @@ IpcSemaphoreCreate(int numSems)
 		creatorPID = IpcSemaphoreGetLastPID(semId, numSems);
 		if (creatorPID <= 0)
 			continue;			/* oops, GETPID failed */
+#if 0
 		if (creatorPID != getpid())
 		{
-			if (kill(creatorPID, 0) == 0 || errno != ESRCH)
+			if (pthread_kill(creatorPID, 0) == 0 || errno != ESRCH)
 				continue;		/* sema belongs to a live process */
 		}
-
+#endif
 		/*
 		 * The sema set appears to be from a dead Postgres process, or from a
 		 * previous cycle of life in this same process.  Zap it, if possible.

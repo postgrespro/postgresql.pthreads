@@ -67,7 +67,7 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 	char		cmd[MAX_STRING];
 
 #ifndef WIN32
-	pid_t		child;
+	pthread_t		child;
 #else
 	HANDLE		child;
 	exec_thread_arg *new_arg;
@@ -180,7 +180,7 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 							  char *old_tablespace)
 {
 #ifndef WIN32
-	pid_t		child;
+	pthread_t		child;
 #else
 	HANDLE		child;
 	transfer_thread_arg *new_arg;
