@@ -187,7 +187,6 @@ struct config_bool
 	/* variable fields, initialized at runtime: */
 	bool		reset_val;
 	void	   *reset_extra;
-	bool		postmaster_val;
 };
 
 struct config_int

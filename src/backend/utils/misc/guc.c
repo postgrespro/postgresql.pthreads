@@ -3853,6 +3853,20 @@ guc_malloc(int elevel, size_t size)
 	return data;
 }
 
+static void*
+guc_clone(int elevel, void const* src, size_t size)
+{
+	void	   *dst;
+	dst = malloc(size);
+	if (dst == NULL)
+		ereport(elevel,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	memcpy(dst, src, size);
+	return dst;
+}
+
+
 static void *
 guc_realloc(int elevel, void *old, size_t size)
 {
@@ -4067,6 +4081,11 @@ build_guc_variables(void)
 	int			num_vars = 0;
 	struct config_generic **guc_vars;
 	int			i;
+	struct config_bool*   bconf = ConfigureNamesBool;
+	struct config_int*    iconf = ConfigureNamesInt;
+	struct config_real*   rconf = ConfigureNamesReal;
+	struct config_string* sconf = ConfigureNamesString;
+	struct config_enum*   econf = ConfigureNamesEnum;
 
 	for (i = 0; ConfigureNamesBool[i].gen.name; i++)
 	{
@@ -4119,23 +4138,61 @@ build_guc_variables(void)
 
 	num_vars = 0;
 
-	for (i = 0; ConfigureNamesBool[i].gen.name; i++)
-		guc_vars[num_vars++] = &ConfigureNamesBool[i].gen;
+	if (!IsPostmaster)
+	{
+		bconf = (struct config_bool*)guc_clone(FATAL, ConfigureNamesBool, sizeof(ConfigureNamesBool));
+		iconf = (struct config_int*)guc_clone(FATAL, ConfigureNamesInt, sizeof(ConfigureNamesInt));
+		rconf = (struct config_real*)guc_clone(FATAL, ConfigureNamesReal, sizeof(ConfigureNamesReal));
+		sconf = (struct config_string*)guc_clone(FATAL, ConfigureNamesString, sizeof(ConfigureNamesString));
+		econf = (struct config_enum*)guc_clone(FATAL, ConfigureNamesEnum, sizeof(ConfigureNamesEnum));
+	}
 
-	for (i = 0; ConfigureNamesInt[i].gen.name; i++)
-		guc_vars[num_vars++] = &ConfigureNamesInt[i].gen;
-
-	for (i = 0; ConfigureNamesReal[i].gen.name; i++)
-		guc_vars[num_vars++] = &ConfigureNamesReal[i].gen;
-
-	for (i = 0; ConfigureNamesString[i].gen.name; i++)
-		guc_vars[num_vars++] = &ConfigureNamesString[i].gen;
-
-	for (i = 0; ConfigureNamesEnum[i].gen.name; i++)
-		guc_vars[num_vars++] = &ConfigureNamesEnum[i].gen;
-
-	if (guc_variables)
-		free(guc_variables);
+	for (i = 0; bconf[i].gen.name; i++)
+	{
+		struct config_bool* conf = &bconf[i];
+		if (conf->address_hook)
+			conf->variable = conf->address_hook();
+		if (conf->variable && !IsPostmaster)
+			conf->boot_val = *ConfigureNamesBool[i].variable;
+		guc_vars[num_vars++] = &conf->gen;
+	}
+	for (i = 0; iconf[i].gen.name; i++)
+	{
+		struct config_int* conf = &iconf[i];
+		if (conf->address_hook)
+			conf->variable = conf->address_hook();
+		if (conf->variable && !IsPostmaster)
+			conf->boot_val = *ConfigureNamesInt[i].variable;
+		guc_vars[num_vars++] = &conf->gen;
+	}
+	for (i = 0; rconf[i].gen.name; i++)
+	{
+		struct config_real* conf = &rconf[i];
+		if (conf->address_hook)
+			conf->variable = conf->address_hook();
+		if (conf->variable && !IsPostmaster)
+			conf->boot_val = *ConfigureNamesReal[i].variable;
+		guc_vars[num_vars++] = &conf->gen;
+	}
+	for (i = 0; sconf[i].gen.name; i++)
+	{
+		struct config_string* conf = &sconf[i];
+		if (conf->address_hook)
+			conf->variable = conf->address_hook();
+		if (conf->variable && !IsPostmaster)
+			conf->boot_val = *ConfigureNamesString[i].variable;
+		guc_vars[num_vars++] = &conf->gen;
+	}
+	for (i = 0; econf[i].gen.name; i++)
+	{
+		struct config_enum* conf = &econf[i];
+		if (conf->address_hook)
+			conf->variable = conf->address_hook();
+		if (conf->variable && !IsPostmaster)
+			conf->boot_val = *ConfigureNamesEnum[i].variable;
+		guc_vars[num_vars++] = &conf->gen;
+	}
+	free(guc_variables);
 	guc_variables = guc_vars;
 	num_guc_variables = num_vars;
 	size_guc_variables = size_vars;
@@ -4447,7 +4504,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 		case PGC_BOOL:
 			{
 				struct config_bool *conf = (struct config_bool *) gconf;
-				bool		newval = IsPostmaster ? conf->boot_val : conf->postmaster_val;
+				bool		newval = conf->boot_val;
 				void	   *extra = NULL;
 				if (!call_bool_check_hook(conf, &newval, &extra,
 										  PGC_S_DEFAULT, LOG))
@@ -4455,18 +4512,14 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, (int) newval);
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
-				if (conf->address_hook)
-					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
-				if (IsPostmaster)
-					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_INT:
 			{
 				struct config_int *conf = (struct config_int *) gconf;
-				int			newval = IsPostmaster ? conf->boot_val : conf->postmaster_val;
+				int			newval = conf->boot_val;
 				void	   *extra = NULL;
 
 				Assert(newval >= conf->min);
@@ -4477,18 +4530,14 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
-				if (conf->address_hook)
-					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
-				if (IsPostmaster)
-					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_REAL:
 			{
 				struct config_real *conf = (struct config_real *) gconf;
-				double		newval = IsPostmaster ? conf->boot_val : conf->postmaster_val;
+				double		newval = conf->boot_val;
 				void	   *extra = NULL;
 
 				Assert(newval >= conf->min);
@@ -4499,11 +4548,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
-				if (conf->address_hook)
-					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
-				if (IsPostmaster)
-					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
@@ -4514,21 +4559,10 @@ InitializeOneGUCOption(struct config_generic *gconf)
 				void	   *extra = NULL;
 
 				/* non-NULL boot_val must always get strdup'd */
-				if (IsPostmaster)
-				{
-					if (conf->boot_val != NULL)
-						newval = guc_strdup(FATAL, conf->boot_val);
-					else
-						newval = NULL;
-				}
+				if (conf->boot_val != NULL)
+					newval = guc_strdup(FATAL, conf->boot_val);
 				else
-				{
-					if (conf->postmaster_val != NULL)
-						newval = guc_strdup(FATAL, conf->postmaster_val);
-					else
-						newval = NULL;
-				}
-
+					newval = NULL;
 
 				if (!call_string_check_hook(conf, &newval, &extra,
 											PGC_S_DEFAULT, LOG))
@@ -4536,18 +4570,14 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, newval ? newval : "");
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
-				if (conf->address_hook)
-					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
-				if (IsPostmaster)
-					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_ENUM:
 			{
 				struct config_enum *conf = (struct config_enum *) gconf;
-				int			newval = IsPostmaster ? conf->boot_val : conf->postmaster_val;
+				int			newval = conf->boot_val;
 				void	   *extra = NULL;
 
 				if (!call_enum_check_hook(conf, &newval, &extra,
@@ -4556,11 +4586,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
-				if (conf->address_hook)
-					conf->variable = conf->address_hook();
 				*conf->variable = conf->reset_val = newval;
-				if (IsPostmaster)
-					conf->postmaster_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
@@ -6096,8 +6122,6 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
-					if (IsPostmaster)
-						conf->postmaster_val = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6188,8 +6212,6 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
-					if (IsPostmaster)
-						conf->postmaster_val = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6280,8 +6302,6 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
-					if (IsPostmaster)
-						conf->postmaster_val = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6390,8 +6410,6 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					set_string_field(conf, conf->variable, newval);
-					if (IsPostmaster)
-						conf->postmaster_val = *conf->variable;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
@@ -6487,8 +6505,6 @@ set_config_option(const char *name, const char *value,
 					if (conf->assign_hook)
 						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
-					if (IsPostmaster)
-						conf->postmaster_val = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
 					conf->gen.source = source;
