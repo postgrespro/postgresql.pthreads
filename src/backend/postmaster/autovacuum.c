@@ -387,6 +387,13 @@ AutovacuumLauncherIAm(void)
 }
 #endif
 
+static void* autovacuum_proc_main(void* arg)
+{
+	initialize_thread(arg, NULL);
+	AutoVacLauncherMain(0, NULL);
+	return NULL;
+}
+
 /*
  * Main entry point for autovacuum launcher process, to be called from the
  * postmaster.
@@ -396,34 +403,13 @@ StartAutoVacLauncher(void)
 {
 	pthread_t		AutoVacPID;
 
-#ifdef EXEC_BACKEND
-	switch ((AutoVacPID = avlauncher_forkexec()))
-#else
-	switch ((AutoVacPID = fork_process()))
-#endif
-	{
-		case -1:
-			ereport(LOG,
-					(errmsg("could not fork autovacuum launcher process: %m")));
-			return 0;
-
-#ifndef EXEC_BACKEND
-		case 0:
-			/* in postmaster child ... */
-			InitPostmasterChild();
-
-			/* Close the postmaster's sockets */
-			ClosePostmasterPorts(false);
-
-			AutoVacLauncherMain(0, NULL);
-			break;
-#endif
-		default:
-			return (int) AutoVacPID;
+	if (!create_thread(&AutoVacPID, autovacuum_proc_main, NULL)) {
+		ereport(LOG,
+				(errmsg("could not fork autovacuum launcher process: %m")));
+		return 0;
+	} else  {
+		return (int) AutoVacPID;
 	}
-
-	/* shouldn't get here */
-	return 0;
 }
 
 /*

@@ -712,6 +712,12 @@ pgstat_forkexec(void)
 }
 #endif							/* EXEC_BACKEND */
 
+static void* pgstat_proc_main(void* arg)
+{
+	initialize_thread(arg, NULL);
+	PgstatCollectorMain(0, NULL);
+	return NULL;
+}
 
 /*
  * pgstat_start() -
@@ -751,39 +757,16 @@ pgstat_start(void)
 	/*
 	 * Okay, fork off the collector.
 	 */
-#ifdef EXEC_BACKEND
-	switch ((pgStatPid = pgstat_forkexec()))
-#else
-	switch ((pgStatPid = fork_process()))
-#endif
+	if (!create_thread(&pgStatPid, pgstat_proc_main, NULL))
 	{
-		case -1:
-			ereport(LOG,
-					(errmsg("could not fork statistics collector: %m")));
-			return 0;
-
-#ifndef EXEC_BACKEND
-		case 0:
-			/* in postmaster child ... */
-			InitPostmasterChild();
-
-			/* Close the postmaster's sockets */
-			ClosePostmasterPorts(false);
-
-			/* Drop our connection to postmaster's shared memory, as well */
-			dsm_detach_all();
-			PGSharedMemoryDetach();
-
-			PgstatCollectorMain(0, NULL);
-			break;
-#endif
-
-		default:
-			return (int) pgStatPid;
+		ereport(LOG,
+				(errmsg("could not fork statistics collector: %m")));
+		return 0;
 	}
-
-	/* shouldn't get here */
-	return 0;
+	else
+	{
+		return (int) pgStatPid;
+	}
 }
 
 void

@@ -112,7 +112,7 @@ ProcSignalInit(int pss_idx)
 
 	/* sanity check */
 	if (slot->pss_pid != 0)
-		elog(LOG, "process %d taking over ProcSignal slot %d, but it's not empty",
+		elog(LOG, "process %ld taking over ProcSignal slot %d, but it's not empty",
 			 MyProcPid, pss_idx);
 
 	/* Clear out any leftover signal reasons */
@@ -157,7 +157,7 @@ CleanupProcSignalState(int status, Datum arg)
 		 * don't ERROR here. We're exiting anyway, and don't want to get into
 		 * infinite loop trying to exit
 		 */
-		elog(LOG, "process %d releasing ProcSignal slot %d, but it contains %d",
+		elog(LOG, "process %ld releasing ProcSignal slot %d, but it contains %d",
 			 MyProcPid, pss_idx, (int) slot->pss_pid);
 		return;					/* XXX better to zero the slot anyway? */
 	}

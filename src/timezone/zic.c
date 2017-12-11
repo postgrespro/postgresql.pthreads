@@ -7,12 +7,12 @@
  */
 
 #include "postgres_fe.h"
+#include "pg_getopt.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
 
-#include "pg_getopt.h"
 
 #include "private.h"
 #include "tzfile.h"

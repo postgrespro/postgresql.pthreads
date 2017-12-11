@@ -433,6 +433,7 @@ static void TerminateChildren(int signal);
 static int	CountChildren(int target);
 static bool assign_backendlist_entry(RegisteredBgWorker *rw);
 static void maybe_start_bgworkers(void);
+static void wait_startup_completion(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pthread_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
@@ -449,6 +450,7 @@ static void InitPostmasterDeathWatchHandle(void);
 	((XLogArchivingActive() && pmState == PM_RUN) ||	\
 	 (XLogArchivingAlways() &&	\
 	  (pmState == PM_RECOVERY || pmState == PM_HOT_STANDBY)))
+
 
 /*
  * Structure contains all variables passed to exec:ed backends
@@ -581,6 +583,7 @@ PostmasterMain(int argc, char *argv[])
 	MyProcPid = PostmasterPid = pthread_self();
 
 	MyStartTime = time(NULL);
+	sleep(30);
 
 	IsPostmasterEnvironment = true;
 	IsPostmaster = true;
@@ -647,7 +650,7 @@ PostmasterMain(int argc, char *argv[])
 													 * process */
 	pqsignal_no_restart(SIGUSR2, dummy_handler);	/* unused, reserve for
 													 * children */
-	pqsignal_no_restart(SIGCHLD, reaper);	/* handle child termination */
+	//pqsignal_no_restart(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
 	/* ignore SIGXFSZ, so that ulimit violations work like disk full */
@@ -1212,7 +1215,7 @@ PostmasterMain(int argc, char *argv[])
 
 		if (fpidfile)
 		{
-			fprintf(fpidfile, "%d\n", MyProcPid);
+			fprintf(fpidfile, "%ld\n", MyProcPid);
 			fclose(fpidfile);
 
 			/* Make PID file world readable */
@@ -1358,8 +1361,7 @@ PostmasterMain(int argc, char *argv[])
 	StartupStatus = STARTUP_RUNNING;
 	pmState = PM_STARTUP;
 
-	/* Some workers may be scheduled to start now */
-	maybe_start_bgworkers();
+	wait_startup_completion();
 
 	status = ServerLoop();
 
@@ -2816,6 +2818,104 @@ pmdie(SIGNAL_ARGS)
 	errno = save_errno;
 }
 
+static void wait_startup_completion(void)
+{
+	void* status;
+	int exitstatus;
+	int rc;
+	Assert(StartupPID != 0);
+	rc = pthread_join(StartupPID, &status);
+	if (rc != 0)
+	{
+		elog(ERROR, "Startup process failed with code %d", rc);
+	}
+	StartupPID = 0;
+	exitstatus = (int)(size_t)status;
+
+	/*
+	 * Startup process exited in response to a shutdown request (or it
+	 * completed normally regardless of the shutdown request).
+	 */
+	if (Shutdown > NoShutdown &&
+		(EXIT_STATUS_0(exitstatus) || EXIT_STATUS_1(exitstatus)))
+	{
+		StartupStatus = STARTUP_NOT_RUNNING;
+		pmState = PM_WAIT_BACKENDS;
+		/* PostmasterStateMachine logic does the rest */
+		return;
+	}
+
+	if (EXIT_STATUS_3(exitstatus))
+	{
+		ereport(LOG,
+				(errmsg("shutdown at recovery target")));
+		StartupStatus = STARTUP_NOT_RUNNING;
+		Shutdown = SmartShutdown;
+		TerminateChildren(SIGTERM);
+		pmState = PM_WAIT_BACKENDS;
+		/* PostmasterStateMachine logic does the rest */
+		return;
+	}
+
+	/*
+	 * Unexpected exit of startup process (including FATAL exit)
+	 * during PM_STARTUP is treated as catastrophic. There are no
+	 * other processes running yet, so we can just exit.
+	 */
+	if (pmState == PM_STARTUP && !EXIT_STATUS_0(exitstatus))
+	{
+		ereport(LOG,
+				(errmsg("aborting startup due to startup process failure")));
+		ExitPostmaster(1);
+	}
+
+	/*
+	 * Startup succeeded, commence normal operations
+	 */
+	StartupStatus = STARTUP_NOT_RUNNING;
+	FatalError = false;
+	Assert(AbortStartTime == 0);
+	ReachedNormalRunning = true;
+	pmState = PM_RUN;
+
+	/*
+	 * Crank up the background tasks, if we didn't do that already
+	 * when we entered consistent recovery state.  It doesn't matter
+	 * if this fails, we'll just try again later.
+	 */
+	if (CheckpointerPID == 0)
+		CheckpointerPID = StartCheckpointer();
+	if (BgWriterPID == 0)
+		BgWriterPID = StartBackgroundWriter();
+	if (WalWriterPID == 0)
+		WalWriterPID = StartWalWriter();
+
+	/*
+	 * Likewise, start other special children as needed.  In a restart
+	 * situation, some of them may be alive already.
+	 */
+	if (!IsBinaryUpgrade && AutoVacuumingActive() && AutoVacPID == 0)
+		AutoVacPID = StartAutoVacLauncher();
+	if (PgArchStartupAllowed() && PgArchPID == 0)
+		PgArchPID = pgarch_start();
+	if (PgStatPID == 0)
+		PgStatPID = pgstat_start();
+
+	/* workers may be scheduled to start now */
+	maybe_start_bgworkers();
+
+	/* at this point we are really open for business */
+	ereport(LOG,
+			(errmsg("database system is ready to accept connections")));
+
+	/* Report status */
+	AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_READY);
+	#ifdef USE_SYSTEMD
+	sd_notify(0, "READY=1");
+	#endif
+}
+
+
 /*
  * Reaper -- signal handler to cleanup after a child process dies.
  */
@@ -4005,30 +4105,14 @@ TerminateChildren(int signal)
 		signal_child(PgStatPID, signal);
 }
 
-
-static bool create_thread(pthread_t* t, void*(*thread_proc)(void*), Port* port)
-{
-	pthread_attr_t attr;
-	int rc;
-	ThreadParameters* param = (ThreadParameters*)malloc(sizeof(ThreadParameters));
-	save_backend_variables(param, port);
-
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, thread_stack_size);
-	rc = pthread_create(t, &attr, thread_proc, param);
-	if (rc != 0) elog(WARNING, "pthread_create failed with code %d, errno=%d, thread_stack_size=%d", rc, errno, thread_stack_size);
-	pthread_attr_destroy(&attr);
-	return rc == 0;
-}
-
 /**
  * Common initialized for all threads
  */
-static void initialize_thread(void* arg, Port* port)
+void initialize_thread(void* arg, void* port)
 {
 	ThreadParameters *param = (ThreadParameters*)arg;
 
-	restore_backend_variables(param, port);
+	restore_backend_variables(param, (Port*)port);
 	free(param);
 
 	IsPostmasterEnvironment = true;
@@ -4054,6 +4138,23 @@ static void initialize_thread(void* arg, Port* port)
 	 */
 	set_stack_base();
 }
+
+
+bool create_thread(pthread_t* t, thread_proc_t thread_proc, void* port)
+{
+	pthread_attr_t attr;
+	int rc;
+	ThreadParameters* param = (ThreadParameters*)malloc(sizeof(ThreadParameters));
+	save_backend_variables(param, (Port*)port);
+
+	pthread_attr_init(&attr);
+	pthread_attr_setstacksize(&attr, thread_stack_size);
+	rc = pthread_create(t, &attr, thread_proc, param);
+	if (rc != 0) elog(WARNING, "pthread_create failed with code %d, errno=%d, thread_stack_size=%d", rc, errno, thread_stack_size);
+	pthread_attr_destroy(&attr);
+	return rc == 0;
+}
+
 
 
 /*
@@ -5372,20 +5473,10 @@ CountChildren(int target)
  */
 static void* auxiliary_main_proc(void* arg)
 {
-	char	   *av[10];
-	int			ac = 0;
-	char		typebuf[32];
-
 	initialize_thread(arg, NULL);
 	IsPostmasterEnvironment = true;
 
-	av[ac++] = "postgres";
-	snprintf(typebuf, sizeof(typebuf), "-x%d", MyAuxProcType);
-	av[ac++] = typebuf;
-	av[ac] = NULL;
-	Assert(ac < lengthof(av));
-
-	AuxiliaryProcessMain(ac, av);
+	AuxiliaryProcessMain(0, NULL);
 	return NULL;
 }
 

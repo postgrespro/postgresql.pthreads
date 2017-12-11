@@ -75,4 +75,10 @@ extern void ShmemBackendArrayAllocation(void);
  */
 #define MAX_BACKENDS	0x3FFFF
 
+typedef void*(*thread_proc_t)(void* arg);
+
+extern bool create_thread(pthread_t* t, thread_proc_t thread_proc, void* port);
+extern void initialize_thread(void* arg, void* port);
+
+
 #endif							/* _POSTMASTER_H */

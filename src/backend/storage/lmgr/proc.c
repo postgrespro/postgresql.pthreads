@@ -1306,7 +1306,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				initStringInfo(&logbuf);
 				DescribeLockTag(&locktagbuf, &lock->tag);
 				appendStringInfo(&logbuf,
-								 _("Process %d waits for %s on %s."),
+								 _("Process %ld waits for %s on %s."),
 								 MyProcPid,
 								 GetLockmodeName(lock->tag.locktag_lockmethodid,
 												 lockmode),
@@ -1437,7 +1437,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 
 			if (deadlock_state == DS_SOFT_DEADLOCK)
 				ereport(LOG,
-						(errmsg("process %d avoided deadlock for %s on %s by rearranging queue order after %ld.%03d ms",
+						(errmsg("process %ld avoided deadlock for %s on %s by rearranging queue order after %ld.%03d ms",
 								MyProcPid, modename, buf.data, msecs, usecs),
 						 (errdetail_log_plural("Process holding the lock: %s. Wait queue: %s.",
 											   "Processes holding the lock: %s. Wait queue: %s.",
@@ -1452,7 +1452,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				 * events get logged.
 				 */
 				ereport(LOG,
-						(errmsg("process %d detected deadlock while waiting for %s on %s after %ld.%03d ms",
+						(errmsg("process %ld detected deadlock while waiting for %s on %s after %ld.%03d ms",
 								MyProcPid, modename, buf.data, msecs, usecs),
 						 (errdetail_log_plural("Process holding the lock: %s. Wait queue: %s.",
 											   "Processes holding the lock: %s. Wait queue: %s.",
@@ -1461,14 +1461,14 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 
 			if (myWaitStatus == STATUS_WAITING)
 				ereport(LOG,
-						(errmsg("process %d still waiting for %s on %s after %ld.%03d ms",
+						(errmsg("process %ld still waiting for %s on %s after %ld.%03d ms",
 								MyProcPid, modename, buf.data, msecs, usecs),
 						 (errdetail_log_plural("Process holding the lock: %s. Wait queue: %s.",
 											   "Processes holding the lock: %s. Wait queue: %s.",
 											   lockHoldersNum, lock_holders_sbuf.data, lock_waiters_sbuf.data))));
 			else if (myWaitStatus == STATUS_OK)
 				ereport(LOG,
-						(errmsg("process %d acquired %s on %s after %ld.%03d ms",
+						(errmsg("process %ld acquired %s on %s after %ld.%03d ms",
 								MyProcPid, modename, buf.data, msecs, usecs)));
 			else
 			{
@@ -1484,7 +1484,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				 */
 				if (deadlock_state != DS_HARD_DEADLOCK)
 					ereport(LOG,
-							(errmsg("process %d failed to acquire %s on %s after %ld.%03d ms",
+							(errmsg("process %ld failed to acquire %s on %s after %ld.%03d ms",
 									MyProcPid, modename, buf.data, msecs, usecs),
 							 (errdetail_log_plural("Process holding the lock: %s. Wait queue: %s.",
 												   "Processes holding the lock: %s. Wait queue: %s.",

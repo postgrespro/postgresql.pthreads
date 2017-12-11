@@ -1484,7 +1484,7 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
 	 * Generate a tempfile name that should be unique within the current
 	 * database instance.
 	 */
-	snprintf(tempfilepath, sizeof(tempfilepath), "%s/%s%d.%ld",
+	snprintf(tempfilepath, sizeof(tempfilepath), "%s/%s%ld.%ld",
 			 tempdirpath, PG_TEMP_FILE_PREFIX, MyProcPid, tempFileCounter++);
 
 	/*

@@ -970,8 +970,6 @@ RequestCheckpoint(int flags)
 	int			old_failed,
 				old_started;
 
-	return;
-	
 	/*
 	 * If in a standalone backend, just do it ourselves.
 	 */

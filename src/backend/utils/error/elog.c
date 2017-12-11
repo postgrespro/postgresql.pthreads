@@ -2439,18 +2439,18 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				{
 					char		strfbuf[128];
 
-					snprintf(strfbuf, sizeof(strfbuf) - 1, "%lx.%x",
+					snprintf(strfbuf, sizeof(strfbuf) - 1, "%lx.%lx",
 							 (long) (MyStartTime), MyProcPid);
 					appendStringInfo(buf, "%*s", padding, strfbuf);
 				}
 				else
-					appendStringInfo(buf, "%lx.%x", (long) (MyStartTime), MyProcPid);
+					appendStringInfo(buf, "%lx.%lx", (long) (MyStartTime), MyProcPid);
 				break;
 			case 'p':
 				if (padding != 0)
-					appendStringInfo(buf, "%*d", padding, MyProcPid);
+					appendStringInfo(buf, "%*ld", padding, MyProcPid);
 				else
-					appendStringInfo(buf, "%d", MyProcPid);
+					appendStringInfo(buf, "%ld", MyProcPid);
 				break;
 			case 'l':
 				if (padding != 0)
@@ -2700,7 +2700,7 @@ write_csvlog(ErrorData *edata)
 
 	/* Process id  */
 	if (MyProcPid != 0)
-		appendStringInfo(&buf, "%d", MyProcPid);
+		appendStringInfo(&buf, "%ld", MyProcPid);
 	appendStringInfoChar(&buf, ',');
 
 	/* Remote host and port */
@@ -2718,7 +2718,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* session id */
-	appendStringInfo(&buf, "%lx.%x", (long) MyStartTime, MyProcPid);
+	appendStringInfo(&buf, "%lx.%lx", (long) MyStartTime, MyProcPid);
 	appendStringInfoChar(&buf, ',');
 
 	/* Line number */

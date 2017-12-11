@@ -1239,7 +1239,7 @@ ExportSnapshot(Snapshot snapshot)
 	initStringInfo(&buf);
 
 	appendStringInfo(&buf, "vxid:%d/%u\n", MyProc->backendId, MyProc->lxid);
-	appendStringInfo(&buf, "pid:%d\n", MyProcPid);
+	appendStringInfo(&buf, "pid:%ld\n", MyProcPid);
 	appendStringInfo(&buf, "dbid:%u\n", MyDatabaseId);
 	appendStringInfo(&buf, "iso:%d\n", XactIsoLevel);
 	appendStringInfo(&buf, "ro:%d\n", XactReadOnly);

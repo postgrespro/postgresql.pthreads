@@ -195,7 +195,7 @@ static session_local IndexList *ILHead = NULL;
 void
 AuxiliaryProcessMain(int argc, char *argv[])
 {
-	char	   *progname = argv[0];
+	char	   *progname = (char*)"aux";
 	int			flag;
 	char	   *userDoption = NULL;
 
@@ -215,104 +215,107 @@ AuxiliaryProcessMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 		InitializeGUCOptions();
 
-	/* Ignore the initial --boot argument, if present */
-	if (argc > 1 && strcmp(argv[1], "--boot") == 0)
+	if (argv != NULL)
 	{
-		argv++;
-		argc--;
-	}
-
-	/* If no -x argument, we are a CheckerProcess */
-	MyAuxProcType = CheckerProcess;
-
-	while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:X:-:")) != -1)
-	{
-		switch (flag)
+		progname = argv[0];
+		/* Ignore the initial --boot argument, if present */
+		if (argc > 1 && strcmp(argv[1], "--boot") == 0)
 		{
-			case 'B':
+			argv++;
+			argc--;
+		}
+
+		/* If no -x argument, we are a CheckerProcess */
+		MyAuxProcType = CheckerProcess;
+
+		while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:X:-:")) != -1)
+		{
+			switch (flag)
+			{
+			  case 'B':
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-			case 'D':
+			  case 'D':
 				userDoption = pstrdup(optarg);
 				break;
-			case 'd':
-				{
-					/* Turn on debugging for the bootstrap process. */
-					char	   *debugstr;
+			  case 'd':
+			  {
+				  /* Turn on debugging for the bootstrap process. */
+				  char	   *debugstr;
 
-					debugstr = psprintf("debug%s", optarg);
-					SetConfigOption("log_min_messages", debugstr,
-									PGC_POSTMASTER, PGC_S_ARGV);
-					SetConfigOption("client_min_messages", debugstr,
-									PGC_POSTMASTER, PGC_S_ARGV);
-					pfree(debugstr);
-				}
-				break;
-			case 'F':
+				  debugstr = psprintf("debug%s", optarg);
+				  SetConfigOption("log_min_messages", debugstr,
+								  PGC_POSTMASTER, PGC_S_ARGV);
+				  SetConfigOption("client_min_messages", debugstr,
+								  PGC_POSTMASTER, PGC_S_ARGV);
+				  pfree(debugstr);
+			  }
+			  break;
+			  case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
-			case 'k':
+			  case 'k':
 				bootstrap_data_checksum_version = PG_DATA_CHECKSUM_VERSION;
 				break;
-			case 'r':
+			  case 'r':
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
 				break;
-			case 'x':
+			  case 'x':
 				MyAuxProcType = atoi(optarg);
 				break;
-			case 'X':
-				{
-					int			WalSegSz = strtoul(optarg, NULL, 0);
+			  case 'X':
+			  {
+				  int			WalSegSz = strtoul(optarg, NULL, 0);
 
-					if (!IsValidWalSegSize(WalSegSz))
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("-X requires a power of 2 value between 1MB and 1GB")));
-					SetConfigOption("wal_segment_size", optarg, PGC_INTERNAL,
-									PGC_S_OVERRIDE);
-				}
-				break;
-			case 'c':
-			case '-':
-				{
-					char	   *name,
-							   *value;
+				  if (!IsValidWalSegSize(WalSegSz))
+					  ereport(ERROR,
+							  (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							   errmsg("-X requires a power of 2 value between 1MB and 1GB")));
+				  SetConfigOption("wal_segment_size", optarg, PGC_INTERNAL,
+								  PGC_S_OVERRIDE);
+			  }
+			  break;
+			  case 'c':
+			  case '-':
+			  {
+				  char	   *name,
+					  *value;
 
-					ParseLongOption(optarg, &name, &value);
-					if (!value)
-					{
-						if (flag == '-')
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("--%s requires a value",
-											optarg)));
-						else
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("-c %s requires a value",
-											optarg)));
-					}
+				  ParseLongOption(optarg, &name, &value);
+				  if (!value)
+				  {
+					  if (flag == '-')
+						  ereport(ERROR,
+								  (errcode(ERRCODE_SYNTAX_ERROR),
+								   errmsg("--%s requires a value",
+										  optarg)));
+					  else
+						  ereport(ERROR,
+								  (errcode(ERRCODE_SYNTAX_ERROR),
+								   errmsg("-c %s requires a value",
+										  optarg)));
+				  }
 
-					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
-					free(name);
-					if (value)
-						free(value);
-					break;
-				}
-			default:
+				  SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
+				  free(name);
+				  if (value)
+					  free(value);
+				  break;
+			  }
+			  default:
 				write_stderr("Try \"%s --help\" for more information.\n",
 							 progname);
 				proc_exit(1);
 				break;
+			}
+		}
+
+		if (argc != optind)
+		{
+			write_stderr("%s: invalid command-line arguments\n", progname);
+			proc_exit(1);
 		}
 	}
-
-	if (argc != optind)
-	{
-		write_stderr("%s: invalid command-line arguments\n", progname);
-		proc_exit(1);
-	}
-
 	/*
 	 * Identify myself via ps
 	 */

@@ -5781,14 +5781,14 @@ write_relcache_init_file(bool shared)
 	 */
 	if (shared)
 	{
-		snprintf(tempfilename, sizeof(tempfilename), "global/%s.%d",
+		snprintf(tempfilename, sizeof(tempfilename), "global/%s.%ld",
 				 RELCACHE_INIT_FILENAME, MyProcPid);
 		snprintf(finalfilename, sizeof(finalfilename), "global/%s",
 				 RELCACHE_INIT_FILENAME);
 	}
 	else
 	{
-		snprintf(tempfilename, sizeof(tempfilename), "%s/%s.%d",
+		snprintf(tempfilename, sizeof(tempfilename), "%s/%s.%ld",
 				 DatabasePath, RELCACHE_INIT_FILENAME, MyProcPid);
 		snprintf(finalfilename, sizeof(finalfilename), "%s/%s",
 				 DatabasePath, RELCACHE_INIT_FILENAME);

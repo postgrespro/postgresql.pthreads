@@ -470,7 +470,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 
 	/* Configure a worker. */
 	memset(&worker, 0, sizeof(worker));
-	snprintf(worker.bgw_name, BGW_MAXLEN, "parallel worker for PID %d",
+	snprintf(worker.bgw_name, BGW_MAXLEN, "parallel worker for PID %ld",
 			 MyProcPid);
 	snprintf(worker.bgw_type, BGW_MAXLEN, "parallel worker");
 	worker.bgw_flags =
