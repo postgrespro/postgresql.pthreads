@@ -84,7 +84,7 @@ session_local Oid			MyDatabaseTableSpace = InvalidOid;
  */
 session_local char	   *DatabasePath = NULL;
 
-session_local pthread_t	PostmasterPid = 0;
+pthread_t	PostmasterPid = 0;
 
 /*
  * IsPostmasterEnvironment is true in a postmaster process and any postmaster

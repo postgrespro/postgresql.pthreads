@@ -144,7 +144,7 @@ do { \
 /*
  * from utils/init/globals.c
  */
-extern session_local PGDLLIMPORT pthread_t PostmasterPid;
+extern PGDLLIMPORT pthread_t PostmasterPid;
 extern session_local PGDLLIMPORT bool IsPostmaster;
 extern session_local PGDLLIMPORT bool IsPostmasterEnvironment;
 extern session_local PGDLLIMPORT bool IsUnderPostmaster;

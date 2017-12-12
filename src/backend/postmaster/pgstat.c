@@ -146,9 +146,9 @@ session_local PgStat_MsgBgWriter BgWriterStats;
  * Local data
  * ----------
  */
-session_local pgsocket pgStatSock = PGINVALID_SOCKET;
+pgsocket pgStatSock = PGINVALID_SOCKET;
 
-static session_local struct sockaddr_storage pgStatAddr;
+static struct sockaddr_storage pgStatAddr;
 
 static session_local time_t last_pgstat_start_time;
 
@@ -712,9 +712,8 @@ pgstat_forkexec(void)
 }
 #endif							/* EXEC_BACKEND */
 
-static void* pgstat_proc_main(void* arg)
+static void* pgstat_main_proc(void* arg)
 {
-	initialize_thread(arg, NULL);
 	PgstatCollectorMain(0, NULL);
 	return NULL;
 }
@@ -757,7 +756,7 @@ pgstat_start(void)
 	/*
 	 * Okay, fork off the collector.
 	 */
-	if (!create_thread(&pgStatPid, pgstat_proc_main, NULL))
+	if (!create_thread(&pgStatPid, pgstat_main_proc, NULL))
 	{
 		ereport(LOG,
 				(errmsg("could not fork statistics collector: %m")));

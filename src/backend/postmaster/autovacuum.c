@@ -387,9 +387,8 @@ AutovacuumLauncherIAm(void)
 }
 #endif
 
-static void* autovacuum_proc_main(void* arg)
+static void* autovacuum_main_proc(void* arg)
 {
-	initialize_thread(arg, NULL);
 	AutoVacLauncherMain(0, NULL);
 	return NULL;
 }
@@ -403,7 +402,7 @@ StartAutoVacLauncher(void)
 {
 	pthread_t		AutoVacPID;
 
-	if (!create_thread(&AutoVacPID, autovacuum_proc_main, NULL)) {
+	if (!create_thread(&AutoVacPID, autovacuum_main_proc, NULL)) {
 		ereport(LOG,
 				(errmsg("could not fork autovacuum launcher process: %m")));
 		return 0;
