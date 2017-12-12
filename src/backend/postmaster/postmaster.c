@@ -583,7 +583,6 @@ PostmasterMain(int argc, char *argv[])
 	MyProcPid = PostmasterPid = pthread_self();
 
 	MyStartTime = time(NULL);
-	sleep(30);
 
 	IsPostmasterEnvironment = true;
 	IsPostmaster = true;
