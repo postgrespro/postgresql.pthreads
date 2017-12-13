@@ -63,6 +63,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/syscache.h"
+#include "miscadmin.h"
 
 #ifdef USE_ICU
 #include <unicode/ucnv.h>
@@ -154,6 +155,9 @@ pg_perm_setlocale(int category, const char *locale)
 	const char *envvar;
 	char	   *envbuf;
 
+	if (!IsPostmaster)
+		locale = NULL;
+
 #ifndef WIN32
 	result = setlocale(category, locale);
 #else
@@ -176,7 +180,7 @@ pg_perm_setlocale(int category, const char *locale)
 		result = setlocale(category, locale);
 #endif							/* WIN32 */
 
-	if (result == NULL)
+	if (result == NULL || !IsPostmaster)
 		return result;			/* fall out immediately on failure */
 
 	/*

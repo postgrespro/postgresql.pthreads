@@ -41,7 +41,7 @@ extern session_local int	autovacuum_vac_cost_delay;
 extern session_local int	autovacuum_vac_cost_limit;
 
 /* autovacuum launcher PID, only valid when worker is shutting down */
-extern session_local int	AutovacuumLauncherPid;
+extern session_local pthread_t AutovacuumLauncherPid;
 
 extern session_local int	Log_autovacuum_min_duration;
 
@@ -55,8 +55,8 @@ extern bool IsAutoVacuumWorkerProcess(void);
 
 /* Functions to start autovacuum process, called from postmaster */
 extern void autovac_init(void);
-extern int	StartAutoVacLauncher(void);
-extern int	StartAutoVacWorker(void);
+extern pthread_t	StartAutoVacLauncher(void);
+extern pthread_t	StartAutoVacWorker(void);
 
 /* called from postmaster when a worker could not be forked */
 extern void AutoVacWorkerFailed(void);

@@ -185,7 +185,6 @@ bool
 ReleasePostmasterChildSlot(int slot)
 {
 	bool		result;
-
 	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
 	slot--;
 

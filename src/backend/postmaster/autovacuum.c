@@ -303,7 +303,7 @@ static session_local MemoryContext DatabaseListCxt = NULL;
 static session_local WorkerInfo MyWorkerInfo = NULL;
 
 /* PID of launcher, valid only in worker while shutting down */
-session_local int			AutovacuumLauncherPid = 0;
+session_local pthread_t			AutovacuumLauncherPid = 0;
 
 #ifdef EXEC_BACKEND
 static session_local pthread_t avlauncher_forkexec(void);
@@ -397,7 +397,7 @@ static void* autovacuum_main_proc(void* arg)
  * Main entry point for autovacuum launcher process, to be called from the
  * postmaster.
  */
-int
+pthread_t
 StartAutoVacLauncher(void)
 {
 	pthread_t		AutoVacPID;
@@ -407,7 +407,7 @@ StartAutoVacLauncher(void)
 				(errmsg("could not fork autovacuum launcher process: %m")));
 		return 0;
 	} else  {
-		return (int) AutoVacPID;
+		return AutoVacPID;
 	}
 }
 
@@ -1421,76 +1421,28 @@ avl_sigterm_handler(SIGNAL_ARGS)
  *					  AUTOVACUUM WORKER CODE
  ********************************************************************/
 
-#ifdef EXEC_BACKEND
-/*
- * forkexec routines for the autovacuum worker.
- *
- * Format up the arglist, then fork and exec.
- */
-static pthread_t
-avworker_forkexec(void)
+static void* autovac_worker_main_proc(void* arg)
 {
-	char	   *av[10];
-	int			ac = 0;
-
-	av[ac++] = "postgres";
-	av[ac++] = "--forkavworker";
-	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
-	av[ac] = NULL;
-
-	Assert(ac < lengthof(av));
-
-	return postmaster_forkexec(ac, av);
+	AutoVacWorkerMain(0, NULL);
+	return NULL;
 }
-
-/*
- * We need this set from the outside, before InitProcess is called
- */
-void
-AutovacuumWorkerIAm(void)
-{
-	am_autovacuum_worker = true;
-}
-#endif
 
 /*
  * Main entry point for autovacuum worker process.
  *
  * This code is heavily based on pgarch.c, q.v.
  */
-int
+pthread_t 
 StartAutoVacWorker(void)
 {
-	pthread_t		worker_pid;
+	pthread_t		worker_pid = 0;
 
-#ifdef EXEC_BACKEND
-	switch ((worker_pid = avworker_forkexec()))
-#else
-	switch ((worker_pid = fork_process()))
-#endif
+	if (!create_thread(&worker_pid, autovac_worker_main_proc, NULL))
 	{
-		case -1:
-			ereport(LOG,
-					(errmsg("could not fork autovacuum worker process: %m")));
-			return 0;
-
-#ifndef EXEC_BACKEND
-		case 0:
-			/* in postmaster child ... */
-			InitPostmasterChild();
-
-			/* Close the postmaster's sockets */
-			ClosePostmasterPorts(false);
-
-			AutoVacWorkerMain(0, NULL);
-			break;
-#endif
-		default:
-			return (int) worker_pid;
+		ereport(LOG,
+				(errmsg("could not fork autovacuum worker process: %m")));
 	}
-
-	/* shouldn't get here */
-	return 0;
+	return worker_pid;
 }
 
 /*

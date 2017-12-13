@@ -728,7 +728,7 @@ static void* pgstat_main_proc(void* arg)
  *
  *	Note: if fail, we will be called again from the postmaster main loop.
  */
-int
+pthread_t
 pgstat_start(void)
 {
 	time_t		curtime;
@@ -764,7 +764,7 @@ pgstat_start(void)
 	}
 	else
 	{
-		return (int) pgStatPid;
+		return pgStatPid;
 	}
 }
 

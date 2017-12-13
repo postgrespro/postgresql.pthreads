@@ -26,6 +26,7 @@
 #include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/sinval.h"
+#include "postmaster/postmaster.h"
 #include "tcop/tcopprot.h"
 
 
@@ -292,12 +293,8 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN))
 		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
 
-	if (!IsPostmaster)
-	{
-		SetLatch(MyLatch);
-		latch_sigusr1_handler();
-	}
-
+	SetLatch(MyLatch);
+	latch_sigusr1_handler();
 
 	errno = save_errno;
 }

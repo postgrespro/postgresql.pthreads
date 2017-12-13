@@ -31,6 +31,23 @@
 
 #if !defined(WIN32) || defined(FRONTEND)
 
+static session_local pqsigfunc signal_handlers[NSIG];
+static bool signal_catched[NSIG];
+
+
+static void process_signal_handler(int signo)
+{
+	pqsigfunc handler = signal_handlers[signo];
+	if (handler != SIG_DFL && handler != SIG_IGN)
+	{
+		if (handler == SIG_ERR)
+		{
+			abort();
+		}
+		handler(signo);
+	}
+}
+
 /*
  * Set up a signal handler, with SA_RESTART, for signal "signo"
  *
@@ -40,19 +57,19 @@ pqsigfunc
 pqsignal(int signo, pqsigfunc func)
 {
 #ifndef WIN32
-	struct sigaction act,
-				oact;
-
-	act.sa_handler = func;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = SA_RESTART;
-#ifdef SA_NOCLDSTOP
-	if (signo == SIGCHLD)
-		act.sa_flags |= SA_NOCLDSTOP;
-#endif
-	if (sigaction(signo, &act, &oact) < 0)
-		return SIG_ERR;
-	return oact.sa_handler;
+	pqsigfunc old = signal_handlers[signo];
+	signal_handlers[signo] = func;
+	if (!signal_catched[signo])
+	{
+		struct sigaction act;
+		signal_catched[signo] = true;
+		act.sa_handler = process_signal_handler;
+		sigemptyset(&act.sa_mask);
+		act.sa_flags = SA_RESTART;
+		if (sigaction(signo, &act, NULL) < 0)
+			return SIG_ERR;
+	}
+	return old;
 #else							/* WIN32 */
 	return signal(signo, func);
 #endif
@@ -70,19 +87,7 @@ pqsignal(int signo, pqsigfunc func)
 pqsigfunc
 pqsignal_no_restart(int signo, pqsigfunc func)
 {
-	struct sigaction act,
-				oact;
-
-	act.sa_handler = func;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-#ifdef SA_NOCLDSTOP
-	if (signo == SIGCHLD)
-		act.sa_flags |= SA_NOCLDSTOP;
-#endif
-	if (sigaction(signo, &act, &oact) < 0)
-		return SIG_ERR;
-	return oact.sa_handler;
+	return pqsignal(signo, func);
 }
 
 #endif							/* !WIN32 */

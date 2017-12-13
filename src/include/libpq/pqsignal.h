@@ -16,7 +16,7 @@
 #include <signal.h>
 
 #ifndef WIN32
-#define PG_SETMASK(mask)	sigprocmask(SIG_SETMASK, mask, NULL)
+#define PG_SETMASK(mask)	pthread_sigmask(SIG_SETMASK, mask, NULL)
 #else
 /* Emulate POSIX sigset_t APIs on Windows */
 typedef int sigset_t;

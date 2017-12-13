@@ -184,7 +184,7 @@ typedef struct bkend
 	dlist_node	elem;			/* list link in BackendList */
 } Backend;
 
-static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
+static session_local dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
 
 #ifdef EXEC_BACKEND
 static Backend *ShmemBackendArray;
@@ -249,7 +249,7 @@ session_local bool		restart_after_crash = true;
 session_local int       thread_stack_size;
 
 /* PIDs of special child processes; 0 when not running */
-static pthread_t StartupPID = 0,
+static session_local pthread_t StartupPID = 0,
 			BgWriterPID = 0,
 			CheckpointerPID = 0,
 			WalWriterPID = 0,
@@ -401,10 +401,8 @@ static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
 static void reset_shared(int port);
 static void SIGHUP_handler(SIGNAL_ARGS);
-static void pmdie(SIGNAL_ARGS);
-static void reaper(int existatus);
-static void wait_startup_completion(void);
 static void sigusr1_handler(SIGNAL_ARGS);
+static void pmdie(SIGNAL_ARGS);
 static void startup_die(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void StartupPacketTimeoutHandler(void);
@@ -456,8 +454,10 @@ static void InitPostmasterDeathWatchHandle(void);
 /*
  * Structure contains all variables passed to exec:ed backends
  */
-typedef struct
+typedef struct ThreadContext
 {
+	pthread_t   tid;
+	struct ThreadContext* next;
 	thread_proc_t thread_proc;
 	Port		port;
 	AuxProcType auxProcType;
@@ -494,10 +494,10 @@ typedef struct
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
 	char		ExtraOptions[MAXPGPATH];
-} ThreadParameters;
+} ThreadContext;
 
-static bool save_backend_variables(ThreadParameters *param);
-static void restore_backend_variables(ThreadParameters *param);
+static bool save_backend_variables(ThreadContext* ctx);
+static void restore_backend_variables(ThreadContext* ctx);
 
 #define StartupDataBase()		StartChildProcess(StartupProcess)
 #define StartBackgroundWriter() StartChildProcess(BgWriterProcess)
@@ -1314,7 +1314,8 @@ PostmasterMain(int argc, char *argv[])
 	StartupStatus = STARTUP_RUNNING;
 	pmState = PM_STARTUP;
 
-	wait_startup_completion();
+	/* Some workers may be scheduled to start now */
+	maybe_start_bgworkers();
 
 	status = ServerLoop();
 
@@ -2771,124 +2772,146 @@ pmdie(SIGNAL_ARGS)
 	errno = save_errno;
 }
 
-static void wait_startup_completion(void)
-{
-	thread_status_t exitstatus;
-	int rc;
-
-    Assert(StartupPID != 0);
-    rc = pthread_join(StartupPID, (void**)&exitstatus);
-    if (rc != 0)
-    {
-        elog(ERROR, "Startup process failed with code %d", rc);
-    }
-    StartupPID = 0;
-
-	/*
-	 * Startup process exited in response to a shutdown request (or it
-	 * completed normally regardless of the shutdown request).
-	 */
-	if (Shutdown > NoShutdown &&
-		(EXIT_STATUS_0(exitstatus) || EXIT_STATUS_1(exitstatus)))
-	{
-		StartupStatus = STARTUP_NOT_RUNNING;
-		pmState = PM_WAIT_BACKENDS;
-		/* PostmasterStateMachine logic does the rest */
-		return;
-	}
-
-	if (EXIT_STATUS_3(exitstatus))
-	{
-		ereport(LOG,
-				(errmsg("shutdown at recovery target")));
-		StartupStatus = STARTUP_NOT_RUNNING;
-		Shutdown = SmartShutdown;
-		TerminateChildren(SIGTERM);
-		pmState = PM_WAIT_BACKENDS;
-		/* PostmasterStateMachine logic does the rest */
-		return;
-	}
-
-	/*
-	 * Unexpected exit of startup process (including FATAL exit)
-	 * during PM_STARTUP is treated as catastrophic. There are no
-	 * other processes running yet, so we can just exit.
-	 */
-	if (pmState == PM_STARTUP && !EXIT_STATUS_0(exitstatus))
-	{
-		ereport(LOG,
-				(errmsg("aborting startup due to startup process failure")));
-		ExitPostmaster(1);
-	}
-
-	/*
-	 * Startup succeeded, commence normal operations
-	 */
-	StartupStatus = STARTUP_NOT_RUNNING;
-	FatalError = false;
-	Assert(AbortStartTime == 0);
-	ReachedNormalRunning = true;
-	pmState = PM_RUN;
-
-	/*
-	 * Crank up the background tasks, if we didn't do that already
-	 * when we entered consistent recovery state.  It doesn't matter
-	 * if this fails, we'll just try again later.
-	 */
-	if (CheckpointerPID == 0)
-		CheckpointerPID = StartCheckpointer();
-	if (BgWriterPID == 0)
-		BgWriterPID = StartBackgroundWriter();
-	if (WalWriterPID == 0)
-		WalWriterPID = StartWalWriter();
-
-	/*
-	 * Likewise, start other special children as needed.  In a restart
-	 * situation, some of them may be alive already.
-	 */
-	if (!IsBinaryUpgrade && AutoVacuumingActive() && AutoVacPID == 0)
-		AutoVacPID = StartAutoVacLauncher();
-	if (PgArchStartupAllowed() && PgArchPID == 0)
-		PgArchPID = pgarch_start();
-	if (PgStatPID == 0)
-		PgStatPID = pgstat_start();
-
-	/* workers may be scheduled to start now */
-	maybe_start_bgworkers();
-
-	/* at this point we are really open for business */
-	ereport(LOG,
-			(errmsg("database system is ready to accept connections")));
-
-	/* Report status */
-	AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_READY);
-#ifdef USE_SYSTEMD
-	sd_notify(0, "READY=1");
-#endif
-}
-
-
 /*
  * Reaper -- signal handler to cleanup after a child process dies.
  */
 static void
-reaper(int exitstatus)
+reaper(ThreadContext* ctx)
 {
+	thread_status_t exitstatus;
 	int			save_errno = errno;
-	pthread_t pid = pthread_self();
-
-	if (pid == StartupPID)
-	{
-		/* Will be handled in wait_startup_completion */
-		return;
-	}
+	pthread_t pid = ctx->tid;
+	int rc;
 
 	PG_SETMASK(&BlockSig);
+
+	rc = pthread_join(pid, (void**)&exitstatus);
+    if (rc != 0)
+    {
+        elog(ERROR, "Startup process failed with code %d", rc);
+    }
+	elog(DEBUG2, "reaper thread %ld, status=%ld", pid, exitstatus);
+
 
 	ereport(DEBUG4,
 			(errmsg_internal("reaping dead processes")));
 
 	do {
+		/*
+		 * Check if this child was a startup process.
+		 */
+		if (pid == StartupPID)
+		{
+			elog(DEBUG2, "Startup %ld completed", pid);
+			StartupPID = 0;
+
+			/*
+			 * Startup process exited in response to a shutdown request (or it
+			 * completed normally regardless of the shutdown request).
+			 */
+			if (Shutdown > NoShutdown &&
+				(EXIT_STATUS_0(exitstatus) || EXIT_STATUS_1(exitstatus)))
+			{
+				StartupStatus = STARTUP_NOT_RUNNING;
+				pmState = PM_WAIT_BACKENDS;
+				/* PostmasterStateMachine logic does the rest */
+				continue;
+			}
+
+			if (EXIT_STATUS_3(exitstatus))
+			{
+				ereport(LOG,
+						(errmsg("shutdown at recovery target")));
+				StartupStatus = STARTUP_NOT_RUNNING;
+				Shutdown = SmartShutdown;
+				TerminateChildren(SIGTERM);
+				pmState = PM_WAIT_BACKENDS;
+				/* PostmasterStateMachine logic does the rest */
+				continue;
+			}
+
+			/*
+			 * Unexpected exit of startup process (including FATAL exit)
+			 * during PM_STARTUP is treated as catastrophic. There are no
+			 * other processes running yet, so we can just exit.
+			 */
+			if (pmState == PM_STARTUP && !EXIT_STATUS_0(exitstatus))
+			{
+				LogChildExit(LOG, _("startup process"),
+							 pid, exitstatus);
+				ereport(LOG,
+						(errmsg("aborting startup due to startup process failure")));
+				ExitPostmaster(1);
+			}
+
+			/*
+			 * After PM_STARTUP, any unexpected exit (including FATAL exit) of
+			 * the startup process is catastrophic, so kill other children,
+			 * and set StartupStatus so we don't try to reinitialize after
+			 * they're gone.  Exception: if StartupStatus is STARTUP_SIGNALED,
+			 * then we previously sent the startup process a SIGQUIT; so
+			 * that's probably the reason it died, and we do want to try to
+			 * restart in that case.
+			 */
+			if (!EXIT_STATUS_0(exitstatus))
+			{
+				if (StartupStatus == STARTUP_SIGNALED)
+					StartupStatus = STARTUP_NOT_RUNNING;
+				else
+					StartupStatus = STARTUP_CRASHED;
+				HandleChildCrash(pid, exitstatus,
+								 _("startup process"));
+				continue;
+			}
+
+			/*
+			 * Startup succeeded, commence normal operations
+			 */
+			StartupStatus = STARTUP_NOT_RUNNING;
+			FatalError = false;
+			Assert(AbortStartTime == 0);
+			ReachedNormalRunning = true;
+			pmState = PM_RUN;
+
+			/*
+			 * Crank up the background tasks, if we didn't do that already
+			 * when we entered consistent recovery state.  It doesn't matter
+			 * if this fails, we'll just try again later.
+			 */
+			if (CheckpointerPID == 0)
+				CheckpointerPID = StartCheckpointer();
+			if (BgWriterPID == 0)
+				BgWriterPID = StartBackgroundWriter();
+			if (WalWriterPID == 0)
+				WalWriterPID = StartWalWriter();
+
+			/*
+			 * Likewise, start other special children as needed.  In a restart
+			 * situation, some of them may be alive already.
+			 */
+			if (!IsBinaryUpgrade && AutoVacuumingActive() && AutoVacPID == 0)
+				AutoVacPID = StartAutoVacLauncher();
+			if (PgArchStartupAllowed() && PgArchPID == 0)
+				PgArchPID = pgarch_start();
+			if (PgStatPID == 0)
+				PgStatPID = pgstat_start();
+
+			/* workers may be scheduled to start now */
+			maybe_start_bgworkers();
+
+			/* at this point we are really open for business */
+			ereport(LOG,
+					(errmsg("database system is ready to accept connections")));
+
+			/* Report status */
+			AddToDataDirLockFile(LOCK_FILE_LINE_PM_STATUS, PM_STATUS_READY);
+#ifdef USE_SYSTEMD
+			sd_notify(0, "READY=1");
+#endif
+
+			continue;
+		}
+
 		/*
 		 * Was it the bgwriter?  Normal exit can be ignored; we'll start a new
 		 * one at the next iteration of the postmaster's main loop, if
@@ -3072,6 +3095,8 @@ reaper(int exitstatus)
 	/* Done with signal handler */
 	PG_SETMASK(&UnBlockSig);
 
+	free(ctx);
+	
 	errno = save_errno;
 }
 
@@ -3190,6 +3215,8 @@ CleanupBackend(pthread_t pid,
 {
 	dlist_mutable_iter iter;
 
+	elog(DEBUG2, "CleanupBackend %ld in thread %ld, status=%ld", pid, pthread_self(), exitstatus);
+
 	LogChildExit(DEBUG2, _("server process"), pid, exitstatus);
 
 	/*
@@ -3231,6 +3258,7 @@ CleanupBackend(pthread_t pid,
 			{
 				if (!ReleasePostmasterChildSlot(bp->child_slot))
 				{
+					elog(WARNING, "Child %ld failed to perform cleanup", pid);
 					/*
 					 * Uh-oh, the child failed to clean itself up.  Treat as a
 					 * crash after all.
@@ -3462,9 +3490,9 @@ HandleChildCrash(pthread_t pid, thread_status_t exitstatus, const char *procname
 	else if (AutoVacPID != 0 && take_action)
 	{
 		ereport(DEBUG2,
-				(errmsg_internal("sending %s to process %d",
+				(errmsg_internal("sending %s to process %ld",
 								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
-								 (int) AutoVacPID)));
+								 AutoVacPID)));
 		signal_child(AutoVacPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
@@ -3492,9 +3520,9 @@ HandleChildCrash(pthread_t pid, thread_status_t exitstatus, const char *procname
 	if (PgStatPID != 0 && take_action)
 	{
 		ereport(DEBUG2,
-				(errmsg_internal("sending %s to process %d",
+				(errmsg_internal("sending %s to process %ld",
 								 "SIGQUIT",
-								 (int) PgStatPID)));
+								 PgStatPID)));
 		signal_child(PgStatPID, SIGQUIT);
 		allow_immediate_pgstat_restart();
 	}
@@ -3947,17 +3975,44 @@ TerminateChildren(int signal)
 		signal_child(PgStatPID, signal);
 }
 
+static ThreadContext* terminated_queue;
+static pthread_mutex_t teminated_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static ThreadContext* get_terminated_thread()
+{
+	ThreadContext* tc;
+	pthread_mutex_lock(&teminated_queue_mutex);
+	tc = terminated_queue;
+	if (tc != NULL)
+		terminated_queue = tc->next;
+	pthread_mutex_unlock(&teminated_queue_mutex);
+	return tc;
+}
+
 static void thread_cleanup(void* arg)
 {
-	reaper(0);
+	ThreadContext* ctx = (ThreadContext*)arg;
+	int rc;
+	pthread_mutex_lock(&teminated_queue_mutex);
+	ctx->next = terminated_queue;
+	terminated_queue = ctx;
+	pthread_mutex_unlock(&teminated_queue_mutex);
+	elog(DEBUG1, "Thread %ld is terminated", ctx->tid);
+	Assert(PostmasterPid != 0);
+	rc = pthread_kill(PostmasterPid, SIGUSR1);
+	if (rc != 0)
+		elog(WARNING, "Failed to notify poastmaster %ld about backend termination: %d", PostmasterPid, rc);
+	elog(DEBUG2, "Notify poastmaster %ld about backend termination: %d", PostmasterPid, rc);
 }
 
 static void* thread_trampoline(void* arg)
 {
-	ThreadParameters *param = (ThreadParameters*)arg;
+	ThreadContext* ctx = (ThreadContext*)arg;
 	void* result;
 
-	restore_backend_variables(param);
+	pthread_cleanup_push(thread_cleanup, ctx);
+
+	restore_backend_variables(ctx);
 	IsPostmasterEnvironment = true;
 
 	/*
@@ -3981,11 +4036,8 @@ static void* thread_trampoline(void* arg)
 	 */
 	set_stack_base();
 
-	pthread_cleanup_push(thread_cleanup, NULL);
-	result = param->thread_proc(param);
+	result = ctx->thread_proc(ctx);
 	pthread_cleanup_pop(1);
-
-	free(param);
 
 	return result;
 }
@@ -3995,16 +4047,17 @@ bool create_thread(pthread_t* t, thread_proc_t thread_proc, void* port)
 {
 	pthread_attr_t attr;
 	int rc;
-	ThreadParameters* param = (ThreadParameters*)malloc(sizeof(ThreadParameters));
-	save_backend_variables(param);
+	ThreadContext* ctx = (ThreadContext*)malloc(sizeof(ThreadContext));
+	save_backend_variables(ctx);
 	if (port != NULL) {
-		memcpy(&param->port, port, sizeof(Port));
+		memcpy(&ctx->port, port, sizeof(Port));
 	}
-	param->thread_proc = thread_proc;
+	ctx->thread_proc = thread_proc;
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, thread_stack_size);
-	rc = pthread_create(t, &attr, thread_trampoline, param);
+	rc = pthread_create(&ctx->tid, &attr, thread_trampoline, ctx);
 	if (rc != 0) elog(WARNING, "pthread_create failed with code %d, errno=%d, thread_stack_size=%d", rc, errno, thread_stack_size);
+	*t = ctx->tid;
 	pthread_attr_destroy(&attr);
 	return rc == 0;
 }
@@ -4020,12 +4073,12 @@ bool create_thread(pthread_t* t, thread_proc_t thread_proc, void* port)
  */
 static void* backend_main_proc(void* arg)
 {
-	ThreadParameters* param = (ThreadParameters*)arg;
+	ThreadContext* ctx = (ThreadContext*)arg;
 	/* Perform additional initialization and collect startup packet */
-	BackendInitialize(&param->port);
+	BackendInitialize(&ctx->port);
 
 	/* And run the backend */
-	BackendRun(&param->port);
+	BackendRun(&ctx->port);
 	return NULL;
 }
 
@@ -4743,14 +4796,22 @@ ExitPostmaster(int status)
 /*
  * sigusr1_handler - handle signal conditions from child processes
  */
-static void
-sigusr1_handler(SIGNAL_ARGS)
+static void sigusr1_handler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+	ThreadContext* tc;
+
+
+	elog(DEBUG2, "postmaster_sigusr1_handler");
+
+	while ((tc = get_terminated_thread()) != NULL)
+	{
+		reaper(tc);
+	}
 
 	PG_SETMASK(&BlockSig);
 
-	/* Process background worker state change. */
+    /* Process background worker state change. */
 	if (CheckPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE))
 	{
 		BackgroundWorkerStateChange();
@@ -5621,9 +5682,9 @@ PostmasterMarkPIDForWorkerNotify(pthread_t pid)
 }
 
 
-/* Save critical backend variables into the ThreadParameters struct */
+/* Save critical backend variables into the ThreadContext struct */
 static bool
-save_backend_variables(ThreadParameters *param)
+save_backend_variables(ThreadContext *param)
 {
 	param->auxProcType = MyAuxProcType;
 	param->bgwEntry = MyBgworkerEntry;
@@ -5688,9 +5749,9 @@ save_backend_variables(ThreadParameters *param)
 
 
 
-/* Restore critical backend variables from the ThreadParameters struct */
+/* Restore critical backend variables from the ThreadContext struct */
 static void
-restore_backend_variables(ThreadParameters *param)
+restore_backend_variables(ThreadContext *param)
 {
 	MyAuxProcType = param->auxProcType;
 	MyBgworkerEntry = param->bgwEntry;
