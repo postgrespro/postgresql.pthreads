@@ -738,8 +738,8 @@ store_match(pg_ctype_cache *pcc, pg_wchar chr1, int nchrs)
 		if (pcc->cv.nranges >= pcc->cv.rangespace)
 		{
 			pcc->cv.rangespace *= 2;
-			newchrs = (chr *) realloc(pcc->cv.ranges,
-									  pcc->cv.rangespace * sizeof(chr) * 2);
+			newchrs = (chr *) top_realloc(pcc->cv.ranges,
+										  pcc->cv.rangespace * sizeof(chr) * 2);
 			if (newchrs == NULL)
 				return false;
 			pcc->cv.ranges = newchrs;
@@ -754,8 +754,8 @@ store_match(pg_ctype_cache *pcc, pg_wchar chr1, int nchrs)
 		if (pcc->cv.nchrs >= pcc->cv.chrspace)
 		{
 			pcc->cv.chrspace *= 2;
-			newchrs = (chr *) realloc(pcc->cv.chrs,
-									  pcc->cv.chrspace * sizeof(chr));
+			newchrs = (chr *) top_realloc(pcc->cv.chrs,
+										  pcc->cv.chrspace * sizeof(chr));
 			if (newchrs == NULL)
 				return false;
 			pcc->cv.chrs = newchrs;
@@ -794,17 +794,17 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 	/*
 	 * Nope, so initialize some workspace ...
 	 */
-	pcc = (pg_ctype_cache *) malloc(sizeof(pg_ctype_cache));
+	pcc = (pg_ctype_cache *) top_malloc(sizeof(pg_ctype_cache));
 	if (pcc == NULL)
 		return NULL;
 	pcc->probefunc = probefunc;
 	pcc->collation = pg_regex_collation;
 	pcc->cv.nchrs = 0;
 	pcc->cv.chrspace = 128;
-	pcc->cv.chrs = (chr *) malloc(pcc->cv.chrspace * sizeof(chr));
+	pcc->cv.chrs = (chr *) top_malloc(pcc->cv.chrspace * sizeof(chr));
 	pcc->cv.nranges = 0;
 	pcc->cv.rangespace = 64;
-	pcc->cv.ranges = (chr *) malloc(pcc->cv.rangespace * sizeof(chr) * 2);
+	pcc->cv.ranges = (chr *) top_malloc(pcc->cv.rangespace * sizeof(chr) * 2);
 	if (pcc->cv.chrs == NULL || pcc->cv.ranges == NULL)
 		goto out_of_memory;
 	pcc->cv.cclasscode = cclasscode;
@@ -879,14 +879,14 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 	 */
 	if (pcc->cv.nchrs == 0)
 	{
-		free(pcc->cv.chrs);
+		top_free(pcc->cv.chrs);
 		pcc->cv.chrs = NULL;
 		pcc->cv.chrspace = 0;
 	}
 	else if (pcc->cv.nchrs < pcc->cv.chrspace)
 	{
-		newchrs = (chr *) realloc(pcc->cv.chrs,
-								  pcc->cv.nchrs * sizeof(chr));
+		newchrs = (chr *) top_realloc(pcc->cv.chrs,
+									  pcc->cv.nchrs * sizeof(chr));
 		if (newchrs == NULL)
 			goto out_of_memory;
 		pcc->cv.chrs = newchrs;
@@ -894,14 +894,14 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 	}
 	if (pcc->cv.nranges == 0)
 	{
-		free(pcc->cv.ranges);
+		top_free(pcc->cv.ranges);
 		pcc->cv.ranges = NULL;
 		pcc->cv.rangespace = 0;
 	}
 	else if (pcc->cv.nranges < pcc->cv.rangespace)
 	{
-		newchrs = (chr *) realloc(pcc->cv.ranges,
-								  pcc->cv.nranges * sizeof(chr) * 2);
+		newchrs = (chr *) top_realloc(pcc->cv.ranges,
+									  pcc->cv.nranges * sizeof(chr) * 2);
 		if (newchrs == NULL)
 			goto out_of_memory;
 		pcc->cv.ranges = newchrs;
@@ -921,10 +921,10 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 	 */
 out_of_memory:
 	if (pcc->cv.chrs)
-		free(pcc->cv.chrs);
+		pfree(pcc->cv.chrs);
 	if (pcc->cv.ranges)
-		free(pcc->cv.ranges);
-	free(pcc);
+		pfree(pcc->cv.ranges);
+	pfree(pcc);
 
 	return NULL;
 }

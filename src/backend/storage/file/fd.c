@@ -2668,7 +2668,16 @@ AtEOXact_Files(void)
 static void
 AtProcExit_Files(int code, Datum arg)
 {
+	int i;
 	CleanupTempFiles(true);
+
+	for (i = 1; i < SizeVfdCache; i++)
+	{
+		if (VfdCache[i].fileName != NULL)
+			FileClose(i);
+	}
+	free(VfdCache);
+	free(allocatedDescs);
 }
 
 /*

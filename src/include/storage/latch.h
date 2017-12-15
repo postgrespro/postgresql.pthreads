@@ -161,6 +161,7 @@ extern void OwnLatch(volatile Latch *latch);
 extern void DisownLatch(volatile Latch *latch);
 extern void SetLatch(volatile Latch *latch);
 extern void ResetLatch(volatile Latch *latch);
+extern void CleanupLatchSupport(void);
 
 extern WaitEventSet *CreateWaitEventSet(MemoryContext context, int nevents);
 extern void FreeWaitEventSet(WaitEventSet *set);

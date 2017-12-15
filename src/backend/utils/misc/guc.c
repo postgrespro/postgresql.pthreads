@@ -3845,7 +3845,7 @@ guc_malloc(int elevel, size_t size)
 	/* Avoid unportable behavior of malloc(0) */
 	if (size == 0)
 		size = 1;
-	data = malloc(size);
+	data = top_malloc(size);
 	if (data == NULL)
 		ereport(elevel,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -3857,7 +3857,7 @@ static void*
 guc_clone(int elevel, void const* src, size_t size)
 {
 	void	   *dst;
-	dst = malloc(size);
+	dst = top_malloc(size);
 	if (dst == NULL)
 		ereport(elevel,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -3875,7 +3875,7 @@ guc_realloc(int elevel, void *old, size_t size)
 	/* Avoid unportable behavior of realloc(NULL, 0) */
 	if (old == NULL && size == 0)
 		size = 1;
-	data = realloc(old, size);
+	data = top_realloc(old, size);
 	if (data == NULL)
 		ereport(elevel,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -3888,11 +3888,22 @@ guc_strdup(int elevel, const char *src)
 {
 	char	   *data;
 
-	data = strdup(src);
+	data = top_strdup(src);
 	if (data == NULL)
 		ereport(elevel,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
+	return data;
+}
+
+static char *
+guc_strgrab(int elevel, char *src)
+{
+	char	  *data = (char*)guc_malloc(elevel, strlen(src) + 1);
+
+	strcpy(data, src);
+	free(src);
+
 	return data;
 }
 
@@ -3933,7 +3944,7 @@ set_string_field(struct config_string *conf, char **field, char *newval)
 
 	/* Free old value if it's not NULL and isn't referenced anymore */
 	if (oldval && !string_field_used(conf, oldval))
-		free(oldval);
+		top_free(oldval);
 }
 
 /*
@@ -3994,7 +4005,7 @@ set_extra_field(struct config_generic *gconf, void **field, void *newval)
 
 	/* Free old value if it's not NULL and isn't referenced anymore */
 	if (oldval && !extra_field_used(gconf, oldval))
-		free(oldval);
+		top_free(oldval);
 }
 
 /*
@@ -4192,7 +4203,7 @@ build_guc_variables(void)
 			conf->boot_val = *ConfigureNamesEnum[i].variable;
 		guc_vars[num_vars++] = &conf->gen;
 	}
-	free(guc_variables);
+	top_free(guc_variables);
 	guc_variables = guc_vars;
 	num_guc_variables = num_vars;
 	size_guc_variables = size_vars;
@@ -4258,7 +4269,7 @@ add_placeholder_variable(const char *name, int elevel)
 	gen->name = guc_strdup(elevel, name);
 	if (gen->name == NULL)
 	{
-		free(var);
+		top_free(var);
 		return NULL;
 	}
 
@@ -4277,8 +4288,8 @@ add_placeholder_variable(const char *name, int elevel)
 
 	if (!add_guc_variable((struct config_generic *) var, elevel))
 	{
-		free((void *) gen->name);
-		free(var);
+		top_free((void *) gen->name);
+		top_free(var);
 		return NULL;
 	}
 
@@ -4614,9 +4625,9 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 
 	/* configdir is -D option, or $PGDATA if no -D */
 	if (userDoption)
-		configdir = make_absolute_path(userDoption);
+		configdir = guc_strgrab(FATAL, make_absolute_path(userDoption));
 	else
-		configdir = make_absolute_path(getenv("PGDATA"));
+		configdir = guc_strgrab(FATAL, make_absolute_path(getenv("PGDATA")));
 
 	if (configdir && stat(configdir, &stat_buf) != 0)
 	{
@@ -4636,7 +4647,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * the same way by future backends.
 	 */
 	if (ConfigFileName)
-		fname = make_absolute_path(ConfigFileName);
+		fname = guc_strgrab(FATAL, make_absolute_path(ConfigFileName));
 	else if (configdir)
 	{
 		fname = guc_malloc(FATAL,
@@ -4657,7 +4668,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * it can't be overridden later.
 	 */
 	SetConfigOption("config_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
-	free(fname);
+	top_free(fname);
 
 	/*
 	 * Now read the config file for the first time.
@@ -4666,7 +4677,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	{
 		write_stderr("%s: could not access the server configuration file \"%s\": %s\n",
 					 progname, ConfigFileName, strerror(errno));
-		free(configdir);
+		top_free(configdir);
 		return false;
 	}
 
@@ -4729,7 +4740,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * Figure out where pg_hba.conf is, and make sure the path is absolute.
 	 */
 	if (HbaFileName)
-		fname = make_absolute_path(HbaFileName);
+		fname = guc_strgrab(FATAL, make_absolute_path(HbaFileName));
 	else if (configdir)
 	{
 		fname = guc_malloc(FATAL,
@@ -4746,13 +4757,13 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		return false;
 	}
 	SetConfigOption("hba_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
-	free(fname);
+	top_free(fname);
 
 	/*
 	 * Likewise for pg_ident.conf.
 	 */
 	if (IdentFileName)
-		fname = make_absolute_path(IdentFileName);
+		fname = guc_strgrab(FATAL, make_absolute_path(IdentFileName));
 	else if (configdir)
 	{
 		fname = guc_malloc(FATAL,
@@ -4769,9 +4780,9 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		return false;
 	}
 	SetConfigOption("ident_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
-	free(fname);
+	top_free(fname);
 
-	free(configdir);
+	top_free(configdir);
 
 	return true;
 }
@@ -5749,7 +5760,7 @@ parse_and_validate_value(struct config_generic *record,
 				if (!call_string_check_hook(conf, &newval->stringval, newextra,
 											source, elevel))
 				{
-					free(newval->stringval);
+					top_free(newval->stringval);
 					newval->stringval = NULL;
 					return false;
 				}
@@ -6154,7 +6165,7 @@ set_config_option(const char *name, const char *value,
 
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					top_free(newextra);
 				break;
 
 #undef newval
@@ -6244,7 +6255,7 @@ set_config_option(const char *name, const char *value,
 
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					top_free(newextra);
 				break;
 
 #undef newval
@@ -6334,7 +6345,7 @@ set_config_option(const char *name, const char *value,
 
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					top_free(newextra);
 				break;
 
 #undef newval
@@ -6368,7 +6379,7 @@ set_config_option(const char *name, const char *value,
 					if (!call_string_check_hook(conf, &newval, &newextra,
 												source, elevel))
 					{
-						free(newval);
+						top_free(newval);
 						return 0;
 					}
 				}
@@ -6444,10 +6455,10 @@ set_config_option(const char *name, const char *value,
 
 				/* Perhaps we didn't install newval anywhere */
 				if (newval && !string_field_used(conf, newval))
-					free(newval);
+					top_free(newval);
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					top_free(newextra);
 				break;
 
 #undef newval
@@ -6537,7 +6548,7 @@ set_config_option(const char *name, const char *value,
 
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					top_free(newextra);
 				break;
 
 #undef newval
@@ -6573,7 +6584,7 @@ set_config_sourcefile(const char *name, char *sourcefile, int sourceline)
 
 	sourcefile = guc_strdup(elevel, sourcefile);
 	if (record->sourcefile)
-		free(record->sourcefile);
+		top_free(record->sourcefile);
 	record->sourcefile = sourcefile;
 	record->sourceline = sourceline;
 }
@@ -7074,9 +7085,9 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 								name, value)));
 
 			if (record->vartype == PGC_STRING && newval.stringval != NULL)
-				free(newval.stringval);
+				top_free(newval.stringval);
 			if (newextra)
-				free(newextra);
+				top_free(newextra);
 
 			/*
 			 * We must also reject values containing newlines, because the
@@ -7553,7 +7564,7 @@ define_custom_variable(struct config_generic *variable)
 	set_string_field(pHolder, pHolder->variable, NULL);
 	set_string_field(pHolder, &pHolder->reset_val, NULL);
 
-	free(pHolder);
+	top_free(pHolder);
 }
 
 /*
@@ -8871,9 +8882,9 @@ read_nondefault_variables(void)
 		if (varsourcefile[0])
 			set_config_sourcefile(varname, varsourcefile, varsourceline);
 
-		free(varname);
-		free(varvalue);
-		free(varsourcefile);
+		top_free(varname);
+		top_free(varvalue);
+		top_free(varsourcefile);
 	}
 
 	FreeFile(fp);
@@ -9361,7 +9372,7 @@ ProcessGUCArray(ArrayType *array,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("could not parse setting for parameter \"%s\"",
 							name)));
-			free(name);
+			top_free(name);
 			continue;
 		}
 
@@ -9369,9 +9380,8 @@ ProcessGUCArray(ArrayType *array,
 								 context, source,
 								 action, true, 0, false);
 
-		free(name);
-		if (value)
-			free(value);
+		top_free(name);
+		top_free(value);
 		pfree(s);
 	}
 }
@@ -10349,13 +10359,13 @@ assign_pgstat_temp_directory(const char *newval, void *extra)
 	sprintf(fname, "%s/global.stat", newval);
 
 	if (pgstat_stat_directory)
-		free(pgstat_stat_directory);
+		top_free(pgstat_stat_directory);
 	pgstat_stat_directory = dname;
 	if (pgstat_stat_tmpname)
-		free(pgstat_stat_tmpname);
+		top_free(pgstat_stat_tmpname);
 	pgstat_stat_tmpname = tname;
 	if (pgstat_stat_filename)
-		free(pgstat_stat_filename);
+		top_free(pgstat_stat_filename);
 	pgstat_stat_filename = fname;
 }
 

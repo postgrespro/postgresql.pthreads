@@ -4542,7 +4542,7 @@ ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs, int n)
 	}
 
 	/* Alloc the result ... */
-	tbl = malloc(tbl_size);
+	tbl = top_malloc(tbl_size);
 	if (!tbl)
 		return NULL;
 

@@ -48,6 +48,7 @@
 #include "port/atomics.h"
 #include "portability/instr_time.h"
 #include "postmaster/postmaster.h"
+#include "storage/fd.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
@@ -211,6 +212,13 @@ InitializeLatchSupport(void)
 #else
 	/* currently, nothing to do here for Windows */
 #endif
+}
+
+
+void CleanupLatchSupport()
+{
+	close(selfpipe_readfd);
+	close(selfpipe_writefd);
 }
 
 /*

@@ -210,7 +210,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 	 * out-of-memory.  The Max() is because some malloc implementations return
 	 * NULL for malloc(0).
 	 */
-	re_temp.cre_pat = malloc(Max(text_re_len, 1));
+	re_temp.cre_pat = top_malloc(Max(text_re_len, 1));
 	if (re_temp.cre_pat == NULL)
 	{
 		pg_regfree(&re_temp.cre_re);
@@ -232,7 +232,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 		--num_res;
 		Assert(num_res < MAX_CACHED_RES);
 		pg_regfree(&re_array[num_res].cre_re);
-		free(re_array[num_res].cre_pat);
+		top_free(re_array[num_res].cre_pat);
 	}
 
 	if (num_res > 0)

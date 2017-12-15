@@ -632,8 +632,8 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 		ReleaseSysCache(tuple);
 
 		/* GUC wants it malloc'd not palloc'd */
-		free(*newval);
-		*newval = strdup(buf);
+		top_free(*newval);
+		*newval = top_strdup(buf);
 		pfree(buf);
 		if (!*newval)
 			return false;

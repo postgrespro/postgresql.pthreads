@@ -1240,8 +1240,8 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 		}
 
 		/* Now prepare an "extra" struct for assign_temp_tablespaces */
-		myextra = malloc(offsetof(temp_tablespaces_extra, tblSpcs) +
-						 numSpcs * sizeof(Oid));
+		myextra = top_malloc(offsetof(temp_tablespaces_extra, tblSpcs) +
+							numSpcs * sizeof(Oid));
 		if (!myextra)
 			return false;
 		myextra->numSpcs = numSpcs;

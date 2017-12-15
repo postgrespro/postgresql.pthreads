@@ -140,7 +140,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 			char	   *subval;
 			void	   *subextra = NULL;
 
-			subval = strdup(GetConfigOptionResetString("datestyle"));
+			subval = top_strdup(GetConfigOptionResetString("datestyle"));
 			if (!subval)
 			{
 				ok = false;
@@ -148,7 +148,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 			}
 			if (!check_datestyle(&subval, &subextra, source))
 			{
-				free(subval);
+				top_free(subval);
 				ok = false;
 				break;
 			}
@@ -157,8 +157,8 @@ check_datestyle(char **newval, void **extra, GucSource source)
 				newDateStyle = myextra[0];
 			if (!have_order)
 				newDateOrder = myextra[1];
-			free(subval);
-			free(subextra);
+			top_free(subval);
+			top_free(subextra);
 		}
 		else
 		{
@@ -181,7 +181,7 @@ check_datestyle(char **newval, void **extra, GucSource source)
 	/*
 	 * Prepare the canonical string to return.  GUC wants it malloc'd.
 	 */
-	result = (char *) malloc(32);
+	result = (char *) top_malloc(32);
 	if (!result)
 		return false;
 
@@ -213,13 +213,13 @@ check_datestyle(char **newval, void **extra, GucSource source)
 			break;
 	}
 
-	free(*newval);
+	top_free(*newval);
 	*newval = result;
 
 	/*
 	 * Set up the "extra" struct actually used by assign_datestyle.
 	 */
-	myextra = (int *) malloc(2 * sizeof(int));
+	myextra = (int *) top_malloc(2 * sizeof(int));
 	if (!myextra)
 		return false;
 	myextra[0] = newDateStyle;
@@ -358,7 +358,7 @@ check_timezone(char **newval, void **extra, GucSource source)
 	/*
 	 * Pass back data for assign_timezone to use
 	 */
-	*extra = malloc(sizeof(pg_tz *));
+	*extra = top_malloc(sizeof(pg_tz *));
 	if (!*extra)
 		return false;
 	*((pg_tz **) *extra) = new_tz;
@@ -431,7 +431,7 @@ check_log_timezone(char **newval, void **extra, GucSource source)
 	/*
 	 * Pass back data for assign_log_timezone to use
 	 */
-	*extra = malloc(sizeof(pg_tz *));
+	*extra = top_malloc(sizeof(pg_tz *));
 	if (!*extra)
 		return false;
 	*((pg_tz **) *extra) = new_tz;
@@ -574,7 +574,7 @@ check_XactIsoLevel(char **newval, void **extra, GucSource source)
 		}
 	}
 
-	*extra = malloc(sizeof(int));
+	*extra = top_malloc(sizeof(int));
 	if (!*extra)
 		return false;
 	*((int *) *extra) = newXactIsoLevel;
@@ -642,7 +642,7 @@ check_transaction_deferrable(bool *newval, void **extra, GucSource source)
 bool
 check_random_seed(double *newval, void **extra, GucSource source)
 {
-	*extra = malloc(sizeof(int));
+	*extra = top_malloc(sizeof(int));
 	if (!*extra)
 		return false;
 	/* Arm the assign only if source of value is an interactive SET */
@@ -739,7 +739,7 @@ check_client_encoding(char **newval, void **extra, GucSource source)
 	/*
 	 * Save the encoding's ID in *extra, for use by assign_client_encoding.
 	 */
-	*extra = malloc(sizeof(int));
+	*extra = top_malloc(sizeof(int));
 	if (!*extra)
 		return false;
 	*((int *) *extra) = encoding;
@@ -829,7 +829,7 @@ check_session_authorization(char **newval, void **extra, GucSource source)
 	ReleaseSysCache(roleTup);
 
 	/* Set up "extra" struct for assign_session_authorization to use */
-	myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
+	myextra = (role_auth_extra *) top_malloc(sizeof(role_auth_extra));
 	if (!myextra)
 		return false;
 	myextra->roleid = roleid;
@@ -916,7 +916,7 @@ check_role(char **newval, void **extra, GucSource source)
 	}
 
 	/* Set up "extra" struct for assign_role to use */
-	myextra = (role_auth_extra *) malloc(sizeof(role_auth_extra));
+	myextra = (role_auth_extra *) top_malloc(sizeof(role_auth_extra));
 	if (!myextra)
 		return false;
 	myextra->roleid = roleid;

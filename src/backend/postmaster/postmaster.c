@@ -1716,8 +1716,8 @@ ServerLoop(void)
 						 * in this process
 						 */
 						StreamClose(port->sock);
-						ConnFree(port);
 #endif
+						ConnFree(port);
 					}
 				}
 			}
@@ -3096,7 +3096,7 @@ reaper(ThreadContext* ctx)
 	PG_SETMASK(&UnBlockSig);
 
 	free(ctx);
-	
+
 	errno = save_errno;
 }
 
@@ -3993,6 +3993,14 @@ static void thread_cleanup(void* arg)
 {
 	ThreadContext* ctx = (ThreadContext*)arg;
 	int rc;
+
+	CleanupLatchSupport();
+	pq_finalize();
+
+	/* Release memory context for this thread */
+	MemoryContextReset(TopMemoryContext);
+	free(TopMemoryContext);
+
 	pthread_mutex_lock(&teminated_queue_mutex);
 	ctx->next = terminated_queue;
 	terminated_queue = ctx;
@@ -4051,6 +4059,8 @@ bool create_thread(pthread_t* t, thread_proc_t thread_proc, void* port)
 	save_backend_variables(ctx);
 	if (port != NULL) {
 		memcpy(&ctx->port, port, sizeof(Port));
+	} else {
+		ctx->port.sock = PGINVALID_SOCKET;
 	}
 	ctx->thread_proc = thread_proc;
 	pthread_attr_init(&attr);

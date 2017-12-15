@@ -57,6 +57,7 @@ typedef struct MemoryContextCallback
  * to change the setting.
  */
 extern session_local PGDLLIMPORT MemoryContext CurrentMemoryContext;
+extern session_local PGDLLIMPORT MemoryContext TopMemoryContext;
 
 /*
  * Flags for MemoryContextAllocExtended.
@@ -92,6 +93,11 @@ extern void pfree(void *pointer);
 	( MemSetTest(0, sz) ? \
 		MemoryContextAllocZeroAligned(CurrentMemoryContext, sz) : \
 		MemoryContextAllocZero(CurrentMemoryContext, sz) )
+
+#define top_malloc(sz)  MemoryContextAlloc(TopMemoryContext, sz)
+#define top_realloc(ptr,newsz) repalloc(ptr, newsz)
+#define top_free(ptr)   do if (ptr) pfree(ptr); while(0)
+#define top_strdup(str) MemoryContextStrdup(TopMemoryContext, str)
 
 /* Higher-limit allocators. */
 extern void *MemoryContextAllocHuge(MemoryContext context, Size size);
