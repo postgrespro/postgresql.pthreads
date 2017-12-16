@@ -3976,16 +3976,16 @@ TerminateChildren(int signal)
 }
 
 static ThreadContext* terminated_queue;
-static pthread_mutex_t teminated_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t terminated_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static ThreadContext* get_terminated_thread()
 {
 	ThreadContext* tc;
-	pthread_mutex_lock(&teminated_queue_mutex);
+	pthread_mutex_lock(&terminated_queue_mutex);
 	tc = terminated_queue;
 	if (tc != NULL)
 		terminated_queue = tc->next;
-	pthread_mutex_unlock(&teminated_queue_mutex);
+	pthread_mutex_unlock(&terminated_queue_mutex);
 	return tc;
 }
 
@@ -4001,10 +4001,10 @@ static void thread_cleanup(void* arg)
 	MemoryContextReset(TopMemoryContext);
 	free(TopMemoryContext);
 
-	pthread_mutex_lock(&teminated_queue_mutex);
+	pthread_mutex_lock(&terminated_queue_mutex);
 	ctx->next = terminated_queue;
 	terminated_queue = ctx;
-	pthread_mutex_unlock(&teminated_queue_mutex);
+	pthread_mutex_unlock(&terminated_queue_mutex);
 	elog(DEBUG1, "Thread %ld is terminated", ctx->tid);
 	Assert(PostmasterPid != 0);
 	rc = pthread_kill(PostmasterPid, SIGUSR1);
@@ -4814,12 +4814,12 @@ static void sigusr1_handler(SIGNAL_ARGS)
 
 	elog(DEBUG2, "postmaster_sigusr1_handler");
 
+	PG_SETMASK(&BlockSig);
+
 	while ((tc = get_terminated_thread()) != NULL)
 	{
 		reaper(tc);
 	}
-
-	PG_SETMASK(&BlockSig);
 
     /* Process background worker state change. */
 	if (CheckPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE))
