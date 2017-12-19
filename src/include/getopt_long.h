@@ -26,11 +26,12 @@ struct option
 #define optional_argument 2
 #endif
 
-#ifndef HAVE_GETOPT_LONG
-
-extern int getopt_long(int argc, char *const argv[],
+extern int pg_getopt_long(int argc, char *const argv[],
 			const char *optstring,
 			const struct option *longopts, int *longindex);
+
+#ifndef HAVE_GETOPT_LONG
+#define getopt_long(argc,argv,optstring,longopts,lognindex)  pg_getopt_long(argc,argv,optstring,longopts,lognindex) 
 #endif
 
 #endif							/* GETOPT_LONG_H */

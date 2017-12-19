@@ -30,8 +30,8 @@ typedef struct
 	SPIPlanPtr	splan;
 } EPlan;
 
-static EPlan *Plans = NULL;		/* for UPDATE/DELETE */
-static int	nPlans = 0;
+static session_local EPlan *Plans = NULL;		/* for UPDATE/DELETE */
+static session_local int	nPlans = 0;
 
 typedef struct _TTOffList
 {
@@ -39,7 +39,7 @@ typedef struct _TTOffList
 	char		name[FLEXIBLE_ARRAY_MEMBER];
 } TTOffList;
 
-static TTOffList *TTOff = NULL;
+static session_local TTOffList *TTOff = NULL;
 
 static int	findTTStatus(char *name);
 static EPlan *find_plan(char *ident, EPlan **eplan, int *nplans);

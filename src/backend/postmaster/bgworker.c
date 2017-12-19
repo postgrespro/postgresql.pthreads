@@ -307,7 +307,7 @@ BackgroundWorkerStateChange(void)
 		 */
 		if (slot->terminate)
 		{
-			int			notify_pid;
+			pthread_t	notify_pid;
 
 			/*
 			 * We need a memory barrier here to make sure that the load of
@@ -460,7 +460,7 @@ ReportBackgroundWorkerExit(slist_mutable_iter *cur)
 {
 	RegisteredBgWorker *rw;
 	BackgroundWorkerSlot *slot;
-	int			notify_pid;
+	pthread_t			notify_pid;
 
 	rw = slist_container(RegisteredBgWorker, rw_lnode, cur->cur);
 
@@ -726,12 +726,13 @@ StartBackgroundWorker(void)
 	 * so we'd better make sure that we don't mess anything up that would
 	 * require that sort of cleanup.
 	 */
+#if 0
 	if ((worker->bgw_flags & BGWORKER_SHMEM_ACCESS) == 0)
 	{
 		dsm_detach_all();
 		PGSharedMemoryDetach();
 	}
-
+#endif
 	SetProcessingMode(InitProcessing);
 
 	/* Apply PostAuthDelay */
@@ -791,7 +792,7 @@ StartBackgroundWorker(void)
 		 */
 
 		/* and go away */
-		proc_exit(1);
+		proc_exit(0);
 	}
 
 	/* We can now handle ereport(ERROR) */

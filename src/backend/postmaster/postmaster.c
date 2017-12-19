@@ -468,19 +468,6 @@ typedef struct ThreadContext
 	int			MyPMChildSlot;
 	unsigned long UsedShmemSegID;
 	void	   *UsedShmemSegAddr;
-	slock_t    *ShmemLock;
-	VariableCache ShmemVariableCache;
-#ifndef HAVE_SPINLOCKS
-	PGSemaphore *SpinlockSemaArray;
-#endif
-	int			NamedLWLockTrancheRequests;
-	NamedLWLockTranche *NamedLWLockTrancheArray;
-	LWLockPadded *MainLWLockArray;
-	slock_t    *ProcStructLock;
-	PROC_HDR   *ProcGlobal;
-	PGPROC	   *AuxiliaryProcs;
-	PGPROC	   *PreparedXactProcs;
-	PMSignalData *PMSignalState;
 	pthread_t		PostmasterPid;
 	TimestampTz PgStartTime;
 	TimestampTz PgReloadTime;
@@ -616,15 +603,16 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	InitializeGUCOptions();
 
-	opterr = 1;
+	pg_opterr = 1;
 
 	/*
 	 * Parse command-line options.  CAUTION: keep this in sync with
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-	while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
+	while ((opt = pg_getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
 	{
+		char *optarg = pg_optarg;
 		switch (opt)
 		{
 			case 'B':
@@ -782,9 +770,8 @@ PostmasterMain(int argc, char *argv[])
 					}
 
 					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
-					free(name);
-					if (value)
-						free(value);
+					top_free(name);
+					top_free(value);
 					break;
 				}
 
@@ -798,10 +785,10 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Postmaster accepts no non-option switch arguments.
 	 */
-	if (optind < argc)
+	if (pg_optind < argc)
 	{
 		write_stderr("%s: invalid argument: \"%s\"\n",
-					 progname, argv[optind]);
+					 progname, argv[pg_optind]);
 		write_stderr("Try \"%s --help\" for more information.\n",
 					 progname);
 		ExitPostmaster(1);
@@ -868,7 +855,7 @@ PostmasterMain(int argc, char *argv[])
 	 * Now that we are done processing the postmaster arguments, reset
 	 * getopt(3) library so that it will work correctly in subprocesses.
 	 */
-	optind = 1;
+	pg_optind = 1;
 #ifdef HAVE_INT_OPTRESET
 	optreset = 1;				/* some systems need this too */
 #endif
@@ -1842,7 +1829,7 @@ ServerLoop(void)
 			{
 				ereport(LOG,
 						(errmsg("performing immediate shutdown because data directory lock file is invalid")));
-				pthread_kill(MyProcPid, SIGQUIT);
+				exit(1);
 			}
 			last_lockfile_recheck_time = now;
 		}
@@ -3604,7 +3591,7 @@ LogChildExit(int lev, const char *procname, pthread_t pid, thread_status_t exits
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) was terminated by signal %d",
+				(errmsg("%s (PID %d) was terminated by signal %ld",
 						procname, pid, WTERMSIG(exitstatus)),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 #endif
@@ -3998,6 +3985,7 @@ static void thread_cleanup(void* arg)
 	pq_finalize();
 
 	/* Release memory context for this thread */
+	CurrentMemoryContext = NULL;
 	MemoryContextReset(TopMemoryContext);
 	free(TopMemoryContext);
 
@@ -5709,21 +5697,6 @@ save_backend_variables(ThreadContext *param)
 	param->UsedShmemSegID = UsedShmemSegID;
 	param->UsedShmemSegAddr = UsedShmemSegAddr;
 
-	param->ShmemLock = ShmemLock;
-	param->ShmemVariableCache = ShmemVariableCache;
-
-#ifndef HAVE_SPINLOCKS
-	param->SpinlockSemaArray = SpinlockSemaArray;
-#endif
-	param->NamedLWLockTrancheRequests = NamedLWLockTrancheRequests;
-	param->NamedLWLockTrancheArray = NamedLWLockTrancheArray;
-	param->MainLWLockArray = MainLWLockArray;
-	param->ProcStructLock = ProcStructLock;
-	param->ProcGlobal = ProcGlobal;
-	param->AuxiliaryProcs = AuxiliaryProcs;
-	param->PreparedXactProcs = PreparedXactProcs;
-	param->PMSignalState = PMSignalState;
-
 	param->PostmasterPid = PostmasterPid;
 	param->PgStartTime = PgStartTime;
 	param->PgReloadTime = PgReloadTime;
@@ -5775,21 +5748,6 @@ restore_backend_variables(ThreadContext *param)
 
 	UsedShmemSegID = param->UsedShmemSegID;
 	UsedShmemSegAddr = param->UsedShmemSegAddr;
-
-	ShmemLock = param->ShmemLock;
-	ShmemVariableCache = param->ShmemVariableCache;
-
-#ifndef HAVE_SPINLOCKS
-	SpinlockSemaArray = param->SpinlockSemaArray;
-#endif
-	NamedLWLockTrancheRequests = param->NamedLWLockTrancheRequests;
-	NamedLWLockTrancheArray = param->NamedLWLockTrancheArray;
-	MainLWLockArray = param->MainLWLockArray;
-	ProcStructLock = param->ProcStructLock;
-	ProcGlobal = param->ProcGlobal;
-	AuxiliaryProcs = param->AuxiliaryProcs;
-	PreparedXactProcs = param->PreparedXactProcs;
-	PMSignalState = param->PMSignalState;
 
 	PostmasterPid = param->PostmasterPid;
 	PgStartTime = param->PgStartTime;

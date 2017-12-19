@@ -228,8 +228,9 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/* If no -x argument, we are a CheckerProcess */
 		MyAuxProcType = CheckerProcess;
 
-		while ((flag = getopt(argc, argv, "B:c:d:D:Fkr:x:X:-:")) != -1)
+		while ((flag = pg_getopt(argc, argv, "B:c:d:D:Fkr:x:X:-:")) != -1)
 		{
+			char *optarg = pg_optarg;
 			switch (flag)
 			{
 			  case 'B':
@@ -297,9 +298,8 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				  }
 
 				  SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
-				  free(name);
-				  if (value)
-					  free(value);
+				  top_free(name);
+				  top_free(value);
 				  break;
 			  }
 			  default:
@@ -310,7 +310,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			}
 		}
 
-		if (argc != optind)
+		if (argc != pg_optind)
 		{
 			write_stderr("%s: invalid command-line arguments\n", progname);
 			proc_exit(1);

@@ -17,6 +17,14 @@
 #include <getopt.h>
 #endif
 
+extern session_local char *pg_optarg;
+extern session_local int	pg_optind;
+extern session_local int	pg_opterr;
+extern session_local int	pg_optopt;
+
+extern int	pg_getopt(int nargc, char *const *nargv, const char *ostr);
+
+
 /*
  * If we have <getopt.h>, assume it declares these variables, else do that
  * ourselves.  (We used to just declare them unconditionally, but Cygwin
@@ -24,23 +32,15 @@
  */
 #ifndef HAVE_GETOPT_H
 
-extern session_local char *optarg;
-extern session_local int	optind;
-extern session_local int	opterr;
-extern session_local int	optopt;
+#define optarg pg_optarg
+#define optind pg_optind
+#define opterr pg_opterr
+#define optopt pg_optopt
 
 #endif							/* HAVE_GETOPT_H */
 
-/*
- * Some platforms have optreset but fail to declare it in <getopt.h>, so cope.
- * Cygwin, however, doesn't like this either.
- */
-#if defined(HAVE_INT_OPTRESET) && !defined(__CYGWIN__)
-extern session_local int	optreset;
-#endif
-
 #ifndef HAVE_GETOPT
-extern int	getopt(int nargc, char *const *nargv, const char *ostr);
+#define getopt(argc,argv,optstring) pg_getopt(argc,argv,optstring)
 #endif
 
 #endif							/* PG_GETOPT_H */

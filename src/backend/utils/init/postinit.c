@@ -1172,11 +1172,12 @@ StatementTimeoutHandler(void)
 	if (ClientAuthInProgress)
 		sig = SIGTERM;
 
-#ifdef HAVE_SETSID
+#if 0
 	/* try to signal whole process group */
 	kill(-MyProcPid, sig);
 #endif
-	kill(MyProcPid, sig);
+	elog(DEBUG1, "Send SIGINT to thread %ld", MyProcPid);
+	pthread_kill(MyProcPid, sig);
 }
 
 /*
@@ -1185,11 +1186,11 @@ StatementTimeoutHandler(void)
 static void
 LockTimeoutHandler(void)
 {
-#ifdef HAVE_SETSID
+#if 0
 	/* try to signal whole process group */
 	kill(-MyProcPid, SIGINT);
 #endif
-	kill(MyProcPid, SIGINT);
+	pthread_kill(MyProcPid, SIGINT);
 }
 
 static void

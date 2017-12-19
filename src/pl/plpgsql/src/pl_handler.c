@@ -112,7 +112,7 @@ plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source)
 		list_free(elemlist);
 	}
 
-	myextra = (int *) malloc(sizeof(int));
+	myextra = (int *)top_malloc(sizeof(int));
 	if (!myextra)
 		return false;
 	*myextra = extrachecks;

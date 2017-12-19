@@ -3318,9 +3318,9 @@ get_stats_option_name(const char *arg)
 	switch (arg[0])
 	{
 		case 'p':
-			if (optarg[1] == 'a')	/* "parser" */
+			if (pg_optarg[1] == 'a')	/* "parser" */
 				return "log_parser_stats";
-			else if (optarg[1] == 'l')	/* "planner" */
+			else if (pg_optarg[1] == 'l')	/* "planner" */
 				return "log_planner_stats";
 			break;
 
@@ -3361,7 +3361,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	GucSource	gucsource;
 	int			flag;
 
-	if (optind > 1)
+	if (pg_optind > 1)
 		return;
 
 	if (secure)
@@ -3387,7 +3387,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	 * where we'd want it, or argv[0] is now "--single", which would make for
 	 * a weird error message.  We print our own error message below.
 	 */
-	opterr = 0;
+	pg_opterr = 0;
 #endif
 
 	/*
@@ -3395,8 +3395,10 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
 	 * the common help() function in main/main.c.
 	 */
-	while ((flag = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
+	while ((flag = pg_getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:v:W:-:")) != -1)
+
 	{
+		char *optarg = pg_optarg;
 		switch (flag)
 		{
 			case 'B':
@@ -3552,9 +3554,8 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 											optarg)));
 					}
 					SetConfigOption(name, value, ctx, gucsource);
-					free(name);
-					if (value)
-						free(value);
+					top_free(name);
+					top_free(value);
 					break;
 				}
 
@@ -3570,25 +3571,25 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	/*
 	 * Optional database name should be there only if *dbname is NULL.
 	 */
-	if (!errs && dbname && *dbname == NULL && argc - optind >= 1)
-		*dbname = strdup(argv[optind++]);
+	if (!errs && dbname && *dbname == NULL && argc - pg_optind >= 1)
+		*dbname = strdup(argv[pg_optind++]);
 
-	if (errs || argc != optind)
+	if (errs || argc != pg_optind)
 	{
 		if (errs)
-			optind--;			/* complain about the previous argument */
+			pg_optind--;			/* complain about the previous argument */
 
 		/* spell the error message a bit differently depending on context */
 		if (IsUnderPostmaster)
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("invalid command-line argument for server process: %s", argv[optind]),
+					 errmsg("invalid command-line argument for server process: %s", argv[pg_optind]),
 					 errhint("Try \"%s --help\" for more information.", progname)));
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("%s: invalid command-line argument: %s",
-							progname, argv[optind]),
+							progname, argv[pg_optind]),
 					 errhint("Try \"%s --help\" for more information.", progname)));
 	}
 
@@ -3596,7 +3597,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 	 * Reset getopt(3) library so that it will work correctly in subprocesses
 	 * or when this function is called a second time with another array.
 	 */
-	optind = 1;
+	pg_optind = 1;
 #ifdef HAVE_INT_OPTRESET
 	optreset = 1;				/* some systems need this too */
 #endif

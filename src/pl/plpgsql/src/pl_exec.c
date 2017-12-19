@@ -85,8 +85,8 @@ typedef struct SimpleEcontextStackEntry
 	struct SimpleEcontextStackEntry *next;	/* next stack entry up */
 } SimpleEcontextStackEntry;
 
-static EState *shared_simple_eval_estate = NULL;
-static SimpleEcontextStackEntry *simple_econtext_stack = NULL;
+static session_local EState *shared_simple_eval_estate = NULL;
+static session_local  SimpleEcontextStackEntry *simple_econtext_stack = NULL;
 
 /*
  * Memory management within a plpgsql function generally works with three
@@ -151,8 +151,8 @@ typedef struct					/* cast_hash table entry */
 	LocalTransactionId cast_lxid;
 } plpgsql_CastHashEntry;
 
-static MemoryContext shared_cast_context = NULL;
-static HTAB *shared_cast_hash = NULL;
+static session_local MemoryContext shared_cast_context = NULL;
+static session_local HTAB *shared_cast_hash = NULL;
 
 /************************************************************
  * Local function forward declarations

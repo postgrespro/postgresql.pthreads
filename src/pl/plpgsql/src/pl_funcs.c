@@ -34,7 +34,7 @@
  * items.
  * ----------
  */
-static PLpgSQL_nsitem *ns_top = NULL;
+static session_local PLpgSQL_nsitem *ns_top = NULL;
 
 
 /* ----------

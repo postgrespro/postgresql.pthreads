@@ -13481,15 +13481,10 @@ fi
 ac_fn_c_check_func "$LINENO" "getopt" "ac_cv_func_getopt"
 if test "x$ac_cv_func_getopt" = xyes; then :
   $as_echo "#define HAVE_GETOPT 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" getopt.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getopt.$ac_objext"
- ;;
-esac
-
 fi
+
+# Always link our thread-safe versoin of getopt
+LIBOBJS="$LIBOBJS getopt.$ac_objext getopt_long.$ac_objext"
 
 ac_fn_c_check_func "$LINENO" "getrusage" "ac_cv_func_getrusage"
 if test "x$ac_cv_func_getrusage" = xyes; then :
@@ -13701,52 +13696,7 @@ if test x"$ac_cv_type_struct_option" = xyes ; then
   ac_fn_c_check_func "$LINENO" "getopt_long" "ac_cv_func_getopt_long"
 if test "x$ac_cv_func_getopt_long" = xyes; then :
   $as_echo "#define HAVE_GETOPT_LONG 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" getopt_long.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getopt_long.$ac_objext"
- ;;
-esac
-
 fi
-
-
-else
-  case " $LIBOBJS " in
-  *" getopt_long.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getopt_long.$ac_objext"
- ;;
-esac
-
-fi
-
-# Solaris' getopt() doesn't do what we want for long options, so always use
-# our version on that platform.
-if test "$PORTNAME" = "solaris"; then
-  case " $LIBOBJS " in
-  *" getopt.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getopt.$ac_objext"
- ;;
-esac
-
-fi
-
-# mingw has adopted a GNU-centric interpretation of optind/optreset,
-# so always use our version on Windows.
-if test "$PORTNAME" = "win32"; then
-  case " $LIBOBJS " in
-  *" getopt.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getopt.$ac_objext"
- ;;
-esac
-
-  case " $LIBOBJS " in
-  *" getopt_long.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getopt_long.$ac_objext"
- ;;
-esac
-
 fi
 
 # Win32 (really MinGW) support

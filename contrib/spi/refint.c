@@ -23,10 +23,10 @@ typedef struct
 	SPIPlanPtr *splan;
 } EPlan;
 
-static EPlan *FPlans = NULL;
-static int	nFPlans = 0;
-static EPlan *PPlans = NULL;
-static int	nPPlans = 0;
+static session_local EPlan *FPlans = NULL;
+static session_local int	nFPlans = 0;
+static session_local EPlan *PPlans = NULL;
+static session_local int	nPPlans = 0;
 
 static EPlan *find_plan(char *ident, EPlan **eplan, int *nplans);
 

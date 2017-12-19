@@ -33,9 +33,9 @@
 #endif
 
 /* PID can be negative for standalone backend */
-typedef pthread_t pgpid_t;
+typedef long pgpid_t;
 
-
+/* PID can be negative for standalone backend */
 typedef enum
 {
 	SMART_MODE,
@@ -105,7 +105,7 @@ static DWORD pgctl_start_type = SERVICE_AUTO_START;
 static SERVICE_STATUS status;
 static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
 static HANDLE shutdownHandles[2];
-static pthread_t postmasterPID = -1;
+static pid_t postmasterPID = -1;
 
 #define shutdownEvent	  shutdownHandles[0]
 #define postmasterProcess shutdownHandles[1]
@@ -153,7 +153,7 @@ static pgpid_t start_postmaster(void);
 static void read_post_opts(void);
 
 static WaitPMResult wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint);
-static bool postmaster_is_alive(pthread_t pid);
+static bool postmaster_is_alive(pid_t pid);
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
 static void unlimit_core_size(void);
@@ -860,7 +860,7 @@ static void
 do_stop(void)
 {
 	int			cnt;
-	pgpid_t		pid;
+	pid_t		pid;
 	struct stat statbuf;
 
 	pid = get_pgpid(false);
@@ -875,14 +875,14 @@ do_stop(void)
 	{
 		pid = -pid;
 		write_stderr(_("%s: cannot stop server; "
-					   "single-user server is running (PID: %ld)\n"),
+					   "single-user server is running (PID: %d)\n"),
 					 progname, pid);
 		exit(1);
 	}
 
-	if (pthread_kill((pthread_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
+		write_stderr(_("%s: could not send stop signal (PID: %d): %s\n"), progname, pid,
 					 strerror(errno));
 		exit(1);
 	}
@@ -976,7 +976,7 @@ do_restart(void)
 
 	if (postmaster_is_alive(pid))
 	{
-		if (pthread_kill(pid, sig) != 0)
+		if (kill(pid, sig) != 0)
 		{
 			write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
 						 strerror(errno));
@@ -1059,7 +1059,7 @@ do_reload(void)
 		exit(1);
 	}
 
-	if (pthread_kill(pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send reload signal (PID: %ld): %s\n"),
 					 progname, pid, strerror(errno));
@@ -1126,7 +1126,7 @@ do_promote(void)
 	}
 
 	sig = SIGUSR1;
-	if (pthread_kill(pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send promote signal (PID: %ld): %s\n"),
 					 progname, pid, strerror(errno));
@@ -1175,7 +1175,7 @@ do_promote(void)
  */
 
 static bool
-postmaster_is_alive(pthread_t pid)
+postmaster_is_alive(pid_t pid)
 {
 	/*
 	 * Test to see if the process is still there.  Note that we do not
@@ -1193,7 +1193,7 @@ postmaster_is_alive(pthread_t pid)
 	if (pid == getppid())
 		return false;
 #endif
-	if (pthread_kill(pid, 0) == 0)
+	if (kill(pid, 0) == 0)
 		return true;
 	return false;
 }
@@ -1258,7 +1258,7 @@ do_status(void)
 static void
 do_kill(pgpid_t pid)
 {
-	if (pthread_kill(pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send signal %d (PID: %ld): %s\n"),
 					 progname, sig, pid, strerror(errno));
@@ -1490,7 +1490,7 @@ pgwin32_ServiceHandler(DWORD request)
 		case SERVICE_CONTROL_PAUSE:
 			/* Win32 config reloading */
 			status.dwWaitHint = 5000;
-			pthread_kill(postmasterPID, SIGHUP);
+			kill(postmasterPID, SIGHUP);
 			return;
 
 			/* FIXME: These could be used to replace other signals etc */
@@ -1566,7 +1566,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 				 */
 				int			maxShutdownCheckPoint = status.dwCheckPoint + 12;
 
-				pthread_kill(postmasterPID, SIGINT);
+				kill(postmasterPID, SIGINT);
 
 				/*
 				 * Increment the checkpoint and try again. Abort after 12

@@ -793,7 +793,8 @@ cache_locale_time(void)
 	time_t		timenow;
 	struct tm  *timeinfo;
 	int			i;
-
+	struct tm   tm_buf;
+	
 #ifdef WIN32
 	char	   *save_lc_ctype;
 #endif
@@ -832,7 +833,7 @@ cache_locale_time(void)
 	setlocale(LC_TIME, locale_time);
 
 	timenow = time(NULL);
-	timeinfo = localtime(&timenow);
+	timeinfo = localtime_r(&timenow, &tm_buf);
 
 	/* localized days */
 	for (i = 0; i < 7; i++)

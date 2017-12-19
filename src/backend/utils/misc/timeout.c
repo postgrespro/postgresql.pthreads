@@ -14,7 +14,12 @@
  */
 #include "postgres.h"
 
+#include <unistd.h>
+#include <signal.h>
+#include <time.h>
+#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/syscall.h>
 
 #include "miscadmin.h"
 #include "storage/proc.h"
@@ -186,10 +191,11 @@ schedule_alarm(TimestampTz now)
 {
 	if (num_active_timeouts > 0)
 	{
+
 		struct itimerval timeval;
 		long		secs;
 		int			usecs;
-
+		static session_local timer_t timer_id;
 		MemSet(&timeval, 0, sizeof(struct itimerval));
 
 		/* Get the time remaining till the nearest pending timeout */
@@ -238,9 +244,30 @@ schedule_alarm(TimestampTz now)
 		 */
 		enable_alarm();
 
+#if 1
+		if (timer_id == 0)
+		{
+			struct sigevent se;
+			se.sigev_notify = SIGEV_THREAD_ID;
+			se.sigev_signo = SIGALRM;
+			se._sigev_un._tid = syscall(__NR_gettid);
+			if (timer_create(CLOCK_REALTIME, &se, &timer_id) != 0)
+				elog(FATAL, "could not create SIGALRM timer for thread %d: %m", se._sigev_un._tid);
+		}
+		{
+			struct itimerspec it;
+			it.it_interval.tv_sec = 0;
+			it.it_interval.tv_nsec = 0;
+			it.it_value.tv_sec = secs;
+			it.it_value.tv_nsec = usecs*1000;
+			if (timer_settime(timer_id, 0, &it, NULL) != 0)
+				elog(FATAL, "could not set SIGALRM timer: %m");
+		}
+#else
 		/* Set the alarm timer */
 		if (setitimer(ITIMER_REAL, &timeval, NULL) != 0)
 			elog(FATAL, "could not enable SIGALRM timer: %m");
+#endif
 	}
 }
 
@@ -260,9 +287,6 @@ handle_sig_alarm(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-	/* TODO: pthreads are ont able to handle signals now */
-	return;
-	
 	/*
 	 * Bump the holdoff counter, to make sure nothing we call will process
 	 * interrupts directly. No timeout handler should do that, but these

@@ -38,7 +38,6 @@ static bool signal_catched[NSIG];
 static void process_signal_handler(int signo)
 {
 	pqsigfunc handler;
-	if (signo <= 0 && signo >= SIGRTMIN) *(int*)0 = 0;
 	handler = signal_handlers[signo];
 	if (handler != SIG_DFL && handler != SIG_IGN)
 	{

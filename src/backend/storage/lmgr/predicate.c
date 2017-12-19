@@ -351,7 +351,7 @@ static OldSerXidControl oldSerXidControl;
  * collapsing duplicate targets.  When a duplicate is found, the later
  * commitSeqNo is used.
  */
-static session_local SERIALIZABLEXACT *OldCommittedSxact;
+static SERIALIZABLEXACT *OldCommittedSxact;
 
 
 /*
@@ -395,9 +395,9 @@ static SHM_QUEUE *FinishedSerializableTransactions;
  * this entry, you can ensure that there's enough scratch space available for
  * inserting one entry in the hash table. This is an otherwise-invalid tag.
  */
-static session_local const PREDICATELOCKTARGETTAG ScratchTargetTag = {0, 0, 0, 0};
-static session_local uint32 ScratchTargetTagHash;
-static session_local LWLock *ScratchPartitionLock;
+static const PREDICATELOCKTARGETTAG ScratchTargetTag = {0, 0, 0, 0};
+static uint32 ScratchTargetTagHash;
+static LWLock *ScratchPartitionLock;
 
 /*
  * The local hash table used to determine when to combine multiple fine-

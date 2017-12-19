@@ -122,7 +122,7 @@ static session_local int	LWLockTranchesAllocated = 0;
  * the pointer by fork from the postmaster (except in the EXEC_BACKEND case,
  * where we have special measures to pass it down).
  */
-session_local LWLockPadded *MainLWLockArray = NULL;
+LWLockPadded *MainLWLockArray = NULL;
 
 /*
  * We use this structure to keep track of locked LWLocks for release
@@ -149,13 +149,13 @@ typedef struct NamedLWLockTrancheRequest
 	int			num_lwlocks;
 } NamedLWLockTrancheRequest;
 
-session_local NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray = NULL;
-static session_local int	NamedLWLockTrancheRequestsAllocated = 0;
-session_local int			NamedLWLockTrancheRequests = 0;
+NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray = NULL;
+static int	NamedLWLockTrancheRequestsAllocated = 0;
+int			NamedLWLockTrancheRequests = 0;
 
-session_local NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
+NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
 
-static session_local bool lock_named_request_allowed = true;
+static bool lock_named_request_allowed = true;
 
 static void InitializeLWLocks(void);
 static void RegisterLWLockTranches(void);

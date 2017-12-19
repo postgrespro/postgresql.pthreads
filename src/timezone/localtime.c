@@ -54,8 +54,8 @@ static const char gmt[] = "GMT";
  * PG: We cache the result of trying to load the TZDEFRULES zone here.
  * tzdefrules_loaded is 0 if not tried yet, +1 if good, -1 if failed.
  */
-static struct state tzdefrules_s;
-static int	tzdefrules_loaded = 0;
+static session_local struct state tzdefrules_s;
+static session_local int	tzdefrules_loaded = 0;
 
 /*
  * The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
@@ -104,7 +104,7 @@ static bool typesequiv(struct state const *, int, int);
  * Thanks to Paul Eggert for noting this.
  */
 
-static struct pg_tm tm;
+static session_local struct pg_tm tm;
 
 /* Initialize *S to a value based on GMTOFF, ISDST, and ABBRIND.  */
 static void

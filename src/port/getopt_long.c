@@ -49,12 +49,12 @@
  *
  * This implementation does not use optreset.  Instead, we guarantee that
  * it can be restarted on a new argv array after a previous call returned -1,
- * if the caller resets optind to 1 before the first call of the new series.
+ * if the caller resets pg_optind to 1 before the first call of the new series.
  * (Internally, this means we must be sure to reset "place" to EMSG before
  * returning -1.)
  */
 int
-getopt_long(int argc, char *const argv[],
+pg_getopt_long(int argc, char *const argv[],
 			const char *optstring,
 			const struct option *longopts, int *longindex)
 {
@@ -63,13 +63,13 @@ getopt_long(int argc, char *const argv[],
 
 	if (!*place)
 	{							/* update scanning pointer */
-		if (optind >= argc)
+		if (pg_optind >= argc)
 		{
 			place = EMSG;
 			return -1;
 		}
 
-		place = argv[optind];
+		place = argv[pg_optind];
 
 		if (place[0] != '-')
 		{
@@ -81,7 +81,7 @@ getopt_long(int argc, char *const argv[],
 
 		if (place[0] && place[0] == '-' && place[1] == '\0')
 		{						/* found "--" */
-			++optind;
+			++pg_optind;
 			place = EMSG;
 			return -1;
 		}
@@ -105,41 +105,41 @@ getopt_long(int argc, char *const argv[],
 					if (has_arg != no_argument)
 					{
 						if (place[namelen] == '=')
-							optarg = place + namelen + 1;
-						else if (optind < argc - 1 &&
+							pg_optarg = place + namelen + 1;
+						else if (pg_optind < argc - 1 &&
 								 has_arg == required_argument)
 						{
-							optind++;
-							optarg = argv[optind];
+							pg_optind++;
+							pg_optarg = argv[pg_optind];
 						}
 						else
 						{
 							if (optstring[0] == ':')
 								return BADARG;
 
-							if (opterr && has_arg == required_argument)
+							if (pg_opterr && has_arg == required_argument)
 								fprintf(stderr,
 										"%s: option requires an argument -- %s\n",
 										argv[0], place);
 
 							place = EMSG;
-							optind++;
+							pg_optind++;
 
 							if (has_arg == required_argument)
 								return BADCH;
-							optarg = NULL;
+							pg_optarg = NULL;
 						}
 					}
 					else
 					{
-						optarg = NULL;
+						pg_optarg = NULL;
 						if (place[namelen] != 0)
 						{
 							/* XXX error? */
 						}
 					}
 
-					optind++;
+					pg_optind++;
 
 					if (longindex)
 						*longindex = i;
@@ -156,55 +156,55 @@ getopt_long(int argc, char *const argv[],
 				}
 			}
 
-			if (opterr && optstring[0] != ':')
+			if (pg_opterr && optstring[0] != ':')
 				fprintf(stderr,
 						"%s: illegal option -- %s\n", argv[0], place);
 			place = EMSG;
-			optind++;
+			pg_optind++;
 			return BADCH;
 		}
 	}
 
 	/* short option */
-	optopt = (int) *place++;
+	pg_optopt = (int) *place++;
 
-	oli = strchr(optstring, optopt);
+	oli = strchr(optstring, pg_optopt);
 	if (!oli)
 	{
 		if (!*place)
-			++optind;
-		if (opterr && *optstring != ':')
+			++pg_optind;
+		if (pg_opterr && *optstring != ':')
 			fprintf(stderr,
-					"%s: illegal option -- %c\n", argv[0], optopt);
+					"%s: illegal option -- %c\n", argv[0], pg_optopt);
 		return BADCH;
 	}
 
 	if (oli[1] != ':')
 	{							/* don't need argument */
-		optarg = NULL;
+		pg_optarg = NULL;
 		if (!*place)
-			++optind;
+			++pg_optind;
 	}
 	else
 	{							/* need an argument */
 		if (*place)				/* no white space */
-			optarg = place;
-		else if (argc <= ++optind)
+			pg_optarg = place;
+		else if (argc <= ++pg_optind)
 		{						/* no arg */
 			place = EMSG;
 			if (*optstring == ':')
 				return BADARG;
-			if (opterr)
+			if (pg_opterr)
 				fprintf(stderr,
 						"%s: option requires an argument -- %c\n",
-						argv[0], optopt);
+						argv[0], pg_optopt);
 			return BADCH;
 		}
 		else
 			/* white space */
-			optarg = argv[optind];
+			pg_optarg = argv[pg_optind];
 		place = EMSG;
-		++optind;
+		++pg_optind;
 	}
-	return optopt;
+	return pg_optopt;
 }

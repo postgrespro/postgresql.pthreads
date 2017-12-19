@@ -2852,9 +2852,9 @@ static struct config_int ConfigureNamesInt[] =
 		{"thread_stack_size", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Size of thread stack."),
 			NULL,
-			GUC_UNIT_BYTE
+			GUC_UNIT_KB
 		},
-		DECLARE_INT_GUC(thread_stack_size, 512*1024, PTHREAD_STACK_MIN, 128*1024*1024)
+		DECLARE_INT_GUC(thread_stack_size, 1024, PTHREAD_STACK_MIN/1024, 128*1024)
 	},
 
 	/* End-of-list marker */
@@ -4484,6 +4484,8 @@ InitializeGUCOptionsFromEnvironment(void)
 			char		limbuf[16];
 
 			new_limit = Min(new_limit, 2048);
+			if (new_limit > thread_stack_size)
+				new_limit = thread_stack_size / 2;
 			sprintf(limbuf, "%ld", new_limit);
 			SetConfigOption("max_stack_depth", limbuf,
 							PGC_POSTMASTER, PGC_S_ENV_VAR);
