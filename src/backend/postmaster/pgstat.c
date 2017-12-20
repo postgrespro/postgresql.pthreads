@@ -4425,7 +4425,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 */
 	pgstat_write_statsfiles(true, true);
 
-	exit(0);
+	pthread_exit(0);
 }
 
 

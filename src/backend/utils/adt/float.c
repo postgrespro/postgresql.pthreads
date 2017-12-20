@@ -468,7 +468,6 @@ float8in_internal(char *num, char **endptr_p,
 	if (endptr == num || errno != 0)
 	{
 		int			save_errno = errno;
-
 		/*
 		 * C99 requires that strtod() accept NaN, [+-]Infinity, and [+-]Inf,
 		 * but not all platforms support all of these (and some accept them

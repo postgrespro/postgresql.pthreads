@@ -13,6 +13,7 @@
 #include "postgres.h"
 
 #include <unistd.h>
+#include <pthread.h>
 
 #include "libpq/pqsignal.h"
 #include "access/parallel.h"
@@ -665,7 +666,7 @@ bgworker_quickdie(SIGNAL_ARGS)
 	 * should ensure the postmaster sees this as a crash, too, but no harm in
 	 * being doubly sure.)
 	 */
-	exit(2);
+	pthread_exit((void*)2);
 }
 
 /*

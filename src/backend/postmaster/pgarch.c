@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
@@ -240,7 +241,7 @@ PgArchiverMain(int argc, char *argv[])
 
 	pgarch_MainLoop();
 
-	exit(0);
+	pthread_exit(0);
 }
 
 /* SIGQUIT signal handler for archiver process */
@@ -248,7 +249,7 @@ static void
 pgarch_exit(SIGNAL_ARGS)
 {
 	/* SIGQUIT means curl up and die ... */
-	exit(1);
+	pthread_exit((void*)1);
 }
 
 /* SIGHUP signal handler for archiver process */

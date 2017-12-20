@@ -270,6 +270,9 @@ check_locale(int category, const char *locale, char **canonname)
 	char	   *save;
 	char	   *res;
 
+	if (!IsPostmaster)
+		return true;
+	
 	if (canonname)
 		*canonname = NULL;		/* in case of failure */
 

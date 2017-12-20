@@ -246,7 +246,7 @@ static pgpid_t
 get_pgpid(bool is_status_request)
 {
 	FILE	   *pidf;
-	long long		pid;
+	long 		pid;
 	struct stat statbuf;
 
 	if (stat(pg_data, &statbuf) != 0)
@@ -286,7 +286,7 @@ get_pgpid(bool is_status_request)
 			exit(1);
 		}
 	}
-	if (fscanf(pidf, "%lld", &pid) != 1)
+	if (fscanf(pidf, "%ld", &pid) != 1)
 	{
 		/* Is the file empty? */
 		if (ftell(pidf) == 0 && feof(pidf))
@@ -820,7 +820,7 @@ do_start(void)
 
 	pm_pid = start_postmaster();
 
-	if (0/*do_wait*/)
+	if (do_wait)
 	{
 		print_msg(_("waiting for server to start..."));
 

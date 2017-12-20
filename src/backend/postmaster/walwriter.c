@@ -43,6 +43,7 @@
 
 #include <signal.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "access/xlog.h"
 #include "libpq/pqsignal.h"
@@ -300,7 +301,7 @@ WalWriterMain(void)
 		 * necessity for manual cleanup of all postmaster children.
 		 */
 		if (rc & WL_POSTMASTER_DEATH)
-			exit(1);
+			pthread_exit((void*)1);
 	}
 }
 
@@ -339,7 +340,7 @@ wal_quickdie(SIGNAL_ARGS)
 	 * should ensure the postmaster sees this as a crash, too, but no harm in
 	 * being doubly sure.)
 	 */
-	exit(2);
+	pthread_exit((void*)2);
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */

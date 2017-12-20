@@ -394,7 +394,7 @@ typedef size_t thread_status_t;
  * postmaster.c - function prototypes
  */
 static void CloseServerPorts(int status, Datum arg);
-static void unlink_external_pid_file(int status, Datum arg);
+static void unlink_external_pid_file(void);
 static void getInstallationPaths(const char *argv0);
 static void checkDataDir(void);
 static Port *ConnCreate(int serverFd);
@@ -494,8 +494,8 @@ static void restore_backend_variables(ThreadContext* ctx);
 
 /* Macros to check exit status of a child process */
 #define EXIT_STATUS_0(st)  ((st) == 0)
-#define EXIT_STATUS_1(st)  (WIFEXITED(st) && WEXITSTATUS(st) == 1)
-#define EXIT_STATUS_3(st)  (WIFEXITED(st) && WEXITSTATUS(st) == 3)
+#define EXIT_STATUS_1(st)  ((st) == 1)
+#define EXIT_STATUS_3(st)  ((st) == 3)
 
 #ifndef WIN32
 /*
@@ -1167,7 +1167,7 @@ PostmasterMain(int argc, char *argv[])
 			write_stderr("%s: could not write external PID file \"%s\": %s\n",
 						 progname, external_pid_file, strerror(errno));
 
-		on_proc_exit(unlink_external_pid_file, 0);
+		atexit(unlink_external_pid_file);
 	}
 
 	/*
@@ -1355,7 +1355,7 @@ CloseServerPorts(int status, Datum arg)
  * on_proc_exit callback to delete external_pid_file
  */
 static void
-unlink_external_pid_file(int status, Datum arg)
+unlink_external_pid_file(void)
 {
 	if (external_pid_file)
 		unlink(external_pid_file);
@@ -1697,13 +1697,6 @@ ServerLoop(void)
 					if (port)
 					{
 						BackendStartup(port);
-#if 0
-						/*
-						 * We no longer need the open socket or port structure
-						 * in this process
-						 */
-						StreamClose(port->sock);
-#endif
 						ConnFree(port);
 					}
 				}
@@ -3554,14 +3547,14 @@ LogChildExit(int lev, const char *procname, pthread_t pid, thread_status_t exits
 													   activity_buffer,
 													   sizeof(activity_buffer));
 
-	if (WIFEXITED(exitstatus))
+	if (1/*WIFEXITED(exitstatus)*/)
 		ereport(lev,
 
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %ld) exited with exit code %d",
-						procname, pid, WEXITSTATUS(exitstatus)),
+				(errmsg("%s (PID %ld) exited with exit code %ld",
+						procname, pid, exitstatus),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 	else if (WIFSIGNALED(exitstatus))
 #if defined(WIN32)
@@ -4764,21 +4757,6 @@ SubPostmasterMain(int argc, char *argv[])
 static void
 ExitPostmaster(int status)
 {
-#ifdef HAVE_PTHREAD_IS_THREADED_NP
-
-	/*
-	 * There is no known cause for a postmaster to become multithreaded after
-	 * startup.  Recheck to account for the possibility of unknown causes.
-	 * This message uses LOG level, because an unclean shutdown at this point
-	 * would usually not look much different from a clean shutdown.
-	 */
-	if (pthread_is_threaded_np() != 0)
-		ereport(LOG,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg_internal("postmaster became multithreaded"),
-				 errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
-#endif
-
 	/* should cleanup shared memory and kill all backends */
 
 	/*

@@ -5524,8 +5524,9 @@ parse_real(const char *value, double *result)
 	errno = 0;
 	val = strtod(value, &endptr);
 	if (endptr == value || errno == ERANGE)
+	{
 		return false;
-
+	}
 	/* allow whitespace after number */
 	while (isspace((unsigned char) *endptr))
 		endptr++;

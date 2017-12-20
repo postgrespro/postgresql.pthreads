@@ -37,7 +37,7 @@
 # define YYDEBUG 0
 #endif
 #if YYDEBUG
-extern session_local int base_yydebug;
+extern int base_yydebug;
 #endif
 
 /* Token type.  */

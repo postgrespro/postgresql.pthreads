@@ -44,7 +44,7 @@ session_local bool		proc_exit_inprogress = false;
  * This flag tracks whether we've called atexit() in the current process
  * (or in the parent postmaster).
  */
-static session_local bool atexit_callback_setup = false;
+static bool atexit_callback_setup = true; /* do not perform at exit cleanup */
 
 /* local functions */
 static void proc_exit_prepare(int code);
@@ -301,7 +301,6 @@ on_proc_exit(pg_on_exit_callback function, Datum arg)
 	on_proc_exit_list[on_proc_exit_index].arg = arg;
 
 	++on_proc_exit_index;
-
 	if (!atexit_callback_setup)
 	{
 		atexit(atexit_callback);
