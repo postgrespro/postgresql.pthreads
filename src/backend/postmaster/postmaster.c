@@ -2763,8 +2763,6 @@ reaper(ThreadContext* ctx)
 	pthread_t pid = ctx->tid;
 	int rc;
 
-	PG_SETMASK(&BlockSig);
-
 	rc = pthread_join(pid, (void**)&exitstatus);
     if (rc != 0)
     {
@@ -3071,9 +3069,6 @@ reaper(ThreadContext* ctx)
 	 * or actions to make.
 	 */
 	PostmasterStateMachine();
-
-	/* Done with signal handler */
-	PG_SETMASK(&UnBlockSig);
 
 	free(ctx);
 
