@@ -47,6 +47,7 @@ typedef struct timeout_params
  */
 static session_local timeout_params all_timeouts[MAX_TIMEOUTS];
 static session_local bool all_timeouts_initialized = false;
+static session_local timer_t timer_id;
 
 /*
  * List of active timeouts ordered by their fin_time and priority.
@@ -195,7 +196,6 @@ schedule_alarm(TimestampTz now)
 		struct itimerval timeval;
 		long		secs;
 		int			usecs;
-		static session_local timer_t timer_id;
 		MemSet(&timeval, 0, sizeof(struct itimerval));
 
 		/* Get the time remaining till the nearest pending timeout */
@@ -245,7 +245,7 @@ schedule_alarm(TimestampTz now)
 		enable_alarm();
 
 #if 1
-		if (timer_id == 0)
+		if (!timer_id)
 		{
 			struct sigevent se;
 			se.sigev_notify = SIGEV_THREAD_ID;
@@ -386,6 +386,15 @@ InitializeTimeouts(void)
 
 	/* Now establish the signal handler */
 	pqsignal(SIGALRM, handle_sig_alarm);
+}
+
+void
+ReleaseTimeouts(void)
+{
+	if (timer_id)
+	{
+		timer_delete(timer_id);
+	}
 }
 
 /*

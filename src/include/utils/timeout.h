@@ -70,6 +70,7 @@ typedef struct
 extern void InitializeTimeouts(void);
 extern TimeoutId RegisterTimeout(TimeoutId id, timeout_handler_proc handler);
 extern void reschedule_timeouts(void);
+extern void ReleaseTimeouts(void);
 
 /* timeout operation */
 extern void enable_timeout_after(TimeoutId id, int delay_ms);

@@ -1933,7 +1933,7 @@ set_syslog_parameters(const char *ident, int facility)
 		}
 		if (syslog_ident)
 			free(syslog_ident);
-		syslog_ident = strdup(ident);
+		syslog_ident = top_strdup(ident);
 		/* if the strdup fails, we will cope in write_syslog() */
 		syslog_facility = facility;
 	}

@@ -625,11 +625,11 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'C':
-				output_config_variable = strdup(optarg);
+				output_config_variable = top_strdup(optarg);
 				break;
 
 			case 'D':
-				userDoption = strdup(optarg);
+				userDoption = top_strdup(optarg);
 				break;
 
 			case 'd':
@@ -1622,7 +1622,6 @@ ServerLoop(void)
 	last_lockfile_recheck_time = last_touch_time = time(NULL);
 
 	nSockets = initMasks(&readmask);
-
 	for (;;)
 	{
 		fd_set		rmask;
@@ -3568,8 +3567,8 @@ LogChildExit(int lev, const char *procname, pthread_t pid, thread_status_t exits
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %ld) was terminated by signal %d: %s",
-						procname, pid, WTERMSIG(exitstatus),
+				(errmsg("%s (PID %ld) was terminated by signal %ld: %s",
+						procname, pid, exitstatus,
 						WTERMSIG(exitstatus) < NSIG ?
 						sys_siglist[WTERMSIG(exitstatus)] : "(unknown)"),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
@@ -3579,8 +3578,8 @@ LogChildExit(int lev, const char *procname, pthread_t pid, thread_status_t exits
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) was terminated by signal %ld",
-						procname, pid, WTERMSIG(exitstatus)),
+				(errmsg("%s (PID %ld) was terminated by signal %ld",
+						procname, pid, exitstatus),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 #endif
 	else
@@ -3972,10 +3971,11 @@ static void thread_cleanup(void* arg)
 	CleanupLatchSupport();
 	pq_finalize();
 
+	ReleaseTimeouts();
+
 	/* Release memory context for this thread */
 	CurrentMemoryContext = NULL;
-	MemoryContextReset(TopMemoryContext);
-	free(TopMemoryContext);
+	MemoryContextDelete(TopMemoryContext);
 
 	pthread_mutex_lock(&terminated_queue_mutex);
 	ctx->next = terminated_queue;
@@ -3996,8 +3996,8 @@ static void* thread_trampoline(void* arg)
 
 	pthread_cleanup_push(thread_cleanup, ctx);
 
-	restore_backend_variables(ctx);
 	IsPostmasterEnvironment = true;
+	PostmasterContext = NULL;
 
 	/*
 	 * Fire up essential subsystems: error and memory management
@@ -4008,7 +4008,8 @@ static void* thread_trampoline(void* arg)
 	 */
 	MemoryContextInit();
 	MemoryContextSwitchTo(TopMemoryContext);
-	PostmasterContext = NULL;
+
+	restore_backend_variables(ctx);
 
 	InitializeGUCOptions();
 
@@ -4275,8 +4276,8 @@ BackendInitialize(Port *port)
 	 * Save remote_host and remote_port in port structure (after this, they
 	 * will appear in log_line_prefix data for log messages).
 	 */
-	port->remote_host = strdup(remote_host);
-	port->remote_port = strdup(remote_port);
+	port->remote_host = top_strdup(remote_host);
+	port->remote_port = top_strdup(remote_port);
 
 	/* And now we can issue the Log_connections message, if wanted */
 	if (Log_connections)
@@ -4307,7 +4308,7 @@ BackendInitialize(Port *port)
 		ret == 0 &&
 		strspn(remote_host, "0123456789.") < strlen(remote_host) &&
 		strspn(remote_host, "0123456789ABCDEFabcdef:") < strlen(remote_host))
-		port->remote_hostname = strdup(remote_host);
+		port->remote_hostname = top_strdup(remote_host);
 
 	/*
 	 * Ready to begin client interaction.  We will give up and exit(1) after a
