@@ -99,7 +99,7 @@ extern void pfree(void *pointer);
 #define top_free(ptr)   do if (ptr) pfree(ptr); while(0)
 #define top_strdup(str) MemoryContextStrdup(TopMemoryContext, str)
 
-extern char* top_strgrab(char const* str);
+extern char* top_strgrab(char* str);
 
 
 /* Higher-limit allocators. */

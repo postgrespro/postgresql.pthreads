@@ -4041,7 +4041,7 @@ bool create_thread(pthread_t* t, thread_proc_t thread_proc, void* port)
 	}
 	ctx->thread_proc = thread_proc;
 	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, thread_stack_size);
+	pthread_attr_setstacksize(&attr, (size_t)thread_stack_size*1024);
 	rc = pthread_create(&ctx->tid, &attr, thread_trampoline, ctx);
 	if (rc != 0) elog(WARNING, "pthread_create failed with code %d, errno=%d, thread_stack_size=%d", rc, errno, thread_stack_size);
 	*t = ctx->tid;

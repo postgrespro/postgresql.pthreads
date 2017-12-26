@@ -848,7 +848,7 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 	return ret;
 }
 
-char* top_strgrab(char const* str)
+char* top_strgrab(char* str)
 {
 	size_t len = strlen(str) + 1;
 	char* copy = top_malloc(len);
