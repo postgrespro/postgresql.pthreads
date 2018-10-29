@@ -1,7 +1,7 @@
 Pthread port of Postgres is released under the PostgreSQL License,
 a liberal Open Source license, similar to the BSD or MIT licenses.
 
-Copyright (c) 2017, Postgres Professional
+Copyright (c) 2018, Postgres Professional
 Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, The Regents of the University of California
 
